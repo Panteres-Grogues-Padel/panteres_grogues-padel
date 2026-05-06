@@ -1,0 +1,2026 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<meta name="theme-color" content="#FDF6A0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Panteres Pàdel">
+<title>Panteres Grogues Pàdel</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --nav-h:60px;--top-h:52px;
+  --bg:#FEFCE8;--bg2:#FEF9C3;--bg3:#FDF6A0;
+  --text:#0D1B3E;--text2:#2D3D6B;--text3:#6B7FAA;
+  --border:rgba(13,27,62,0.14);--border2:rgba(13,27,62,0.28);
+  --radius:8px;--radius-lg:12px;
+  --navy:#0D1B3E;
+  --blue-bg:#E8EDF7;--blue-t:#0D1B3E;
+  --green-bg:#EAF3DE;--green-t:#27500A;
+  --warn-bg:#FEF3CD;--warn-t:#7A5000;
+  --danger:#C0392B;--info-bg:#EEF2FB;--info-t:#0D1B3E;
+  --success-bg:#EAF3DE;--success-t:#27500A;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);max-width:480px;margin:0 auto;min-height:100vh}
+.screen{display:none;min-height:100vh}
+.screen.active{display:flex;flex-direction:column}
+/* Login */
+.login-screen{align-items:center;justify-content:center;padding:2rem 1.25rem;background:var(--bg3);flex:1}
+.login-card{background:#fff;border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.75rem 1.5rem;width:100%;max-width:340px;box-shadow:0 4px 20px rgba(13,27,62,0.12)}
+.login-logo{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;font-size:13px;font-weight:700;color:#fff;letter-spacing:-0.5px;background:linear-gradient(135deg,#000 0%,#784F17 10%,#55CDFC 20%,#F7A8B8 30%,#fff 38%,#F7A8B8 46%,#55CDFC 54%,#E40303 62%,#FF8C00 70%,#FFED00 78%,#008026 86%,#004DFF 93%,#750787 100%);text-shadow:0 1px 3px rgba(0,0,0,0.5)}
+.login-title{font-size:20px;font-weight:600;color:var(--text);text-align:center;margin-bottom:6px}
+.login-sub{font-size:14px;color:var(--text2);text-align:center;margin-bottom:1.5rem}
+.login-label{font-size:13px;font-weight:500;color:var(--text2);display:block;margin-bottom:5px}
+.login-divider{display:flex;align-items:center;gap:10px;margin:1rem 0;color:var(--text2);font-size:12px}
+.login-divider::before,.login-divider::after{content:'';flex:1;height:0.5px;background:var(--border)}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:10px 16px;background:#fff;border:0.5px solid var(--border2);border-radius:var(--radius);font-size:14px;font-weight:500;color:var(--text);cursor:pointer}
+/* App shell */
+.app-shell{display:flex;flex-direction:column;height:100vh;background:var(--bg)}
+.topbar{height:var(--top-h);display:flex;align-items:center;justify-content:space-between;padding:0 1rem;background:var(--bg3);border-bottom:0.5px solid var(--border);flex-shrink:0}
+.topbar-left{display:flex;align-items:center;gap:8px}
+.app-name{font-size:16px;font-weight:700;color:var(--text)}
+.coord-pill{font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px;background:var(--navy);color:var(--bg3)}
+.logout-btn{font-size:13px;color:var(--text2);background:none;border:none;cursor:pointer;padding:4px 8px}
+.content{flex:1;overflow-y:auto;padding:1rem 1rem calc(var(--nav-h)+1rem)}
+.tab-content{display:none}.tab-content.active{display:block}
+.bottom-nav{height:var(--nav-h);display:flex;border-top:0.5px solid var(--border);background:var(--bg2);flex-shrink:0;padding-bottom:env(safe-area-inset-bottom)}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;border:none;background:none;padding:6px 2px;color:var(--text3)}
+.nav-item.active{color:var(--navy)}
+.nav-item svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.nav-label{font-size:10px;font-weight:600}
+/* Common */
+.avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
+.av-teal{background:#E1F5EE;color:#0F6E56}.av-purple{background:#EEEDFE;color:#3C3489}
+.av-coral{background:#FAECE7;color:#993C1D}.av-blue{background:#E6F1FB;color:#0C447C}
+.av-amber{background:#FAEEDA;color:#633806}.av-pink{background:#FBEAF0;color:#72243E}
+.av-green{background:#EAF3DE;color:#27500A}.av-gray{background:#F1EFE8;color:#444441}
+.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:.75rem}
+.section-title{font-size:18px;font-weight:600;color:var(--text);margin-bottom:1rem}
+.badge{display:inline-flex;align-items:center;font-size:11px;font-weight:500;padding:3px 9px;border-radius:6px}
+.badge-open{background:var(--success-bg);color:var(--success-t)}
+.badge-closed{background:var(--bg2);color:var(--text2)}
+.badge-enrolled{background:var(--info-bg);color:var(--info-t)}
+.badge-socio{background:var(--green-bg);color:var(--green-t);font-size:10px;padding:2px 6px}
+.btn{font-size:14px;font-weight:500;background:none;border:0.5px solid var(--border2);border-radius:var(--radius);padding:8px 16px;cursor:pointer;color:var(--text)}
+.btn:active{opacity:.7}
+.btn-primary{background:var(--navy);color:var(--bg3);border-color:transparent;font-weight:600}
+.btn-danger{color:var(--danger);border-color:rgba(192,57,43,.3)}
+.btn-sm{font-size:12px;padding:5px 12px}
+.btn-block{width:100%}
+select,input[type=date],input[type=text],input[type=password],input[type=number]{font-size:15px;padding:10px 12px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);width:100%;height:42px}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%232D3D6B' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;-webkit-appearance:none;appearance:none}
+.form-group{margin-bottom:.75rem}
+.form-label{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:5px;display:block}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:.75rem}
+.toast{position:fixed;bottom:calc(var(--nav-h)+env(safe-area-inset-bottom)+12px);left:50%;transform:translateX(-50%);background:var(--navy);color:var(--bg3);padding:10px 20px;border-radius:20px;font-size:13px;display:none;z-index:999;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+/* Ranking */
+.rank-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.rank-table{width:100%;border-collapse:collapse;font-size:12px}
+.rank-table th{font-size:10px;font-weight:600;color:var(--text2);text-align:right;padding:0 4px 8px;border-bottom:0.5px solid var(--border);white-space:nowrap}
+.rank-table th:first-child{text-align:left;padding-left:0;width:24px}
+.rank-table th:nth-child(2){text-align:left;width:30%}
+.rank-table td{padding:7px 4px;text-align:right;border-bottom:0.5px solid var(--border);color:var(--text);white-space:nowrap}
+.rank-table td:first-child{text-align:left;padding-left:0;color:var(--text2);font-weight:600}
+.rank-table td:nth-child(2){text-align:left}
+.rank-table tr:last-child td{border-bottom:none}
+.rank-table tr.me td{background:var(--info-bg)}
+.rank-table tr{cursor:pointer}
+.rank-table tr:hover td{background:var(--bg2)}
+.rank-table tr.me:hover td{background:var(--info-bg)}
+.formula-note{font-size:10px;color:var(--text2);margin-top:.75rem;padding-top:.75rem;border-top:0.5px solid var(--border);line-height:1.5}
+/* Profile */
+.profile-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:flex-end;justify-content:center}
+.profile-overlay.open{display:flex}
+.profile-sheet{background:var(--bg);border-radius:16px 16px 0 0;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;padding:1.25rem}
+.profile-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 1.25rem}
+.profile-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:1.25rem}
+.profile-av{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0}
+.profile-name{font-size:18px;font-weight:600;color:var(--text)}
+.profile-sub{font-size:13px;color:var(--text2);margin-top:2px}
+.profile-links{margin-top:6px;display:flex;flex-direction:column;gap:4px}
+.profile-link{font-size:12px;color:var(--info-t);text-decoration:none;display:flex;align-items:center;gap:5px}
+.profile-link.hidden{color:var(--text3);font-style:italic}
+.own-badge{font-size:10px;background:var(--info-bg);color:var(--info-t);padding:2px 7px;border-radius:4px}
+.sheet-divider{height:0.5px;background:var(--border);margin:1rem 0}
+.privacy-section{background:var(--bg2);border-radius:var(--radius);padding:12px;border:0.5px solid var(--border)}
+.privacy-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.privacy-row{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--border)}
+.privacy-row:last-child{border-bottom:none;padding-bottom:0}
+.privacy-row input[type=checkbox]{width:18px;height:18px;accent-color:var(--navy);cursor:pointer;flex-shrink:0;margin-top:3px}
+.privacy-row-label{font-size:13px;color:var(--text);font-weight:500}
+.privacy-row-sub{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.4}
+.close-btn{width:100%;padding:13px;background:var(--bg2);border:none;border-radius:var(--radius);font-size:14px;font-weight:500;color:var(--text);cursor:pointer;margin-top:.75rem}
+/* Jugar */
+.radio-option{display:flex;align-items:center;gap:12px;padding:13px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:8px;cursor:pointer}
+.radio-option.selected{border-color:var(--navy);background:var(--bg2)}
+.radio-option input[type=radio]{width:18px;height:18px;accent-color:var(--navy);flex-shrink:0}
+.radio-option-title{font-size:14px;font-weight:500;color:var(--text)}
+.radio-option-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.baja-locked{font-size:12px;color:var(--danger);padding:8px 10px;background:rgba(192,57,43,.08);border-radius:var(--radius);margin-top:8px;border:0.5px solid rgba(192,57,43,.2)}
+.player-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--border)}
+.player-row:last-child{border-bottom:none}
+.player-row .ppos{font-size:11px;color:var(--text2);min-width:22px}
+.player-row .pname{font-size:13px;color:var(--text);flex:1}
+.players-list{margin-top:.875rem;padding-top:.875rem;border-top:0.5px solid var(--border)}
+.players-label{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;display:flex;justify-content:space-between}
+.reserva-sep{font-size:10px;font-weight:600;color:#BA7517;text-transform:uppercase;letter-spacing:.05em;margin:8px 0 4px;padding-top:8px;border-top:0.5px dashed var(--border)}
+.enroll-box{margin-top:.875rem;padding:.875rem;background:var(--bg2);border-radius:var(--radius);border:0.5px solid var(--border)}
+.checkbox-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;cursor:pointer}
+.checkbox-row input[type=checkbox]{width:18px;height:18px;accent-color:var(--navy);cursor:pointer;flex-shrink:0;margin-top:2px}
+.checkbox-row label{font-size:14px;color:var(--text);cursor:pointer}
+.checkbox-sub{font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.4;padding-left:28px}
+.back-lnk{font-size:13px;color:var(--text2);background:none;border:none;cursor:pointer;padding:0;margin-bottom:1rem;display:flex;align-items:center;gap:4px}
+/* Partidos */
+.pistas-row{display:flex;align-items:center;gap:10px;padding:.875rem;background:var(--bg2);border-radius:var(--radius);margin-bottom:.75rem;border:0.5px solid var(--border)}
+.pistas-ctrl{display:flex;align-items:center;gap:10px}
+.pistas-btn{width:32px;height:32px;border-radius:50%;border:0.5px solid var(--border2);background:none;cursor:pointer;font-size:18px;color:var(--text);display:flex;align-items:center;justify-content:center}
+.pistas-num{font-size:20px;font-weight:600;color:var(--text);min-width:24px;text-align:center}
+.pista-card{border:0.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:.75rem;overflow:hidden}
+.pista-header{padding:.75rem 1rem;background:var(--bg2);border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.pista-title{font-size:15px;font-weight:600;color:var(--text)}
+.pista-body{padding:.875rem 1rem;background:var(--bg)}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;background:var(--bg2);border-radius:20px;font-size:12px;color:var(--text);margin:2px}
+.rot-row{display:grid;grid-template-columns:44px 1fr auto 1fr;gap:4px;align-items:center;font-size:12px;padding:4px 0;border-bottom:0.5px solid var(--border)}
+.rot-row:last-child{border-bottom:none}
+.rot-lbl{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase}
+.rot-vs{text-align:center;font-size:10px;color:var(--text2)}
+.reserva-box{padding:.75rem 1rem;background:var(--bg2);border-radius:var(--radius-lg);margin-bottom:.75rem;border:0.5px solid var(--border)}
+.wa-box{padding:.875rem;background:var(--bg2);border-radius:var(--radius-lg);border:0.5px solid var(--border);margin-bottom:.75rem}
+.wa-header{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.wa-text{font-size:12px;color:var(--text);white-space:pre-wrap;line-height:1.7;font-family:monospace}
+.empty-state{font-size:14px;color:var(--text2);text-align:center;padding:2.5rem 0}
+.coord-box{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:.75rem}
+.coord-box-title{font-size:13px;font-weight:600;color:#3C3489;margin-bottom:.875rem;display:flex;align-items:center;gap:6px}
+/* Score buttons */
+.score-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:.75rem}
+.score-row-ctrl{display:flex;align-items:center;gap:10px;margin-top:.75rem}
+.score-side{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+.score-lbl{font-size:11px;color:var(--text2);text-align:center;line-height:1.3}
+.score-ctrl{display:flex;align-items:center}
+.sc-btn{width:44px;height:52px;border:0.5px solid var(--border2);background:var(--bg2);font-size:20px;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center}
+.sc-btn:first-child{border-radius:var(--radius) 0 0 var(--radius)}
+.sc-btn:last-child{border-radius:0 var(--radius) var(--radius) 0}
+.sc-btn:active{background:var(--bg3)}
+.sc-num{width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:600;color:var(--text);border-top:0.5px solid var(--border2);border-bottom:0.5px solid var(--border2);background:var(--bg)}
+.sc-vs{font-size:13px;color:var(--text2);font-weight:500}
+/* Resultados */
+.res-step{display:none}.res-step.active{display:block}
+.pos-grid-res{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem}
+.pos-opt{padding:12px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);cursor:pointer;text-align:center}
+.pos-opt.sel{border:1.5px solid var(--navy);background:var(--bg2)}
+.pos-opt-n{font-size:22px;font-weight:600;color:var(--text)}
+.pos-opt-d{font-size:11px;color:var(--text2);margin-top:2px}
+.jug-opt{display:flex;align-items:center;gap:8px;padding:9px 10px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg);cursor:pointer;margin-bottom:6px}
+.jug-opt.sel{border:1.5px solid var(--navy);background:var(--bg2)}
+.resumen-fila{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:0.5px solid var(--border);font-size:13px}
+.resumen-fila:last-child{border-bottom:none}
+.res-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:.75rem}
+.res-fecha{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+/* Agenda */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem}
+.cal-month{font-size:14px;font-weight:600;color:var(--text)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;margin-bottom:.75rem}
+.cal-dow{font-size:9px;font-weight:600;color:var(--text2);text-align:center;padding:3px 0}
+.cal-day{min-height:28px;border-radius:4px;display:flex;flex-direction:column;align-items:center;padding:2px 1px}
+.cal-day.has-ev{cursor:pointer;background:var(--bg2)}
+.cal-day.sel-date{background:var(--info-bg)}
+.cal-day.today .cal-num{background:var(--navy);color:var(--bg3);border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px}
+.cal-num{font-size:11px;color:var(--text);line-height:18px}
+.cal-day.other-m .cal-num{color:var(--text3)}
+.ev-dots{display:flex;gap:1px;margin-top:1px;justify-content:center}
+.ev-dot{width:4px;height:4px;border-radius:50%}
+.dot-torneo{background:#534AB7}.dot-social{background:#D85A30}.dot-otro{background:#1D9E75}
+.ev-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:.75rem;display:flex;gap:12px}
+.ev-card.hl{border-color:#378ADD;background:var(--info-bg)}
+.ev-date{display:flex;flex-direction:column;align-items:center;min-width:36px}
+.ev-day-n{font-size:22px;font-weight:600;color:var(--text);line-height:1}
+.ev-day-s{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.05em}
+.ev-div{width:0.5px;background:var(--border);align-self:stretch;margin:0 4px}
+.ev-body{flex:1}
+.ev-title{font-size:14px;font-weight:600;color:var(--text)}
+.ev-desc{font-size:12px;color:var(--text2);margin-top:3px;line-height:1.4}
+.ev-type{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;margin-top:5px}
+.et-torneo{background:#EEEDFE;color:#3C3489}.et-social{background:#FAECE7;color:#993C1D}.et-otro{background:#E1F5EE;color:#0F6E56}
+.legend{display:flex;gap:12px;margin-bottom:.75rem;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2)}
+.ev-month-title{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem}
+/* Seccion */
+.org-area{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin:1.25rem 0 .625rem;padding-bottom:.375rem;border-bottom:0.5px solid var(--border)}
+.org-area:first-of-type{margin-top:0}
+.pcard{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:.875rem;display:flex;gap:10px;align-items:flex-start;margin-bottom:.5rem}
+.pcard.feat{border:1.5px solid #378ADD;background:var(--info-bg)}
+.org-av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0}
+.pcard-info{flex:1;min-width:0}
+.pcard-name{font-size:14px;font-weight:600;color:var(--text)}
+.pcard-role{font-size:12px;color:var(--text2);margin-top:2px}
+.pcard-contact{margin-top:6px;display:flex;flex-direction:column;gap:3px}
+.pcard-link{font-size:12px;color:var(--info-t);text-decoration:none}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="screen active" id="screen-login">
+  <div class="login-screen">
+    <div class="login-card">
+      <div class="login-logo" style="background:none;padding:0;overflow:hidden"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADgAAAA0CAIAAABQJmwyAAABUGlDQ1BpY2MAACiRfZCxS8NQEMa/VqWgdRAdHBwyiUOUkgq6OLQVRHEIVcHqlL6mqZDGR5IiBTf/gYL/gQrObhaHOjo4CKKT6ObkpOCi5XkviaQieo/jfnzvu+M4IDlucG73A6g7vltcyiubpS0l9YwEvSAM5vGcrq9K/q4/4/0+9N5Oy1m///+NwYrpMaqflBnGXR9IqMT6ns8l7xOPubQUcUuyFfKJ5HLI54FnvVggviZWWM2oEL8Qq+Ue3erhut1g0Q5y+7TpbKzJOZQTWMQOPHDYMNCEAh3ZP/yzgb+AXXI34VKfhRp86smRIieYxMtwwDADlVhDhlKTd47udxfdT421gydgoSOEuIi1lQ5wNkcna8fa1DwwMgRctbnhGoHUR5msVoHXU2C4BIzeUM+2V81q4fbpPDDwKMTbJJA6BLotIT6OhOgeU/MDcOl8AQOnYhMeBiitAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAAGYktHRAD/AP8A/6C9p5MAAAAJcEhZcwAAFiUAABYlAUlSJPAAAAAHdElNRQfqBQUWIjuKJ53AAAAAk3pUWHRSYXcgcHJvZmlsZSB0eXBlIDhiaW0AAAiZRU45DsQwCOz9in0CZrjynMR2pBT7/3bBxYYRaA4JTYvr+bbPnkMaQlgOmSSJ/8D6oK5n0X6xiqfmHdXlUh7JToXB2bSZ2nJY2O1SMUbGBkowBMB+AU830im3Us21twRre1v0xJAVxKGTJ+4YPAfZOiNNXUbtB4pBLNX2TI7LAAAAk3RFWHRSYXcgcHJvZmlsZSB0eXBlIGlwdGMACmlwdGMKICAgICAgNTQKMWMwMTVhMDAwMzFiMjU0NzFjMDIwMDAwMDIwMDAyMWMwMjc4MDAwYTUzNjM3MjY1NjU2ZTczNjg2Zjc0MWMwMjNjMDAwNjMwCjMwMzIzNDMzMzcxYzAyMzcwMDA4MzIzMDMyMzYzMDM1MzAzNgqhSJkeAAAQRklEQVRo3rVaaZBc1XU+59771t5nk0YjEEKbwSAkwEAAI8mxiRcQ2IUJLhMclnIcxw7BjovEiWO7bCeVxA7ES0gMxqRIOWVcMYjdYJtFbDarAMFoAUkjCc1Mz0xvr/tt996TH+91q2emR4gs/aNrpvu9+757zznf+c45jUQE7/xFRIAAXbciAiVvgLMvREQimHVx+47Z1x7xhe8I6JyLETEBoomUUnEslVRaa6U1ADDGOGeGEFxwwXlycdfNydvRIhXvCGX3wxBRKdVsBc1WEARRLKXWlHyeXA2ABARAnDNDGI5jZTOOY1uMAVH7gDFd9v/mROdDDMKoVm82vKaUWnBmWYZlW1nHtm2TMZZciYhSKj8IfT8IwjAIpdZkmUYu5+ZzrmkYXQu+vRO8PdBulIgYx3K6UqvVmwjguHZfMZ9x7eSaMIoq9XqzFfhhhAwdy8xl3FI+LzhPbq83mtWa54cRZ1gs5ErFvOCdXQHRkRC/DdA5Z1mvNcszVa2pkMv09+WFIaSU29/Y88RL217asXPs0ESl7oVxLJVmAEJwyzIHioWVS5ecduIJ565fu3xkCQAGYTQ1XfOagWnyoYFSNuN0TuEIbnAkoB2UiChjNTk1U/darmsPDZRsy6w2vLseeWzLI1tf3zcWRDEa3BJCMM4Qk+AHIkUklYrjSCvIZ5xT16z6/fN/9/1nnmEYwmv6k9PVMIr7i7mBvmICLyGInlAXBNqNMgzDt8ano1j19ecHS4VIxj998Je33HnvvvEJy7Icy0TGiIhIz1+LAQJDBFBKt4JAKbVu1fLPX3bp+844XSk1NV2r1Lyc6yxe1M9FgrL3ufYGOgtlEB04VNYAi4dKuYw7umfvV2+6+Znto67r2pahdQqPMGVQ7FqPMP2XkBCQISJi0w+UjD668b1fvvoP+wqFSrUxOV2xLXNk8aAQLDnR+VB7AJ2FMooPHCwDwvCiftex7n5061duutkL40LWVVppTYgJBwFSkgBmMyMlGwAkTLASEWcMEKs1b9XSxTd88dqTVq2o1b3x8oxjWSPDg5yzozpRIkiCBxGlUgcOTihFw8N9ru386Of3fOvWf3ezGYNzpRQhICG04cHcnHQYKyT5qv09ESCQEMLzA1eI713/Z+89dX215k2Wp7OZzPDi/u6E0uVCvcye/FEuV8JIDg4WXdu59c67v3Hrj/P5HGcolSLE5IjgMJ8sQITYfsPO4wkQYykzthmR/uzfffvJl14uFrL9fcV6ozVTqaf4cFYinAM0OXNCxFq9WW14/aV8Ppu59/Env/Xj24u5IhEl5kYCOvr01ws7IkqlLUPEiNf94427xsb6+wq5nDtVqftBiG3p0BsoUeKgEMeqPF13HXugv7h73/6v/usttuMQElE7POaiJKAkX87TBsnns7+gtpNJpR3DnGkG19/4/SAMFw+VOGNTU9XkLIkOywvWc8eVWl0pOTRQAoCv//DWWrNlCqG1JsReB5l6ICBwzgBRaa21RkTGGCACAtEsrZVaLcWqcjn7+R1vfPcnP+WcD5TyTT9seK22A+DcE+1OktV6M5txHdu64xe/fGLbq/lcRikFiEgLoCQSjGlNlVojCkPHNEwhGp7nBwECAFECao75E8pARCV1IZ+7/f6Ht+9+s1jMWZY5U6knW01tMls9pZuu1j2t9WB/wQ/8W7bcY9mm0kQ9kwZBwhGCsVYQZh3rU5de/IEzzxge7CdNE5XaDf/xn0+9+mrGchUpmHd7J8KISHBeDVs3/9ddN17/hVIhc2hyptkKclm3p48SImpNDa/l2qZpGvc+9uSusYOOZWmtscsK3RyZ8KIXBKuOWXrnd/7+S1d8cu2qFVnHyWczE9PlZYsGbrzuWqWkSo+nh35OFaPWuYz76+deev3NPcVCzhC83mj11KPp/UEQRpHqX1wAgDsf2yoMo7dQIEgpnEEUq8Wlvs9cslnK6IXXd7ywY3Tbzje27dp94K1Dt37ja6etXnHNxR+57d4HY6mQQfs2nM+JgrOq39zy6NYTjl+edZ2GF8RSGkIQEQGJTrwnr2YrYAwKuczOvfu273rTti2dhO0CVMQAgyjceOrZu/cdePiZZx3b+tVvn/d9CYJyhcL1N3z/oo3n/vElH5us1n5y30P5Qk5p1SseEQE0kWWZW59/8QtXfKJYyFbrTd8PjZxIjM3mFBh+EBqGAIDfvPJazfcFY52YnpPRkufFsVzS37fh9FO9ln/7fQ9tefypeivwo1ApUlqbtvnCzp27x8Y+tmkDZyxht57Zi5BIk2WZew6VR9/Ya9uWYOj7YbePtsUEgpQyiqRjmwDw4uhO4LynS3WTdhjHy0dGRhYNbXrP+s3nncMZHxkY+PB5Z608Zkml1jj/rNMHc4Xv3fGz5SPDxVxWSd1bqSEkGYQjtqJw285dAGAYIohigDT9dQcTSqmVVq5jA8CegwctLkgDJWscIc1oveqYY4Mw+LevXL/ptHW2bRRdd9miRfmM+8SLr0RIUSw1kNFVe8zfdEdnAeLovv0AYFpGLJVSGhABSEBX2SuVIiLbNmueV67WhGC0wIl2BIYh+MTMTKziQjb/wujoky+93Iri7bv2xFrZhrH34AQT7MKzz6rXGlXPE8YCtWR7OU1kcH5gogwAlmk0PF9r4rwT9UnBAqC0AgBTGJMzlVYYImOU1rRzownbPG+Zxt7x8e2738xmMgcmJqM4FowvWTx4wTlnLR1adNs99+8/cGj5yMgDTzztR1HBMrXSPaIeUx1IgMix5jUAyBAGEWmtu+ipbZHUNAh+EIRScmFAavl5/ESpwkQERfDDn9/9t5/9dHlm+nOXXfLNH9129eYPXXf5ZQBwzrq15UolCMObfr4ll3FVwsc94wkhSbUMWSsIojhmjBFQx1vYfCI/7OGp3Y9U/SlNuYz78G+fv+2+B1YsO+aME9b8ySUfffCpp0f3jgHAW5MTYRTces/9zTBiiPC2mgu7BOzsLYk5GSIB5tiWbYiQNMMFFsaOaAetVT6X/ZefbTkwPnnVxRd8/hOXnnXK2tu23L3htNM2nXn6zrH923e9mXUcTdRWhwvTMqAmch3bNI0g8hGwY0vRfWKccQCIpcxlMo5t+k2fc9QLCfe2pEjqsWIue+fWp3/13AsnLT/uXccfV2n6f37Dd09euWJscjKUMTMEJ9CwoI5NyBoRtNL5bAYAZSwRgTHW7aPt4xUcEfwgLOSyg4VCueaZgqOm+X5FkBZgsYQwjjUBN/iSousF6rkdu55+9TXLNISwnnl9V951TcMC0s1IGgJT2u8hbiixqFL6mKFBAAijmDHGOOshnDnnnHM/CAHg+CVLIhkDYlq3zbU8MYZBpM9d6f/gU/53rwjPPLZ13FDjqo2BEDyfKzQCce6q5iVniJmmagWy1oqv3hitGJRhDOxITsqI9LuWHQsAURQKIThLGAlZd5UnBDMMI0lc605YTbpTWfaUPBDEcMpxMgzjB5/1rruARnLhhjXBheuCkXztxk+2Pvv+4NhS88Mne9++vPneVd4Zy6NFhShWyWlST78nTY5lrV2zEgCiWNmW0UnfotNLSSLEsa1KrQ4AZ5787rzrKK2TImquZxEAAUP0WrD0eDjvJHP/VLxqkRqb0Bevp987iZ59A2fqtGwwOns1n66Hl59j+hHEUqRab4H4DOJo+fDiE5cv94NQKe06Vud5bE5hmnEt0lCve6uPW7Z2xXF+ECaBP1+WAIImcG0MJPziFfOf7mMrR5yhknJMiCX152BRCQXDUIKUfG85LljMZIxoIVUCjGEQhBvXrzUMo1ZvMs4c2+rw49yc5ti2aYpq3cvns5s3nffkq68hOqQ1JnHeIRYE0mCb8Owe8+nd1qOjopjBh172s3Zhpo6vj8Pm02F3Wf9mF8vYuOlE/NUobDsAYxVmCki6qDCPF5XWOdfavOk8APBavuvYhiGI0iA73IDo1ExT09XpSu34Y0eklhdfd/1YedoyhOrkojYpJ1EfxUAIGQOUBi8EIAAGtoBmQAzQtEBrCGNpm1xrNAQIPjfok6UE59WGt/ns3/nnv7iuVvMOTU4tGR7MZzMdVD2q0Hwuw5BNztQc277mogv9IGTMmJMqMO0QgWWSIzAmIICsA3kXczYKjqUsK2TREpgxqS8rHAMzFhp8bt2VWAgRpdYZ2/z0xy8CgErNsy0r6zrd3Rc2p/dPRKZpFPJZz2sGQfjxD75/w9qTal5DcD5L7bWnCqRRJ41uJNKkNGlNGkhpkkREWhFIAgWgQRNp7BJryYJEZHDeqHtXfOiD715xfNLpLRVzjLFUeiDO1aOdJfpKOc7ZxHQVAL7yR1eWXDuSstPz7k6ihJQmU0DC9BOkzjsm5SsSECHh4fyZFl1EgvNas7l+zYo//eSlWunpStV1zHwuk9AnQq8GREpxREKIgb5CqxVOTddWLjv265+5Jmz5AMBmTzYw6S4kmAEQCNMWRcIUiASpsREQ08ZeV2lIgrEgivtc9x+u/ZxtmuPlmVjqwf4SYvtaXLBJljpAsZAtZJ3pSt3z/I9sOPevrvqDeq0BiIwlTYGEUjrEjR2tNiugsVubYdo0ShUuCcbDWHOgG7907aplx0xXavVGc6Cv4DpWEuxp46An0PQcAABwaLBkmGJiatoPgis/uvmvr7nCq9eVosRf2/Y++jlV0sVIux+GEE0/MDjd9JdfPHvdKdVGszxTz2Xd/lK+veQskTXvQel4KJXLYRjtf6uMDIeH+lzHvvuRrX9z081eFOezrlZKde2409xpF6k9mj8JEzOGiDhTr69eMvydL167dvXKeqM5Xp4xTWPp8GAyQsF5M8C3b40HQXTgUBmQhgf7MxlndO/er/3glqdfG824rmUZWmtKXQG7qsD2RqlTZBIgMkRg2PR9FcuPbTz3y1df2VfIV2vexFTFNsXI8KAQovvRRzFsIEgflGANo4PjZSX1YH+hVMxHUt7xwMO33HXP3vEJ07Js2+KIKVyCOWbD5AUgtfZbodKya9igpyvV6Woj6zjDi/pFOxm8g2FDF8+lt8WxnCxXGp6fydpDA0XLNKuNxpZfP37Xo4/v2Le/FUWcc9MwOOesPb9Jur5SyljGSlPRddatWf3x89/3gbPeYxqG1/LL09UwiErF3GB/MUF2hFHTOxiIEUC15k3NVJGgkM/2lfJCcKXkK7vffPLFl7ft2LVvfHym3gijKJIKGJqC25Y1VCysHBk57cQ156xft3zpEgQMwmi6UvM8XwgxNFDMZd3/7UCs54gxiuKpmXrDayGC69p9xZzrpCPGKI5narV6s9XyfWQs6zqFTKaUz/P2iLHhtSr1ZuAHDLFYyPUVs1yIo0F51GNwmt0xRgiDqFZv1pu+kkoIbluGY5uu49i22b0rrbUfhC0/bPlBFEmltGmKfNbN5zOzh7b4tjPmo+ZB6vR2Dq8upWq1fK8Z+GGkpNI0t42a8DbnnHPmOmbWdRzX5l2p+Ggg/k9+WHC4RQGz7KU1SamklFEs272NFKIQwjC5Mf+HBe3m+P/LLyBmqR7oCIbOEBt7tveT7cxticE7+aEGwH8DVbzG7J9VfKwAAAD6ZVhJZk1NACoAAAAIAAcBDgACAAAACwAAAGIBEgADAAAAAQABAAABGgAFAAAAAQAAAG4BGwAFAAAAAQAAAHYBKAADAAAAAQACAAABMgACAAAAFAAAAH6HaQAEAAAAAQAAAJIAAAAAU2NyZWVuc2hvdAAAAAAAkAAAAAEAAACQAAAAATIwMjY6MDU6MDYgMDA6MjQ6MzcAAAWQAwACAAAAFAAAANSShgAHAAAAEgAAAOigAQADAAAAAf//AACgAgAEAAAAAQAAAVegAwAEAAAAAQAAATwAAAAAMjAyNjowNTowNiAwMDoyNDozNwBBU0NJSQAAAFNjcmVlbnNob3Ska3DcAAAAFXRFWHRleGlmOkNvbG9yU3BhY2UANjU1MzUzewBuAAAAIXRFWHRleGlmOkRhdGVUaW1lADIwMjY6MDU6MDYgMDA6MjQ6MzeeQAr/AAAAKXRFWHRleGlmOkRhdGVUaW1lT3JpZ2luYWwAMjAyNjowNTowNiAwMDoyNDozNw3M4jkAAAATdEVYdGV4aWY6RXhpZk9mZnNldAAxNDYQQyi6AAAAIHRFWHRleGlmOkltYWdlRGVzY3JpcHRpb24AU2NyZWVuc2hvdBkDHKcAAAAYdEVYdGV4aWY6UGl4ZWxYRGltZW5zaW9uADM0M7jTAL0AAAAYdEVYdGV4aWY6UGl4ZWxZRGltZW5zaW9uADMxNijB4QEAAAAWdEVYdGV4aWY6VXNlckNvbW1lbnQAQVNDSUm041reAAAAKHRFWHRpY2M6Y29weXJpZ2h0AENvcHlyaWdodCBBcHBsZSBJbmMuLCAyMDIy5LS/nAAAABp0RVh0aWNjOmRlc2NyaXB0aW9uAERpc3BsYXkgUDOPebu8AAAAAElFTkSuQmCC" style="width:56px;height:56px;border-radius:14px;object-fit:cover;display:block"></div>
+      <div class="login-title">Panteres Grogues Pàdel</div>
+      <div class="login-sub">Inicia sesión para continuar</div>
+      <div class="form-group">
+        <label class="login-label">Email</label>
+        <input type="text" id="login-email" placeholder="tu@email.com">
+      </div>
+      <div class="form-group" style="margin-bottom:.5rem">
+        <label class="login-label">Contraseña</label>
+        <div style="position:relative">
+          <input type="password" id="login-pass" placeholder="••••••••" style="padding-right:44px">
+          <button onclick="togglePass()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text2);font-size:13px" id="pass-toggle">👁</button>
+        </div>
+      </div>
+      <div style="text-align:right;margin-bottom:1.25rem">
+        <a href="#" style="font-size:12px;color:var(--info-t);text-decoration:none">¿Olvidaste la contraseña?</a>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:1.25rem;padding:10px;background:#f9f9f7;border-radius:var(--radius);border:0.5px solid var(--border)">
+        <input type="checkbox" id="privacy-check" style="width:18px;height:18px;accent-color:#0D1B3E;flex-shrink:0;margin-top:2px;cursor:pointer">
+        <label for="privacy-check" style="font-size:12px;color:#2D3D6B;line-height:1.5;cursor:pointer">
+          He leído y acepto la <a href="#" onclick="abrirPolitica(event)" style="color:#0D1B3E;font-weight:600;text-decoration:underline">Política de privacidad</a>. Entiendo que mis datos se usarán para gestionar mi participación en la sección de pàdel.
+        </label>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="doLogin()">Entrar</button>
+      <div class="login-divider"><span>o acceso demo</span></div>
+      <select id="demo-sel" style="font-size:13px;height:38px;margin-bottom:.5rem">
+        <option value="">Selecciona un usuario demo...</option>
+      </select>
+      <button class="btn btn-block" style="font-size:13px" onclick="doLoginDemo()">Entrar como demo</button>
+      <div id="login-error" style="display:none;font-size:12px;color:var(--danger);text-align:center;margin-top:.75rem;padding:8px;background:rgba(192,57,43,.08);border-radius:var(--radius)"></div>
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-top:1rem;text-align:center">¿No tienes cuenta? Contacta con tu coordinador</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="screen" id="screen-app">
+  <div class="app-shell">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div style="width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;cursor:pointer;background:linear-gradient(135deg,#000 0%,#784F17 10%,#55CDFC 20%,#F7A8B8 30%,#fff 38%,#F7A8B8 46%,#55CDFC 54%,#E40303 62%,#FF8C00 70%,#FFED00 78%,#008026 86%,#004DFF 93%,#750787 100%)" onclick="volverBienvenida()"><img src="data:image/png;base64,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RzFsIEgflGANo4PjZSX1YH+hVMxHUt7xwMO33HXP3vEJ07Js2+KIKVyCOWbD5AUgtfZbodKya9igpyvV6Woj6zjDi/pFOxm8g2FDF8+lt8WxnCxXGp6fydpDA0XLNKuNxpZfP37Xo4/v2Le/FUWcc9MwOOesPb9Jur5SyljGSlPRddatWf3x89/3gbPeYxqG1/LL09UwiErF3GB/MUF2hFHTOxiIEUC15k3NVJGgkM/2lfJCcKXkK7vffPLFl7ft2LVvfHym3gijKJIKGJqC25Y1VCysHBk57cQ156xft3zpEgQMwmi6UvM8XwgxNFDMZd3/7UCs54gxiuKpmXrDayGC69p9xZzrpCPGKI5narV6s9XyfWQs6zqFTKaUz/P2iLHhtSr1ZuAHDLFYyPUVs1yIo0F51GNwmt0xRgiDqFZv1pu+kkoIbluGY5uu49i22b0rrbUfhC0/bPlBFEmltGmKfNbN5zOzh7b4tjPmo+ZB6vR2Dq8upWq1fK8Z+GGkpNI0t42a8DbnnHPmOmbWdRzX5l2p+Ggg/k9+WHC4RQGz7KU1SamklFEs272NFKIQwjC5Mf+HBe3m+P/LLyBmqR7oCIbOEBt7tveT7cxticE7+aEGwH8DVbzG7J9VfKwAAAD6ZVhJZk1NACoAAAAIAAcBDgACAAAACwAAAGIBEgADAAAAAQABAAABGgAFAAAAAQAAAG4BGwAFAAAAAQAAAHYBKAADAAAAAQACAAABMgACAAAAFAAAAH6HaQAEAAAAAQAAAJIAAAAAU2NyZWVuc2hvdAAAAAAAkAAAAAEAAACQAAAAATIwMjY6MDU6MDYgMDA6MjQ6MzcAAAWQAwACAAAAFAAAANSShgAHAAAAEgAAAOigAQADAAAAAf//AACgAgAEAAAAAQAAAVegAwAEAAAAAQAAATwAAAAAMjAyNjowNTowNiAwMDoyNDozNwBBU0NJSQAAAFNjcmVlbnNob3Ska3DcAAAAFXRFWHRleGlmOkNvbG9yU3BhY2UANjU1MzUzewBuAAAAIXRFWHRleGlmOkRhdGVUaW1lADIwMjY6MDU6MDYgMDA6MjQ6MzeeQAr/AAAAKXRFWHRleGlmOkRhdGVUaW1lT3JpZ2luYWwAMjAyNjowNTowNiAwMDoyNDozNw3M4jkAAAATdEVYdGV4aWY6RXhpZk9mZnNldAAxNDYQQyi6AAAAIHRFWHRleGlmOkltYWdlRGVzY3JpcHRpb24AU2NyZWVuc2hvdBkDHKcAAAAYdEVYdGV4aWY6UGl4ZWxYRGltZW5zaW9uADM0M7jTAL0AAAAYdEVYdGV4aWY6UGl4ZWxZRGltZW5zaW9uADMxNijB4QEAAAAWdEVYdGV4aWY6VXNlckNvbW1lbnQAQVNDSUm041reAAAAKHRFWHRpY2M6Y29weXJpZ2h0AENvcHlyaWdodCBBcHBsZSBJbmMuLCAyMDIy5LS/nAAAABp0RVh0aWNjOmRlc2NyaXB0aW9uAERpc3BsYXkgUDOPebu8AAAAAElFTkSuQmCC" style="width:28px;height:28px;border-radius:7px;object-fit:cover;display:block"></div>
+        <div>
+          <div class="app-name">Panteres Grogues</div>
+          <div style="font-size:10px;color:var(--text2)" id="top-name"></div>
+        </div>
+        <span class="coord-pill" id="coord-pill" style="display:none">Coord.</span>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">Salir</button>
+      <button onclick="abrirNotificaciones()" style="background:none;border:none;cursor:pointer;padding:4px 6px;position:relative" id="notif-btn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span id="notif-badge" style="display:none;position:absolute;top:2px;right:2px;width:8px;height:8px;background:#E40303;border-radius:50%;border:1.5px solid var(--bg3)"></span>
+      </button>
+    </div>
+    <div class="content">
+      <!-- RANKING -->
+      <div class="tab-content" id="tab-ranking">
+        <div class="section-title">Ranking</div>
+        <div class="card">
+          <div class="rank-wrap">
+            <table class="rank-table">
+              <thead><tr><th>#</th><th>Jugador</th><th>PJ</th><th>PG</th><th>JJ</th><th>JG</th><th>Efic.</th><th>Pen.</th></tr></thead>
+              <tbody id="rank-body"></tbody>
+            </table>
+          </div>
+          <div class="formula-note">Ordenado por eficacia · Penalización a jugadores con pocos partidos · Pulsa para ver perfil</div>
+        </div>
+      </div>
+      <!-- JUGAR -->
+      <div class="tab-content" id="tab-jugar">
+        <div class="section-title">Jugar</div>
+        <div id="jugar-step1"></div>
+        <div id="jugar-step2" style="display:none"></div>
+      </div>
+      <!-- PARTIDOS -->
+      <div class="tab-content" id="tab-partidos">
+        <div class="section-title">Partidos</div>
+        <div id="partidos-days"></div>
+        <div id="coord-partidos"></div>
+        <div id="partidos-output"></div>
+      </div>
+      <!-- RESULTADOS -->
+      <div class="tab-content" id="tab-resultados">
+        <div class="section-title">Resultados</div>
+        <div id="res-cal"></div>
+        <div id="res-day-content"></div>
+      </div>
+      <!-- AGENDA -->
+      <div class="tab-content" id="tab-agenda">
+        <div class="section-title">Agenda</div>
+        <div class="cal-nav">
+          <button class="btn btn-sm" onclick="changeMonth(-1)">&#8592;</button>
+          <span class="cal-month" id="cal-lbl"></span>
+          <button class="btn btn-sm" onclick="changeMonth(1)">&#8594;</button>
+        </div>
+        <div class="legend">
+          <div class="leg-item"><div class="ev-dot dot-torneo"></div>Torneo</div>
+          <div class="leg-item"><div class="ev-dot dot-social"></div>Social</div>
+          <div class="leg-item"><div class="ev-dot dot-otro"></div>Otro</div>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+        <div class="ev-month-title" id="ev-lbl"></div>
+        <div id="ev-list"></div>
+      </div>
+      <!-- BIENVENIDA -->
+      <div class="tab-content active" id="tab-bienvenida">
+        <div id="bienvenida-content"></div>
+      </div>
+      <!-- SECCION -->
+      <div class="tab-content active" id="tab-seccion">
+        <div class="section-title">La sección</div>
+        <div class="org-area">Coordinación general</div>
+        <div class="pcard feat"><div class="org-av av-blue">JG</div><div class="pcard-info"><div class="pcard-name">Jaime García</div><div class="pcard-role">Coordinador General · Presidente</div><div class="pcard-contact"><a class="pcard-link" href="mailto:jaime@ejemplo.com">jaime@ejemplo.com</a></div></div></div>
+        <div class="org-area">Área de gestión</div>
+        <div class="pcard"><div class="org-av av-teal">MP</div><div class="pcard-info"><div class="pcard-name">María Puig</div><div class="pcard-role">Tesorería</div></div></div>
+        <div class="pcard"><div class="org-av av-purple">CR</div><div class="pcard-info"><div class="pcard-name">Carlos Ros</div><div class="pcard-role">Soporte informático</div></div></div>
+        <div class="org-area">Área deportiva y competición</div>
+        <div class="pcard"><div class="org-av av-purple">AL</div><div class="pcard-info"><div class="pcard-name">Ana López</div><div class="pcard-role">Coord. Liga Social</div></div></div>
+        <div class="pcard"><div class="org-av av-coral">PT</div><div class="pcard-info"><div class="pcard-name">Pedro Torres</div><div class="pcard-role">Coord. Torneos</div></div></div>
+        <div class="org-area">Área de comunicación</div>
+        <div class="pcard"><div class="org-av av-pink">BM</div><div class="pcard-info"><div class="pcard-name">Bea Martí</div><div class="pcard-role">Coord. Activismo y Redes</div></div></div>
+        <div class="pcard"><div class="org-av av-teal">OS</div><div class="pcard-info"><div class="pcard-name">Oriol Serra</div><div class="pcard-role">Coord. Entretenimiento</div></div></div>
+      </div>
+    </div>
+    <nav class="bottom-nav">
+      <button class="nav-item active" onclick="showTab('seccion',this)">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span class="nav-label">Sección</span>
+      </button>
+      <button class="nav-item" onclick="showTab('agenda',this)">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="8.01" y2="14"/><line x1="12" y1="14" x2="12.01" y2="14"/><line x1="16" y1="14" x2="16.01" y2="14"/></svg>
+        <span class="nav-label">Agenda</span>
+      </button>
+      <button class="nav-item" onclick="showTab('jugar',this)">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span class="nav-label">Jugar</span>
+      </button>
+      <button class="nav-item" onclick="showTab('partidos',this)">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        <span class="nav-label">Partidos</span>
+      </button>
+      <button class="nav-item" onclick="showTab('resultados',this)">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span class="nav-label">Resultados</span>
+      </button>
+      <button class="nav-item" onclick="showTab('ranking',this)">
+        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span class="nav-label">Ranking</span>
+      </button>
+    </nav>
+  </div>
+</div>
+
+<!-- Profile sheet -->
+<div class="profile-overlay" id="profile-overlay" onclick="closeProfileOutside(event)">
+  <div class="profile-sheet">
+    <div class="profile-handle"></div>
+    <div id="profile-content"></div>
+    <button class="close-btn" onclick="closeProfile()">Cerrar</button>
+  </div>
+</div>
+
+<!-- Mover jugador entre partidos -->
+<div class="profile-overlay" id="mover-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="profile-sheet">
+    <div class="profile-handle"></div>
+    <div id="mover-content"></div>
+    <button class="close-btn" onclick="document.getElementById('mover-overlay').classList.remove('open')">Cancelar</button>
+  </div>
+</div>
+
+<!-- Notificaciones -->
+<div class="profile-overlay" id="notif-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="profile-sheet">
+    <div class="profile-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <div style="font-size:18px;font-weight:600;color:var(--text)">🔔 Notificaciones</div>
+      <button class="btn btn-sm" onclick="marcarTodasLeidas()" style="font-size:11px">Marcar todas leídas</button>
+    </div>
+    <div id="notif-list"></div>
+    <button class="close-btn" onclick="document.getElementById('notif-overlay').classList.remove('open')">Cerrar</button>
+  </div>
+</div>
+
+<!-- Política de privacidad -->
+<div class="profile-overlay" id="politica-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="profile-sheet">
+    <div class="profile-handle"></div>
+    <div style="font-size:18px;font-weight:600;color:var(--text);margin-bottom:.25rem">Política de privacidad</div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:1.25rem">Panteres Grogues Pàdel · Última actualización: mayo 2026</div>
+
+    <div style="font-size:13px;color:var(--text);line-height:1.7">
+
+      <div style="font-weight:600;margin-bottom:4px">1. Responsable del tratamiento</div>
+      <div style="color:var(--text2);margin-bottom:1rem">Sección de Pàdel de Panteres Grogues. Para cualquier consulta sobre tus datos contacta con el coordinador de la sección.</div>
+
+      <div style="font-weight:600;margin-bottom:4px">2. Datos que recogemos</div>
+      <div style="color:var(--text2);margin-bottom:1rem">Nombre, apellidos, email, teléfono (opcional), cuenta de Instagram (opcional) y foto de perfil (opcional). También se registran tus participaciones en partidos y eventos de la sección.</div>
+
+      <div style="font-weight:600;margin-bottom:4px">3. Finalidad</div>
+      <div style="color:var(--text2);margin-bottom:1rem">Gestionar tu participación en la sección de pàdel: listas de jugadores, ranking, partidos, resultados y eventos. No se usarán para ningún otro fin.</div>
+
+      <div style="font-weight:600;margin-bottom:4px">4. Base legal</div>
+      <div style="color:var(--text2);margin-bottom:1rem">Consentimiento explícito del usuario al registrarse en la aplicación (Art. 6.1.a RGPD).</div>
+
+      <div style="font-weight:600;margin-bottom:4px">5. Conservación de datos</div>
+      <div style="color:var(--text2);margin-bottom:1rem">Tus datos se conservarán mientras seas miembro activo de la sección. Al darte de baja, se eliminarán en un plazo máximo de 30 días.</div>
+
+      <div style="font-weight:600;margin-bottom:4px">6. Tus derechos</div>
+      <div style="color:var(--text2);margin-bottom:1rem">Tienes derecho a acceder, rectificar, suprimir, limitar y portar tus datos. Puedes ejercerlos desde tu perfil en la app o contactando con el coordinador. También puedes reclamar ante la AEPD (aepd.es).</div>
+
+      <div style="font-weight:600;margin-bottom:4px">7. Dónde se almacenan</div>
+      <div style="color:var(--text2);margin-bottom:1rem">Los datos se almacenan en servidores ubicados en la Unión Europea (Supabase, Frankfurt), cumpliendo con el RGPD.</div>
+
+      <div style="font-weight:600;margin-bottom:4px">8. Visibilidad de datos entre usuarios</div>
+      <div style="color:var(--text2);margin-bottom:1rem">Tu teléfono e Instagram solo son visibles para otros jugadores si tú lo autorizas expresamente desde tu perfil. Tu nombre y estadísticas de juego son siempre visibles para los miembros de la sección.</div>
+
+    </div>
+    <button class="close-btn" onclick="document.getElementById('politica-overlay').classList.remove('open')">Cerrar</button>
+  </div>
+</div>
+
+<!-- Utilidades sheet -->
+<div class="profile-overlay" id="util-sheet-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="profile-sheet">
+    <div class="profile-handle"></div>
+    <div style="font-size:18px;font-weight:600;color:var(--text);margin-bottom:1.25rem">🗺️ Utilidades</div>
+
+    <!-- Clubs -->
+    <div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.625rem">Clubs</div>
+
+    <div style="background:var(--bg2);border-radius:var(--radius-lg);padding:1rem;margin-bottom:.75rem;border:0.5px solid var(--border)">
+      <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px">🎾 Club Cornellà Up</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Carrer de la Verge de Montserrat, 08940 Cornellà de Llobregat</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <a href="tel:931575872" class="btn btn-sm" style="font-size:12px;text-decoration:none">📞 931 575 872</a>
+        <a href="https://maps.google.com/?q=Carrer+de+la+Verge+de+Montserrat+08940+Cornella" target="_blank" class="btn btn-sm" style="font-size:12px;text-decoration:none">📍 Cómo llegar</a>
+      </div>
+    </div>
+
+    <div style="background:var(--bg2);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;border:0.5px solid var(--border)">
+      <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px">🎾 Club Delfos</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Carrer de la Verge de Montserrat, s/n, 08940 Cornellà de Llobregat</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <a href="tel:934741686" class="btn btn-sm" style="font-size:12px;text-decoration:none">📞 934 741 686</a>
+        <a href="https://maps.google.com/?q=Club+Delfos+Cornella+de+Llobregat" target="_blank" class="btn btn-sm" style="font-size:12px;text-decoration:none">📍 Cómo llegar</a>
+      </div>
+    </div>
+
+    <!-- Seguro médico -->
+    <div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.625rem">Seguro médico</div>
+    <div style="background:var(--bg2);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;border:0.5px solid var(--border)">
+      <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px">🏥 Seguro deportivo</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Póliza federativa — Federació Catalana de Pàdel</div>
+      <div style="font-size:11px;color:var(--text3)">Contacta con el coordinador para obtener los datos de tu póliza</div>
+    </div>
+
+    <!-- Hospitales cercanos -->
+    <div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.625rem">Urgencias cercanas</div>
+    <div style="background:var(--bg2);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;border:0.5px solid var(--border)">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--text)">Hospital de Bellvitge</div>
+            <div style="font-size:11px;color:var(--text2)">~10 min · L'Hospitalet de Llobregat</div>
+          </div>
+          <a href="https://maps.google.com/?q=Hospital+de+Bellvitge" target="_blank" class="btn btn-sm" style="font-size:11px;text-decoration:none">📍</a>
+        </div>
+        <div style="height:0.5px;background:var(--border)"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--text)">CAP Almeda</div>
+            <div style="font-size:11px;color:var(--text2)">~5 min · Cornellà de Llobregat</div>
+          </div>
+          <a href="https://maps.google.com/?q=CAP+Almeda+Cornella" target="_blank" class="btn btn-sm" style="font-size:11px;text-decoration:none">📍</a>
+        </div>
+        <div style="height:0.5px;background:var(--border)"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--text)">Urgencias · 112</div>
+            <div style="font-size:11px;color:var(--text2)">Emergencias generales</div>
+          </div>
+          <a href="tel:112" class="btn btn-sm" style="font-size:11px;text-decoration:none;background:var(--danger);color:#fff;border-color:transparent">📞 112</a>
+        </div>
+      </div>
+    </div>
+
+    <button class="close-btn" onclick="document.getElementById('util-sheet-overlay').classList.remove('open')">Cerrar</button>
+  </div>
+</div>
+
+<!-- Evento inscritos sheet -->
+<div class="profile-overlay" id="ev-sheet-overlay" onclick="cerrarListaEvento(event)">
+  <div class="profile-sheet" id="ev-sheet">
+    <div class="profile-handle"></div>
+    <div id="ev-sheet-content"></div>
+    <button class="close-btn" onclick="document.getElementById('ev-sheet-overlay').classList.remove('open')">Cerrar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── CONSTANTS ───────────────────────────────────────────────
+const DS=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DSH=['Lu','Ma','Mi','Ju','Vi','Sá','Do'];
+const AVC_LIST=['av-teal','av-purple','av-coral','av-blue','av-amber','av-pink','av-green','av-gray'];
+const INI=n=>n.split(/[\s_]/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+const AVC=n=>AVC_LIST[n.charCodeAt(0)%AVC_LIST.length];
+
+// Genera "Jose G. B." desde "Jose García Blanco"
+const nombreCorto=n=>{
+  const parts=n.trim().split(/\s+/);
+  if(parts.length===1)return parts[0];
+  const nombre=parts[0];
+  const aps=[parts[1],parts[2]].filter(Boolean).map(a=>a[0].toUpperCase()).join('');
+  return nombre+(aps?' '+aps:'');
+};
+const PEN={1:.48,2:.43,3:.38,4:.33,5:.27,6:.20,7:.13,8:.05};
+const getPen=pj=>PEN[pj]||0;
+const COORDS=['JoseGB','SergiIbso','Jordi_V'];
+const ROTS=[{izq:[0,3],der:[1,2]},{izq:[0,2],der:[1,3]},{izq:[0,1],der:[2,3]}];
+
+function isBajaLocked(){return false;} // nunca bloqueado
+
+function isBajaWarning(id){
+  // Aviso si es el día del partido y ya son las 7:00
+  const dow=SLOT_DOW[id];if(dow===undefined)return false;
+  const jsNow=NOW_DAY===0?6:NOW_DAY-1;
+  return jsNow===dow&&NOW_H>=7;
+}
+
+// Devuelve los slots del mismo día (excluyendo el actual)
+function slotsRivalesDelDia(slotId){
+  const dow=SLOT_DOW[slotId];if(dow===undefined)return[];
+  return SLOTS.filter(s=>SLOT_DOW[s.id]===dow&&s.id!==slotId);
+}
+
+// Comprueba si el jugador ya está apuntado a otro slot del mismo día
+function estaApuntadoEnDiaRival(slotId){
+  if(!currentUser)return null;
+  return slotsRivalesDelDia(slotId).find(s=>s.jugadores.find(p=>p.nombre===currentUser.nombre))||null;
+}
+
+// ─── DATA ─────────────────────────────────────────────────────
+let JUGADORES=[
+  {id:1,nombre:'JoseGB',nombreCompleto:'Jose García Blanco',ig:'@josegb_padel',tel:'+34 612 345 678',pj:30,pg:29,jj:180,jg:177,mostrarTel:true,autorizaIG:true,foto:null},
+  {id:2,nombre:'AndresA',nombreCompleto:'Andrés Alonso',ig:'@andres_padel',tel:'+34 623 456 789',pj:15,pg:14,jj:92,jg:89,mostrarTel:true,autorizaIG:true,foto:null},
+  {id:3,nombre:'JoanMR',nombreCompleto:'Joan Martí Roca',ig:'@joanmr',tel:'+34 634 567 890',pj:9,pg:8,jj:56,jg:54,mostrarTel:false,autorizaIG:true,foto:null},
+  {id:4,nombre:'MigueB',nombreCompleto:'Miguel Bosch',ig:'@migue.padel',tel:'+34 645 678 901',pj:48,pg:40,jj:294,jg:270,mostrarTel:true,autorizaIG:false,foto:null},
+  {id:5,nombre:'ZoaH',nombreCompleto:'Zoa Hernández',ig:'@zoah_padel',tel:'+34 656 789 012',pj:21,pg:16,jj:128,jg:112,mostrarTel:false,autorizaIG:false,foto:null},
+  {id:6,nombre:'OscarVazquez',nombreCompleto:'Oscar Vázquez',ig:'@oscarvaz',tel:'+34 667 890 123',pj:12,pg:9,jj:73,jg:63,mostrarTel:true,autorizaIG:true,foto:null},
+  {id:7,nombre:'Jordi_V',nombreCompleto:'Jordi Vilar',ig:'@jordi_vilar',tel:'+34 678 901 234',pj:111,pg:81,jj:678,jg:600,mostrarTel:true,autorizaIG:true,foto:null},
+  {id:8,nombre:'Guille',nombreCompleto:'Guillermo Puig',ig:'@guillepadel',tel:'+34 689 012 345',pj:6,pg:6,jj:36,jg:36,mostrarTel:false,autorizaIG:true,foto:null},
+  {id:9,nombre:'PacoCh',nombreCompleto:'Paco Checa',ig:'@pacocheca',tel:'+34 690 123 456',pj:30,pg:22,jj:183,jg:155,mostrarTel:true,autorizaIG:false,foto:null},
+  {id:10,nombre:'Fresco',nombreCompleto:'Alberto Fresco',ig:'@frescopadel',tel:'+34 601 234 567',pj:21,pg:15,jj:128,jg:106,mostrarTel:true,autorizaIG:true,foto:null},
+  {id:11,nombre:'David_L',nombreCompleto:'David Llopis',ig:'@davidl_padel',tel:'+34 612 345 000',pj:12,pg:9,jj:73,jg:61,mostrarTel:false,autorizaIG:false,foto:null},
+  {id:12,nombre:'SergiIbso',nombreCompleto:'Sergi Ibso',ig:'@sergiibso',tel:'+34 623 456 111',pj:134,pg:91,jj:826,jg:700,mostrarTel:true,autorizaIG:true,foto:null},
+  {id:13,nombre:'RobertoL',nombreCompleto:'Roberto López',ig:'@robertol',tel:'+34 634 567 222',pj:15,pg:10,jj:94,jg:76,mostrarTel:true,autorizaIG:true,foto:null},
+  {id:14,nombre:'Javi_C',nombreCompleto:'Javier Cortés',ig:'@javicortes',tel:'+34 645 678 333',pj:99,pg:64,jj:601,jg:477,mostrarTel:false,autorizaIG:true,foto:null},
+];
+
+const SLOTS=[
+  {id:'lun-up',  label:'Lunes',     club:'Club Up',     pistasDefault:3,pistas:3,jugadores:[]},
+  {id:'lun-del', label:'Lunes',     club:'Club Delfos', pistasDefault:2,pistas:2,jugadores:[]},
+  {id:'mar-up',  label:'Martes',    club:'Club Up',     pistasDefault:2,pistas:2,jugadores:[]},
+  {id:'mar-del', label:'Martes',    club:'Club Delfos', pistasDefault:2,pistas:2,jugadores:[]},
+  {id:'mie-man', label:'Miércoles', club:'Mañana',      pistasDefault:1,pistas:1,jugadores:[]},
+  {id:'mie-up',  label:'Miércoles', club:'Club Up',     pistasDefault:5,pistas:5,jugadores:[]},
+  {id:'mie-del', label:'Miércoles', club:'Club Delfos', pistasDefault:0,pistas:0,jugadores:[]},
+  {id:'jue-up',  label:'Jueves',    club:'Club Up',     pistasDefault:1,pistas:1,jugadores:[]},
+  {id:'jue-del', label:'Jueves',    club:'Club Delfos', pistasDefault:2,pistas:2,jugadores:[]},
+  {id:'vie-up',  label:'Viernes',   club:'Club Up',     pistasDefault:7,pistas:7,jugadores:[]},
+  {id:'vie-del', label:'Viernes',   club:'Club Delfos', pistasDefault:1,pistas:1,jugadores:[]},
+  {id:'dom',     label:'Domingo',   club:'Americana',   pistasDefault:0,pistas:0,jugadores:[]},
+];
+
+const SLOT_DOW={'lun-up':0,'lun-del':0,'mar-up':1,'mar-del':1,'mie-man':2,'mie-up':2,'mie-del':2,'jue-up':3,'jue-del':3,'vie-up':4,'vie-del':4,'dom':6};
+
+const tm=(h,m)=>new Date().setHours(h,m,0,0);
+SLOTS.find(s=>s.id==='lun-up').jugadores=[
+  {nombre:'JoseGB',socio:true,ts:tm(19,2),tsStr:'19:02'},
+  {nombre:'MigueB',socio:false,ts:tm(19,5),tsStr:'19:05'},
+  {nombre:'ZoaH',socio:true,ts:tm(19,8),tsStr:'19:08'},
+  {nombre:'Jordi_V',socio:false,ts:tm(19,15),tsStr:'19:15'},
+  {nombre:'PacoCh',socio:true,ts:tm(19,22),tsStr:'19:22'},
+  {nombre:'Fresco',socio:false,ts:tm(19,30),tsStr:'19:30'},
+  {nombre:'SergiIbso',socio:false,ts:tm(19,45),tsStr:'19:45'},
+  {nombre:'RobertoL',socio:false,ts:tm(20,10),tsStr:'20:10'},
+  {nombre:'Javi_C',socio:true,ts:tm(20,30),tsStr:'20:30'},
+  {nombre:'OscarVazquez',socio:false,ts:tm(21,0),tsStr:'21:00'},
+];
+SLOTS.find(s=>s.id==='vie-up').jugadores=[
+  {nombre:'JoseGB',socio:true,ts:tm(19,1),tsStr:'19:01'},
+  {nombre:'SergiIbso',socio:false,ts:tm(19,3),tsStr:'19:03'},
+  {nombre:'Jordi_V',socio:true,ts:tm(19,6),tsStr:'19:06'},
+  {nombre:'MigueB',socio:false,ts:tm(19,9),tsStr:'19:09'},
+  {nombre:'ZoaH',socio:true,ts:tm(19,12),tsStr:'19:12'},
+  {nombre:'PacoCh',socio:true,ts:tm(19,18),tsStr:'19:18'},
+  {nombre:'Javi_C',socio:false,ts:tm(19,25),tsStr:'19:25'},
+  {nombre:'RobertoL',socio:false,ts:tm(19,32),tsStr:'19:32'},
+  {nombre:'AndresA',socio:true,ts:tm(19,40),tsStr:'19:40'},
+  {nombre:'Fresco',socio:false,ts:tm(19,55),tsStr:'19:55'},
+  {nombre:'David_L',socio:false,ts:tm(20,5),tsStr:'20:05'},
+  {nombre:'OscarVazquez',socio:false,ts:tm(20,20),tsStr:'20:20'},
+  {nombre:'Guille',socio:false,ts:tm(20,35),tsStr:'20:35'},
+];
+
+let partidos=[
+  {id:1,fecha:'2026-04-20',dia:'Lunes',jugadores:['JoseGB','MigueB','SergiIbso','Jordi_V'],sets:[{p1:6,p2:3},{p1:4,p2:6},{p1:6,p2:4}],introducidoPor:'JoseGB',validadoPor:'MigueB'},
+  {id:2,fecha:'2026-04-20',dia:'Lunes',jugadores:['AndresA','ZoaH','PacoCh','Fresco'],sets:[{p1:6,p2:2},{p1:6,p2:4},{p1:3,p2:6}],introducidoPor:'ZoaH',validadoPor:null},
+  {id:3,fecha:'2026-04-17',dia:'Jueves',jugadores:['Javi_C','RobertoL','David_L','OscarVazquez'],sets:[{p1:3,p2:6},{p1:6,p2:3},{p1:4,p2:6}],introducidoPor:'Javi_C',validadoPor:null},
+];
+
+const EVENTOS=[
+  {id:1,fecha:'2026-04-26',titulo:'Torneo Primavera',tipo:'torneo',desc:'Torneo interno con grupos y eliminatorias. Inscripción por parejas obligatoria.',precio:10,inscritos:[],pagos:[]},
+  {id:2,fecha:'2026-04-30',titulo:'Calçotada anual',tipo:'social',desc:'Calçotada de la sección en el jardín del club.',precio:15,inscritos:[{nombre:'JoseGB'},{nombre:'AndresA'},{nombre:'ZoaH'}],pagos:['JoseGB']},
+  {id:3,fecha:'2026-05-17',titulo:'Casa rural Montseny',tipo:'otro',desc:'Escapada de fin de semana. Plazas limitadas.',precio:45,inscritos:[{nombre:'JoseGB'},{nombre:'MigueB'},{nombre:'Jordi_V'}],pagos:['MigueB']},
+  {id:4,fecha:'2026-05-24',titulo:'Paella de fin de temporada',tipo:'social',desc:'Comida de fin de temporada para todos los miembros.',precio:20,inscritos:[],pagos:[]},
+  {id:5,fecha:'2026-06-06',titulo:'Torneo verano',tipo:'torneo',desc:'Torneo de verano. Formato por definir.',precio:0,inscritos:[],pagos:[]},
+];
+
+const partidosDelSlot={};
+
+// ─── STATE ────────────────────────────────────────────────────
+let currentUser=null;
+let calYear=new Date().getFullYear(),calMonth=new Date().getMonth(),selDateStr=null;
+let selPartidosSlot='lun-up';
+let selJugarSlot='lun-up';
+let selResDate=new Date().toISOString().slice(0,10);
+let _coordScores=[[0,0],[0,0],[0,0]];
+let _resScores=[[0,0],[0,0],[0,0]];
+let _indoorTemp={};
+const NOW=new Date(),NOW_DAY=NOW.getDay(),NOW_H=NOW.getHours();
+
+// ─── HELPERS ──────────────────────────────────────────────────
+const calcRk=j=>{const e=((j.pg/j.pj)+(j.jg/j.jj))/2,p=getPen(j.pj);return{eficacia:e,pen:p,score:e*(1-p)};};
+const getRanked=()=>[...JUGADORES].map(j=>({...j,...calcRk(j)})).sort((a,b)=>b.score-a.score);
+const getRkPos=n=>getRanked().findIndex(j=>j.nombre===n)+1;
+const isCoord=()=>currentUser&&COORDS.includes(currentUser.nombre);
+const getSlot=id=>SLOTS.find(s=>s.id===id);
+const sortedInsByTs=id=>[...(getSlot(id)?.jugadores||[])].sort((a,b)=>(a.ts||0)-(b.ts||0));
+const sortedInsByRk=id=>[...(getSlot(id)?.jugadores||[])].sort((a,b)=>getRkPos(a.nombre)-getRkPos(b.nombre));
+
+function calcInd(p){
+  const js=p.jugadores,jg={};
+  js.forEach(j=>jg[j]=0);
+  jg[js[0]]+=p.sets[0].p1;jg[js[1]]+=p.sets[0].p1;jg[js[2]]+=p.sets[0].p2;jg[js[3]]+=p.sets[0].p2;
+  jg[js[0]]+=p.sets[1].p1;jg[js[2]]+=p.sets[1].p1;jg[js[1]]+=p.sets[1].p2;jg[js[3]]+=p.sets[1].p2;
+  jg[js[0]]+=p.sets[2].p1;jg[js[3]]+=p.sets[2].p1;jg[js[1]]+=p.sets[2].p2;jg[js[2]]+=p.sets[2].p2;
+  return jg;
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.display='block';
+  clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',2500);
+}
+
+function showTab(t,btn){
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  document.getElementById('tab-'+t).classList.add('active');
+  if(t==='resultados'){selResCalDate=null;resCalMonth=new Date().getMonth();resCalYear=new Date().getFullYear();renderResultados();}
+  if(t==='agenda')renderCalendar();
+  if(t==='partidos')renderPartidos();
+}
+
+// ─── LOGIN ────────────────────────────────────────────────────
+function checkPrivacy(){
+  const cb=document.getElementById('privacy-check');
+  if(!cb||!cb.checked){showLoginError('Debes aceptar la política de privacidad para continuar.');return false;}
+  return true;
+}
+function abrirPolitica(e){
+  e.preventDefault();
+  document.getElementById('politica-overlay').classList.add('open');
+}
+function togglePass(){
+  const inp=document.getElementById('login-pass');
+  inp.type=inp.type==='password'?'text':'password';
+  document.getElementById('pass-toggle').textContent=inp.type==='password'?'👁':'🙈';
+}
+function showLoginError(msg){
+  const el=document.getElementById('login-error');
+  el.textContent=msg;el.style.display='block';
+}
+function doLogin(){
+  if(!checkPrivacy())return;
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  document.getElementById('login-error').style.display='none';
+  if(!email||!pass){showLoginError('Introduce tu email y contraseña.');return;}
+  if(!email.includes('@')){showLoginError('El email no es válido.');return;}
+  if(pass.length<6){showLoginError('La contraseña debe tener al menos 6 caracteres.');return;}
+  currentUser=JUGADORES[Math.floor(Math.random()*JUGADORES.length)];
+  finishLogin();
+}
+function doLoginDemo(){
+  if(!checkPrivacy())return;
+  const id=parseInt(document.getElementById('demo-sel').value);
+  if(!id){showLoginError('Selecciona un usuario demo.');return;}
+  currentUser=JUGADORES.find(j=>j.id===id);
+  finishLogin();
+}
+function renderBienvenida(){
+  const hora=NOW.getHours();
+  const saludoStr=hora<12?'Buenos días':hora<19?'Buenas tardes':'Buenas noches';
+  const nombre=currentUser.nombreCompleto.split(' ')[0];
+
+  document.getElementById('bienvenida-content').innerHTML=
+    // Hero con gradiente Progress Pride
+    '<div style="background:linear-gradient(135deg,#000 0%,#784F17 10%,#55CDFC 20%,#F7A8B8 30%,#fff 38%,#F7A8B8 46%,#55CDFC 54%,#E40303 62%,#FF8C00 70%,#FFED00 78%,#008026 86%,#004DFF 93%,#750787 100%);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;margin-bottom:.75rem;text-align:center">'
+      +'<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAABvCAIAAACo1ZOmAAABUGlDQ1BpY2MAACiRfZCxS8NQEMa/VqWgdRAdHBwyiUOUkgq6OLQVRHEIVcHqlL6mqZDGR5IiBTf/gYL/gQrObhaHOjo4CKKT6ObkpOCi5XkviaQieo/jfnzvu+M4IDlucG73A6g7vltcyiubpS0l9YwEvSAM5vGcrq9K/q4/4/0+9N5Oy1m///+NwYrpMaqflBnGXR9IqMT6ns8l7xOPubQUcUuyFfKJ5HLI54FnvVggviZWWM2oEL8Qq+Ue3erhut1g0Q5y+7TpbKzJOZQTWMQOPHDYMNCEAh3ZP/yzgb+AXXI34VKfhRp86smRIieYxMtwwDADlVhDhlKTd47udxfdT421gydgoSOEuIi1lQ5wNkcna8fa1DwwMgRctbnhGoHUR5msVoHXU2C4BIzeUM+2V81q4fbpPDDwKMTbJJA6BLotIT6OhOgeU/MDcOl8AQOnYhMeBiitAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAAGYktHRAD/AP8A/6C9p5MAAAAJcEhZcwAAFiUAABYlAUlSJPAAAAAHdElNRQfqBQUWGxwhqaURAAAAk3pUWHRSYXcgcHJvZmlsZSB0eXBlIDhiaW0AAAiZRU45DsQwCOz9in0CZrjynMR2pBT7/3bBxYYRaA4JTYvr+bbPnkMaQlgOmSSJ/8D6oK5n0X6xiqfmHdXlUh7JToXB2bSZ2nJY2O1SMUbGBkowBMB+AU830im3Us21twRre1v0xJAVxKGTJ+4YPAfZOiNNXUbtB4pBLNX2TI7LAAAAk3RFWHRSYXcgcHJvZmlsZSB0eXBlIGlwdGMACmlwdGMKICAgICAgNTQKMWMwMTVhMDAwMzFiMjU0NzFjMDIwMDAwMDIwMDAyMWMwMjc4MDAwYTUzNjM3MjY1NjU2ZTczNjg2Zjc0MWMwMjNjMDAwNjMwCjMwMzIzNDMzMzcxYzAyMzcwMDA4MzIzMDMyMzYzMDM1MzAzNgqhSJkeAAAzc0lEQVR42uW9eaBdVZEvXFVr7b3PfO6YOYAMEmYEmUUQhxYRobGdEfQ5tOKnjTyHbvVT2/ZJt62vW9vWD7tb2xHnxgFFFAERkTCEECCEeQjJvbnTmfe0VtX7Y+1z7rlJIDf3JkC/7xCSy+Fkn71r1676VdWvqlBE4Bl8CQCCiIAAIgoKCAAgojsvBBBEFHEf3cXL/bXZv+x+QITu8QGzb3z6X/hsEDQIOAE7oeDsSdF85LvT4zrxuoOgu5cAiPj/W0EL9OSayYYFAAGdPNC9ibjDrQGAnShon0aLgPSOAwAIKOjeeQZe+pmSr7hHu09MwgwIiApFnMlgZpva1BiTptZaZmHOfmMWACAiRPc7KUWe9jxPa61IESFhn16LCCDgDoqVWZveWeD/XRqdaeUO18wiaWqTJImSNEmSNE2tZWbp3hfc+bGyf8V9gAi1VlrpwPeDwA8Cz9MK59ogRHRPE4js/LD/3QU9653m6lSYJJ12GIax010RIXKmg6RrdftOdY7QBAARKNNHka7NR0EAIIWBr/OFXLGQ932v+9UCIoC0E43eO0b86RD0jl/hLCkiJqlpt9vtdhjGVoTdm+4ynSYjoTMLWimlFCn3CVIoKCICTt0ts7FsjLEswuwMPiIJCACJCItownzOLxYLxUJOaxJhdxb9T9ne85ZPq0b3XD8LRFHcbLbanchYi4iICgBBLAgrRcrTyvcCzwt8z9daKSIinFU/7MlGQFBAEKwAC9vU2tQ4sxOnxqTGstNcAgARBhFPq2KpUCoVc77uA5LYMz7//UxHDwP0VFhEOmFUa7Q6nUgEiBQgCjOIaE35XFDI53K5QHvK4Q0EFGERy4IiPTuNACDYVUUBEEEQJHRPgLsbIpKmJoriVjuMotgyICIRMbMIE1Gx4FWrlXwQ9NxGD4n/9xC0zDXBzAyARBjFyfRMvdXuICoiEmFhJqRcLiiVCoVCTivlMC9bKwKEiIrmf/G9+2rYiojODA2IYJKmnU7UbodRnAgIIgGgiAGAcrEwOFjtM9/9PnP2x2edoGdDg1mJo0lNvdFsNFuGhZQGAWbraVUuFUrFgh94hMhi2TIiKaV6yLrWam2dmNw6NvbIlrFmJ2y3w0a7HcZxkqSIGAR+IReUisV8PjdUKe63evXy0dEVIyOlXOC8LopYp79KUWaykmar3Wx32DKRBgAWqwkHquVqpawUzYkquxfy7NLo/vAXQLqPI7VanZnpemwMKSUCwOxprJbL5VJReSSAKVtiq7TnhDtRq92x6f477t10z333PzE2PjlVS43tWCOApAgQEQkdPJDuiy0iOJu+fHho9YoVR605+NiDDzrkoAMrhbyIAEpqLIETOCTG1hrNVrNjrSBpELbWFHLB0FC1WMiJsMM5gJLFqrhYOLKHBd3TBREhotSY6clas9VB0kBorPEUDVTKlUpJa7LCnBqtNChEwK2T07+/9bbrbrltwwMPTE7PpJYp8LQXeForIJUh3248OffxRgCLxMLM1prUxklqUy/wVo+MPH/NmhefcOIJRx1ZKeVFxLIFEEUaARNjarVmo9kWQCJkZgSoVErDQxXq2qtuZNofjT7jpiNDAAACSNhuhxNTM8YIOv8DtlwqDg9UfV8bYbasiYgotvbmDRt+ds11N91+x9hMHXSQyxU9DwVZAFgEREhk1zmPnkgQCBEBhSk2cRSFSnif5cvPOOGYs8940RH7748ibEWAXUgZRvH0TL0dRUgKgaxN84G/ZGQol/O3czbPsOnYTpEREQRnZhoz9ToDEZFlo7UaHhqoFAsAYq1FFKW8MDFX//Gm7/7yV3fce58RCgp55WsSIcMMaBEBBEHQYQ8QwV2Fm1lCAwSEBJWQJQCFCGKiuBOHZd9/4VFHvelVZ51w1JGEYqxFBqUUA9QazelakwUIUdgS4sjwYLVSFMlirLlJF3wmBc3MiMgs2yZnmq2OIi3Alm25XBgZGvC1tpZFWGttLF/9x5v//cc/Wf/Ag56XK+TyiGTZCljGDGuhEHYNvUA30SRPka8DFEAXjrub1KeOgKBIW5ZGpxmAPe15R77tta897tBDhJktK6WQME7SicnpMIyJtIAw83C1MjRchSx165wQLcxY7zFBu5e1PL5tohMmpDxmRpShoWq1UiIEthYBSal19236529c/qc77kbfyxcKwMxiGYHYhdvIhAIMwA7aSjf1hN103E51eVbQgoDIKIyispwrMqISBkBQWoTDVitAOee0F/zl+W/cZ8moNSkgkSJhqc00Z+pNRlKIbNJKuTQyOojZ7RcEAlxIqL5wQW8HgwDAGt4yPhEliSaP2SqPlowOF3OBtcyWPV+3OuFXvvf9b/zilxFDqVgSEZex6yUvsM869Mt3XlckLoRxT8PszwCSHdapJAAAkiIWaTcayyul91zwptf82UuVsGHWSiNgqx2OTU4DgyK01uQL+WVLRwgZgBFJhHbIPD5dgkZEk9qx8ckwTkhrY23O18uWjAS+tjYVFu35t9+76ZNf/sqdDz46VB4CglRMJg4XU0tPuL0zm3sZuDtnlh2wK9+uzmOm8C5xB1qpxCRhs/GyE0/42LvftXJ02BgDCjWqKIwfn5wCw4ooTU25VFi6ZJhQAMRFnk+HoOfiZQBEY+zY2GQcp6SUsTafD5YtGfIUsTVARKS+9bMrP/vNb0SsSvmyZSPCs+FeP2qSPRWIPfWRpCspZtSkvGhmZvVg9eN/ddFpzz/GGEMIRCoydnxsMklSUIqtKReLS5cMEW5fNttbgpbM2aCIMAsRMOPWsW1hlJJSbE2xkFu6ZEQRWGOU1u0k/V9f/Y/v/erqcmkAtTaSKmEBzEqB+AzUOwQExZl+QSEUpbTqpG1Mog9f8Ja3nHe2tYZBPNSpsVvHJ+LUEpG1ploqLRkdEhDE3Q4dF6/RMr5tqtGKSGu2tpD3li8dVUROyhON5ocu/cfr77izOjwqxlhkAdQMgsDPZF0pgzIZnHBegBSDdGZmLjj75R9519u1oBVWShljt45NxkmqFVljBqqVkdHBntD2ikZ3U/ZzMPzUdG16pqGVZsN+3lu+fFSRWGO0DrZMzLz37z5zx8MPVauDNk2tAhBQguJqd8+QOvfcJop0IQ0AgGJkJNCqNbXtnNNf+JlL/iqnyIooUmlqnhjbZo1VqIy1S0YHq9USs2SJxPnZkIUI2lkPImq2Olu3TRERiviklq1Yoj2yNtXK37xt8qKPf/qerVtKlTKnJjOJfe7uGVPmuRBlFpB0tVsrrz49+fKTj//chz8QKMUsWqlOHG8dmxQGQAKxK5eP5vMBs0EkRJqPoGkBDgZRiCiOk8nJaUJyJz24dEh5ii1r5Y9P19/zqU/fNba5VClDbFwxSkCcaUTBZ1jKXXuRPVkormKOAiicmqQyPPTrG2/6m89/IQUkBLamkAuWjg6RQyyA2yanU2N3Kyin+UrXRVyZWRZmmZicMZYRCZlHhweLuUCMIaRWGL3/M/9w12OPlysDkFggMJShN4T+8j8847J2J7TdWSFCYm1xZPRn1934mS99mZQSEGZTKuYHBipiLRFFSTo1XZsjPdm+lLnbgu4vxGMX7tcbzU4Uk1LWptVKqVouMhsEFMKP/dO/3LjxnmplEGOLgLZ3Dc8S+T65bxR0xWBBEWNsdWT4u7/69Ze//0OlPRZhsYOD5UIhYLZKe81Wp9UOnd2AWci+aI3ODLMIIsZxMlNrEBELB4E/OFS1wsyWtPrKd77/0xv/WB0a5sQAYEJCAp7N4mOQZ62os5CahQBQgSgQMTY3NPKv3/7eb2+6WSuPrQDA8MiAKw4g6anpuukZEMfZWZSNzkgVAsIiwgKT003LCEgoMjo8oBQZaz0dXHPzbV/8/o/KA0NgLBMwsjt9xj0Whux9UQtDlidkEM8qzhc+/pWvPLRlq9baWBP43tBgRdggcJKmtVpzjoD7qh4LcoYZ2QeIqN3udMIIkdjaarVSyOessYH2tk5PX/qVy7SfJxEXBAuK88fcRUDPbiEjomTUP0QBBAArJvD9iVrz7//1MiOiCK211UqpXMgzWyJdbzTjOOlCqkVqdJaOQSKyzDMzdVeKCzw9UC2LCAADwOf+/esPTE3lfV/YOjDnIAaK7K3C8l6QtWMCYoYuxCpmYyrlod+tW/efP7mCSIMwCgwPDmhUgMgC9XpDZp3rk0p7fs6wWyptNttRkrrqxcBA2dPKWlbau/r3N/7i+j+WBgaNNbNf5jCqC1d3H+ZmZCIR92eWmnbvbAfvpctG3e7nhcAQZyW7fGJgADQsQWXg33/44/sf36y0Z4zxA69SLbE1qFSj5R7xvohEFugMsZvXl3qjhaSYOcj5lXJRRLRWtXb7C9++XOUKyjITZ/FWN1O58FwEZJjbYW9BAQRSipTKyDSIROT+M6Mv9j4vc8i/CwDZ7h8SAgAW42s91Y6++K3LXaJHmKuVku9pAQCker0xF6Dv5MppHhn9rGDXarWT1CARAAxWKohgbQoA3/n5Lzc+sSWXy5O1kiUg90DGB0FIhMQFb9pDzcY2W616vdZuNcKwHYadZqtZr9dbnQ6LgFYoolhmTdYiZO2UupuPETamWKn+5k+3XLv2Vk8rw0ZrNVApCjOS6oRRuxPOTUVu/73zoe0yAFqnzkDMkg+CUiFvbKq1v2Vi4jtX/ipXKhlOgBBEZaHtQmPsXumCellYpaIkbUftlcMjRx9z9OEHHbhq+ZJckEOAVqvz8OYn7rjv/vX33TdTq5fKRVCEhhBYssoTLtxkY6/8gCyihK2if/vhFS889milyIqUSsVao50aEcFas1Uo5GGWxbk9xJoXPxqROp1OlCRECqytlCqgUFIABZdfedXY9HRlcJit7ZXuFo7jMmIWEAMAWkUAEjZmDly96g1nvf6lp5yyYqC6HUEHEQzD2NTMj6/5w9d+9uOZTnPAL5OQAbtIfldPYVwhwTIXC8V192z87U1r/+wFJ6fGaq1Kxfx0rUFEURgniQl87Yo4OxYF6CnliyICQgjQbIcOtgWeKhXzRqzn+dsmZn76u+uDUlms7ZXAF1WEnFUkEEK2ltudt597zvc+9/cXnvWK5dVKbNPQxImJUxMlJorTKEmNJhSbPvz4wyWWv/kfb9tvxfKYDZLaAwxc7MuFIoAAe/63f/FLECBCAVspFRQRIlkrrVa7P428Oza6K+40tWEYk1LMXCoWlVaOGvuz667dPDkdeH7Gv0KE3ec/SA9i9JJWIkwEKGXCT7//vX/9tgsrfhAnibU2UF5eB4EXkMopFeS8nOd5V1z/h7Pf996r/3Dd5z78wXed/YrnrlzebjeolzKQnptZbGDKbHOFwu0b779x3Z2KiC37gV/IB47J1u6EljMR7/hNej53NQxDaxmIlKJiKQ8AntJJan52w/VeLo+9CHsh2tMrdkDWk4WAgAzYrtU++N53/fnpL2BmVOQrQsSHtmy5c+PG8ZlpFjU5XWuGrW0zM7euu7NQqHzhby856egjAODgfVededoLb7ptHSgl3eRstza5GB1HANGALZafXHvNKccciUygoFTKt9oRkk4SE0VxsZCbzSnPV9BdI9BuRwAELLm8H/ieMVZr9cf1d9776BPFYtWyXfjJ9yAGoCADIAkxSIDw5r84b2Zm6h8u+7fVq5YfdfiRaZz+5qYbUeGSgaEUcMvU1O0bNm585IF8sUBKnf2yl5x29BFpmnieD4TveNUrl1XL37jyqsHyoLW2Czq75dmFnK4j4oFlU8gXbrzjzs1j21YtW2LZ5vN532ulhlmg3YmKhZw4VsJcYetduUE0xsZxQgBWJJ/P9UDMb264MbXYJ6tFFaYQsuIWItk0XjZU/cvXnLutVk+NbNu29fc33GhETjji6E2PPXbFDTc+8tgTURiT5w0NjoIwkvn5b6+e2Lb1fW9+44ErV5jEoDUXv/WC625dN1Frep5HAozdQueCnGPvkRUQX3sTM9O/v/W2N77yTGbrab+QD2qNNiJ2osgKZ3y9udwP2hWIhiiKjbVASISFfA6EtdZTzdatd27I5wMWzngtssgYO7MgDIycrl46EjF/4NOf+dt/vWzT5idecPJJxx933Bcv//alX71s070PW/G9YsXT2lhjmA1SbOGXN91y4Qc/etdDj3pKedobCIK3vuqVcRIygWZAoT2VOmRgpfT1N98iAEQEAPlCzmVYTWqSJMWd1a30zqG6YA8/hFHCgMgc+Nr3PMtGKVp3z72PT0z71TIzz4VmC9doEhClkjA8ds1BBx24P3leqTJ08933r733rtzll3usYoTi8BKVMrEVEYsMWR4IEHGgNDSeNN516aUnHXzoa858GYCcdfoLvvGLX4zVmj4oeGo+2a5Lq9hzJlZsLshtePDhR8cn9ls6ysxB4GtNlq1liaM0HwTSV5p0B6CdVRFni7AiEsUJIolwkPOJ0HGH1955d8xdFoksgjuM7mFw8R8ioE2TV5x66gD52vD++672tBodGg28kvbyJT8PxhrkRFlLDJBlrBAESUzcpjQu5YJ7Hn5o02ObAXCkUjn5qKNNGLOm/mTt4suNWvsT9fad924CAGb2tAoCz5mlKIq71B1+MtMxN9XnYgFj0tQ4xBL4HgAoUgJy58b7dBA4dcZFnXSvCCQowNYW87mTnnd0UAw2j235sxeeomzIbAGQyaZoCCDHKgAPyUOlAQkFCIDZ+AX6+0suvvT9Hwjj5Gs/+KE7/vPWHELCFrOyd6+vfFHFRhABNIjrNtzVe9v3AxAhxDhO2HJWZH8qHN3fAQySpNYyAIAizPmeqyw8Njbx0NYnfD8wXUexqNPOgB0yIRs7OFBdNjqy5qADblh76wuPPPxlp524bbpOwEQKQBvGZhRN1Wdq9elmY0YEADShDjvR6ccdf9YpJ37kc5/bvG1q7aa7b793EwDsu3JpkPfFonKPjMDCOA7S7W8WEMXEYn1f3fPgIymzVgQAga9dUGuYU8s7fgk9WbYBEAAoSVIQcFk6z/OcCj+8eXOz1VJKdakDi7LO0ld/YcsD5QqBnHDEkRPT0w9t3vzZSz7w9pe/3KadVr0BxhRz+tjDD3r3+a++7FMf/cjbL9S2YzG1CJ7yH3n8ibsefGhmarpYLjfa0bqNmwCgWi7lcjlhwS6UXoSh7oF9YBDteY+Pj49NTQOSiASBRwoZxDInSbKjQOjJ8g1OAGlqXLHP8zR1G2k2Pfhwai0h4mx3vCzGDc6mg1m0IhRQAGe/+EXf/dlPFeEn3vuOy//p85+8+H2j+fyJRxx+3ktecviKfW29fdwxx5x71llJu40gQSG/7u57Nm0de8lpp7WaDVT+TKcFAK5DcU6ZevExOQIAKK1nOu1HNm92ZloprbRLqKExdsfS3S5wtDEWBARZa43d8PrxsXEmco5oT7CNpFddQKIkSS0LG37+YYddv3bt7ZvuPe6QQ5+7fMVPfv3betK+5tZbrvz9H9hYYVstlY849PBKULLGWo06l//WD694x1vOv/qGP8y0mstGRwAgMcaynXOSC5I1ziIIZGAQUYDN1D42Nu4gg1KolIKUEdCkpqvEszCB5hasHLE9Mx0sYk1mbjxPA4Drz35syxblaRZG2AOFbZl9IAQV1ZqNRruFmgCgmK9o8gDg6z/6yVe/9wOrfCKvXKoMDgwMDo+I9m7dsN4qFES0kssV7nv48Vs23H7m6af6gMeuORgApqZnwihEIsYeWXrRJ4xAAMSISI8/sbVXD/K0dteRGtMXWu80YMFeRUUQgC1bsU6NtdIuUAyNnaw1tFLSG9CwWEKFCKLrVlGenqnXH92yxZ2ddjlQgBvu3FCuDJAgMaC1hg1b4yPlSoVEARD64rHlYrn0y1//tlipHnboc5eUywDwwKOPh1Hq2pP3SD+9zLZ6CBI+Mb6tZ5c8pVxjB1vuNnI9lY3GXtaORaxYd3CVWTpsd8IoNYRoyRW2pQ/LL8r2oQgSdeJk7YYN7s1CqbBtZgoArLUIwmAZwQISKCDd6LQ7tRqFIUdRO26zAo2gjP/za37nazU5MQUAN6+/S5GXQdqs52ih8KjLH3PwwxIjYSuKug86KlIijAhuosh8snfZs8zM7NpjXBs3AAK0O+1OGBJRFwPjk7aWzK+83h2clEW32g+uvWntW845u5wvrFy96p677gGA/VYtX7vx3gIWU2uRIEXLSedlJz3/ZSedtGxwUBfy191665e+9b1iuZyk0b6V5W/581f/ft0dheHh2zZs8HM5lqyBYzEZmW7yq5vbESGlGq1Wkhrf2VVFzhkw8zxLWTKb7hAB17bX7f5qdzqdKKJcwF2SoIvQFljJ6AtTGYWFg1z+7kce/c2NfzrvJWc874ADf3fN9Z0ouvDcc6+66eYo7PhBnsVKHL/v/De++7xzXB8YABxz4P4jxfIXL7+8VCl87J1vO/w5z7n9gXu/9l9X1NqdoFplNj2e7qIgP/awf/aUt9vtOE19T4MAdcPsLuF2/lXwWa6TC8EcDjEpWyAEoD5st6gkb1a/EiARYCA/+OqPrxifqVWKuWMOP+QbP/rhmtUr//cHLikrnImbsYblpcHzTj0VAFK2iRjLltlccPaZP/3CP1/xhX8+ds1zAeiBu+//6W9/F5RLwkyO2784GLoT74IYJXHX9Qk8JYdm3iTH7gE4a5Te43wYypSO2Qv8TVsmPv+1/wSAc156RmjS/+8H33/RMUf/8EtfePGRR5tWZ7xVf3DLVmcKPPSIFGT+Tm5Zv74dRr9cd8sf77onRRJUriduL5FYWYCln0j6pI81PRmq7bkonMtmJkQliAIC1nGUYE9oiqOqOM0Ty9VS6b+u+8Ol3/wmALz3zRcWcsFHP/9PN91624XnnP3O1/xFsZT//De+OVFr+J62JhFhtnLd2tvf+rG/+fGvfrHx8ce/9M1vWyRCJWIFnIXeKwRLRKJeRXHWsMxTo/vhsWTT/3oA1NPaU6obqSw63Nrem2OXjGXylep//PiKT3zlsjg1F7zq3Ive+pZSMb9x411a7NKR4T+uu/NNH/rY+oce8jyfLW944P5Hn9j8ib+6+Ouf/cfBUrHeaPmeJxkbzeWS9vDIEzd8KxcEntLQDTsAnhR76ae8XeBmmokwd8uOhUIhnws6zECzXRKLzYfNevOMkWVRiKVYHPr2Vdfc++DDH7jwwuOOOGTFC09FxHaUvOzkU264fd33f3Xl699z8Yf+8l3nn33m89YcfPTBBztQtfaOu+rNdrlYNZx2WzocEt2j/D9Ea7lULAS+76ZBdbtFAXc2z0x98pOf3GmaBxEsQ7PZcs91uVR0waFh+ek117SihLQWYJQeYX4xSbxud5RjRyJaFMWkLap87rHJbVdde93GBx8h36+UKwOlwuhA5bhDDn7zq141vGTpv3znuzesv2P56NKlI8MdY/604e7//a1vhoa1EGOW757NUuDiQhaZ7cEhojhJDlq14tUveRGzJVJhFHc6ISJpRdVKeTtOwFNpNBEROZ4X2IwfA4VCIRf4zE0Eb5EJBJgdTeruliPsIQgQoCAzMVjI54rM8vObb71q7S0rR0YPWLV8xZKRUqmslQ6TeOmSobXrN9x9z4Nr9lvVSsKHx8eBtKe0Ee5VRrLEQlY5Wvi59kFpxz7gYsZOYgCwlgFEhIm8PnrYLk2HZII2xnSPAsJc0GqoWrl/6zYfwPb3wi8sWdNtWkQRBsVISoyDIAKYkgBaYkbxq6U8Ck7U6lsmJlMLgKkIiUg5yFdK1YjsukcfIUId5LUBZjYK3FwwJRrAcubYeaHVWegPgMmJW3jFktFe1sLaLHuliOaO9nuyELybFiAETeQI8IlJAYCFAWCflStTa3xWdtGGrzttkEC0RgvK+qKJACjLfzAEAJ4iMYhWQGk/VyxWq+WBSqVSrVaGypBTKaAvuhDkfV2kVDNYJtGsFbsmeQzAEGF2sYsqU2QhIgkgKBHZf9myHrZzgFpElFbzTpNmo9DA93U7jAHRpLaXQFq1dCkyd8mpewQ2iSHCGBPqWFtgBEugfQlQtDE2Ttq2w6pQ9MuiQgMoYoI0T5gkSiGKpDa1rDwgl8mDAMUCsGJPsYRoaxZyEnvkLcp0zIINR3zivFarli+HLqfZ9bOIiOd5ffWj7Ov0U9ANEFFr7bBzagwzO87umv2fExAxAskiaxaZ2SEBEnPw0rhUjGKeViDWBFtnZKJdEo9OPrZw2D4yMdG8em27JXkfNNqcYIJkPbJieGWls2S480i9NNmwolCbokI0ZFKyOrXLS+mqUTMxI5trGtWiuErdNnhw86EGCvnnrFoFAK6T2VrjnJ9DDV1iaSZr/SQBi/NJ4Ps+ISKSNTZJje95AHDAyhUDhWKLDRJyVl1ecCCeDZFAnrzonOqpBwzEquqTz2w3T+FlV01dud5umYjecOLIiacPDwxEX/9NKIqYE/Esp8omOk7qL3mhvuSc53zy+80fXJ/61YLlOLUWlO/5um2mzz44/dQFq794xdS/XGWKpcA1Vy0OjAIgJUm4zz6rl40MOY1OkoSZ3bBTz9N9Q9J2bjp6pVnXxQBaK6fFLJwmJhf4zHb18mX7rFyx7uHHiznfYl8BYuGFLLHogU0sNH5zi6k1cvl880VHDF583pL7xsZufwT/9mt3vvQoSYPCiF/cGg2rQCcxLw1qqyr+xsltcRKA9UUikSCK66MFM1I2zZDHGmUUnzECOwMwDVQFCRadkEYUIIVJmqw58ABNZKzVSiVJ4vLqSpNSasenXD+JHXJwQjxPe1onqRHAMI7L5YJl8QiOWfPcm+97oFgoahvLYh5Hcb5FKwYtwFz+z9+Nb9wyQGmn+Rftt51ZPmA4LAL89ZuOWj0kChp/djR+9kfhpsfkjMOS/3lOeb+l/sPbVm/ZslW4o1XipdNvenHpTS9ZuqQkjZh/uXbyn380ra0PgAQkYPfAQMYsCASf6ZjDDu3VUaI4BSQRyPmedo2ISP3Ag3Z2HATMQndCzAW+i7jCOHaT4QDgxCOPCBAsAAnNZSgs5NQZgYldX2LeS3y/MZSbLhc6hlXFjz7ypmWHrgx/fsNjV99SP/4AdcGLcwO5x951XvWg0eTKm8fXbZo5fN8hZGib9NjDzSWvXvbYIw9/9jvr77xnywVnDLz0eIgjA+S5Lg1ZsPOebU0RQUitHS1Xj1pzMAAQkjE2ThzNCAq5AHuAanbc0FPmo90rn/drTSFSaZKmqQkCHwAOP3TN6tGRLc0Qteq2Ey1GTUQxgJAnyV+/eriZ+mXa54AD8vdtlXs2699tqF1z2/Svbq0dujz/4iPLy6ty2H7eQcPe9Rtbn/pBUk/lw237znOWoZ04/aCyZ5tj9YiUX2+kgHT8gcW199YBWZBwsTFhN5FBlISdw446fL9lS9kaUroTdlJjiRQhBEHQj0+eOjLELsATAAgCXxOxgDB0wigIfJOY4Ur5xCMO/9411/oDA2L6g6bdjlwEgAQ0oyBaktFBHjIBWX3TPfG3fvvIA+NwZN2cd+L+bzhjoGlCFTQojarIAcJ0B1KoKF9NRyEAaZCyT8bCyNKhk0cGo6Tz67VbN2yKtGfBILAnKIvD0T3RoaTxaccfAwBsgRR0wgQAWcT3VOB7c9P+0iVWP7UURDxP53yvHSWA1A7DgWoWxb/0BSf95NprgfuZ5LOEmHkPZkEEYaRQaQNpJPrj35pcv4XzPjQ6aT0tn3ogXPKG1Zse2Pg///XGZSPqI689xiraGiWNND1imV2zdHqqbZ6/ehCSjmH9WDPROe+mmx7/+S2bjllTetkJS+qWSgBgBZgzrVpkgRbRJmZ5tXLa8491WQpmDsMIkIRtPl9Ewr75NLBrHN1/HwvFQiuM3YyOJEl9zxOQE44+av99Vj+wZVshyDHYHtls92hXWbecEERlv1zOVZsmmorLZc6LB3mANNpWDxsHjJb/n9cdW/X9qq+rleCxsYmrN+DrTyr+21+VEi6gaYKnSvmB364b+/PTl33wgqPf/ipbKnFQLP1m/RaSEAb8wCfghRuP3gOLhFEzPOW0U1YvXeoI+e12lKQWFYFwIZ+bWzni3l3dWfauPz4EQERS1Gp1GICZtVKFQs4YG3i63Wlff9s6P59H5h5UoV470zx0x32MERSgr9XDk8kdm/yO8ZVOhYm1N9mQRx+PAhVMtryv/ba9aSy9dzOs2zx8+0NJM4zjJHf9vc3v/L5Vi/K3P6jWP1647UFO0rAZJnc8or/y88mr7pZ8sZS06KYH+PEZReQtLCnTC6wQkTn+4IUX7LNimYglUjMz9dgYAPA8NTxUzeoAmXHG2X7cp26i6vWabRmfarU7hKg07bNiGQKSwq1T0697/4cm40QrQhaBWY8xzyaGrnFnBDGRRGB0XudEs3iAqZaUwQtTIxACg/J0kKQMoosFMhzGERAoZk95beYC5ijwozSFNEZtYhCCSiHw0zSOkyjwtdYBLygE782NI1SdTueEQw78xqWfRmFETBO7ecu4BbDMQwPl0aGB7qS37eMKmscXAABUSgUCQcQ0Ne1OSIiJMcuHh845/bSo1USlBIAESYBJdoNAkX1Ug3j5gAb84ZxokgQwBWQBBaBKvl8J8sVCeUAGKL8ESkNgPIBcUBjRhaqfW47eQK4wmObRCvo675XK2h+seCOFQBtIlVKVYkV5ObsgFNo3PR8EEY09/xVnEUDKFgBbzY6xFgAIoVQs9JnD2bhv14LuJxMX8rnA84QZABvNtoPYAPCGV565amDQxgkQARBmxebdjQxZkBPiRDUFhCHnWeUbBUKMYgTZ+mBUTGlHN4WNgI4UsxhKlRGbggXLIL6ACKRGmNEwxMysxAJAytRlduxmakNmWw0VqbDTOvaQ577kpBOZLRJZw812B4iEbSEX5Pws4OgCtlm7sesqeG+6ChGWy0VmVqQ6UdIII03KpMmKJSOvf8WZcaOJStmsUX035qDMztEVABDFoFgBSOyZRAkCITCTSZVlspaMZ7VnkcRqJhQRShETBRbAFVQIgDyLipWAQkDgAopGSEk0ip4FofMDzn2fF0Egtu98zblKY2xFoWq22lFqCAkFBiolfEoqIs3jtmbfVC6XgsAHFgGcaTSFhYgA5M3nvvKg/VaFUYdIuUri7meYEIFAtEhOAAAtiRCIICMwiWhGxaBYe1YzeJbcGG+NohjRIgFoJRYhBTAIwICGgJEBWNAKMqBF4N1M8wMxMoqAKNKtZvPFJx5/+vHHWctaKzFcb7SBkJnz+VyhUOjbzAHzIqLvjKIDLEyKKuWSCGvCJIxaYUhKG2PLxfx73vxGDCMCEeKels7LHmZlCytoUUAoZrIiREwg7iIRJZtRzGiZjFDarVWm7HgxAoCGEQWUgLIkgqwckYoMgIAoAXaMBtgdjiAJucJManmkkL/4/De6++Ah1pttN0oTgKuZOkOvA2heRPSd3F7I5mGUy0Xf9xyBb3qmZi0rRalNzjrl5HNPPbVRn/ZRg1C3JRznZaQzmkF3d0F3ak32flax7c7ucFxIyDrbERybwPWhi2SEJ1cac0PMMWswcwee35Mm3cxGqsQ34KPXbtTf8RfnHbR6lTFGKZWmpl5vuJF4+XyuWMzvkkFDu36osbcQTLSiwYEKiCWiODG1RhORXN3l4v9x4X6jw+2kg6hwO+amzOOR6cedbhZdVlgXdH3Lko0EnB1pk/3g/nBzC2V27nSXgtyrge8yYt3xbAUZPF1r1s849nlvPe9cV+0WgKnpurXWHXxooNpFDfgU5cj5aHSvEdQpdaFUCKy1qNRMrRmGsaeCxKTLR4c++u53ShKS9E0Fy0rP88R6+CRv9lGBcFcZzFkqIsylXM0Pyrmz7UIHD6iTRqPVwkff/XZFYESIsNXqNFttVIqFy6VCIR8IC0I28kZg5ylCgl3f4i4housVB4eqpBCQGHByusYsntLGJGeccNx7X/v6Zn2GtMrmEnWnbsmCiclP18txHnpcqcyzMUqSfuKii/ZfsTxJIw91mpqpqRlAcjNLhwYHRBwHbxfJYtoNDcs2N0gu8AcrZUlThRRG6dRMHQHdhOWLzn/tq15w4nRtxlO+c2KI3Yw1Pnsl7Uwdk1sLIMQISJp0qz518Rtf9/KTjk9NDNoDgompWmIZFYnI8GDV95RbhtItsSM8Sc54XqjD2dBeRwYzDw5Wi/kcW0NEtUar1QmJtKvU/u3733fKmjWt2ozWnrLkUhnPcnXGrqFTAgDEREpTfWrida942bte92oxTKQ8VPVao9UOldLWmFIpV6kUey5/jotZqI3OfvWyJQBIiMPDA4ocZsWJiVoSp4rIGlsu5L/wkQ8dtt+qRqOulSfdLI48u4eTCoJiIEFDCrVuTk2c/aJTPv6ei9hYEVGkO51wZqqmSLG1vqdHhgZBGGZzGruo3sxfo7uZ5m4/fi7nDw8PMFtENMzj26YsiyJl0mR0aOCLn/h/D1m9stapkVbEs7NJ+8fZzQ6pk6dVpr1fvdE32ZOKYAjRw/bUxCtPPvnSS97vO5qrp9pJOj45Y12XCcjSkSE/4xTgdr54EYLeoezktJqFK5XSQLVs2ZKiKEnGJiZZRGmdmnTVkuEvf+pjR+27ql2b8bTu0mcFs0nNiP1D6p4m2+JmeUrfuqIMrncntJNSqjkxds4LT/6HD38gp4jFklKJsRPbpowVIWVtOjxULRRyItKT3nxIZrsza2p2Ja8z2CyAALh1fLLdiUgRW1MqFZaOjhCAManneVP11gf+/h+vW39ndWgYrNttCtvR0jIvv1gK0TzDapgd0zgb9WQZfRRoz8y84VUv/9hfvsNDsCJKKWN5bHwyCVNUOrFmsFJYOjok3HXvCPNsP9r9oV4ZbsPeymljeOv4RBinSus0TcvF/LIlQ4TAlknpKI4/c9l/fPeqq8uVAVKesSkrRobe4NRZQe99M5xFnd1eQekGn1rpThyqOLrkLee/9dV/Lta6pThuk0KYpEqp1KSlYn7FkuH+M92L60F2TNS6JPWWsck4MUopa02xGCwbHSFEYw0SaaW+8dMrP/fNbyaM5Xw5FkOc7bAXFIsiCEq6y5f2EkqGLHqT2a1ioi1ajaIxrM2sHhz5+Hvf86LnH50mqSIit69ifDKMY6W1saaQy61YNtK3fm8v72Hpy+j1lmAyIiap3To2mSSGlLKcFnLBstERrcnYFAC09m/fdP/f/cuX1z/4SKU6BAqttUrQCdr5btzLgqZsliz2yMIavSSNo3b9pScc/7GL3rVqZDiTslZJbLaOT8TGaqWsSfM5f/my0W7/fi9ZL0+HRveJnEUEUSWpGRufiuJEacXGBr5eumQkCDSzYRGt/GYn+ur3fvjNn1/ZElsqlUGQLbvuZOnb19s14v0b7WaxQTc7jDvFwjLXb0s3rBUEEhHMKrQaSURqzfqKSvV9b3rja858KQlYa5UiJGp1om0TUymzIs0mLeaDZUtHnJQXvCJ1Dwi6OySSESlNecu2iShONCnLoglHhgcrpYKAGDYEqJS+/f4HvvT1b/3xjjsll88VisgW2dq+emOf0LCXepwrxt5ogKfCVNLrlAQABBISBFQIwmGr5QGefdop737z+fuOjtjUuCIKAkzXGlO1BiIpoNSacjG/dHRIdRt2FjxpbPFr9rqLubPEKBqW8YmpdjvUSouAFTtQLg0PVpVGy6kwaq2Nhd/c+Kev/+gndzzwgARBIV9QgFaYgXsx6KxGz10B1NPo7rDVJxVxD96QIAEieUa41a7nUF5w9FFve91rTzj0YGG21pBSRCpJzfRUzVWnyI18r5RGRgZw7g7UhbntPbIKVbruJtNuBpiertdqDUItJNbawPOGhweKxTyIuFZppXSYpr++8abvX3nVHZvuixkLxbz2fWQAa91qAsnynk5Y/SOIen0/syfPvY/1Jm8iCiERiUAaR3EYlgL/lKOPfOM5Z5905GEK0XWdKEUs0Gy2p2fqqbFKKWYGhJGhwcFqSYRhzsrZZ3bnrAjgrKzd4u1Goz09XbOWUWnLDMCVUmF4sOp52oqxNlXkKdKptTevv/u/rr325tvWbavVQXlevqizdhsBzjgPppf37BWAuyGDuxOKu8E+IhIIkhE0SZxGoRZeuWzZGSc8/5UvPv3wA/ZXANamLFarABGjJJ2crnU6kevOtNYEvjc6PNiNSlzJlBa5vXovrasWASTEODFTUzPtTgyKEEGM8bQaqFYqlSIRCVtrLCmNhIg4Njn9+1tvv/aWWzbc/8D4TD1l63m+rz1P+0g0m1LoVphlTuYZBbL5DcYkSZpakxa0WjU6cuwhh7zohBNOeN5R1WJeXMeksFLKRQD1RqtWb1oRUpqtBeFKuTQ6XFVKCTMg9nu/RQ1J3gub7nvbvjLj2mi2p2bq1liltAgLS873K+VSqZRXmliA2aBYpXx3QRO1+l0b71u/8b677r//sW3j47WZyFiTJoBIpAAIFXXzxszMwMxsBSHQfknrlSMj+y5bfuSa5x59yMFrDjqwWsi7h8xaVpjNrE+tnWl32vVmmhoijQAs1tN6eKhaKhW67tM54T0Ts+6lTffZAmQGAUBCStJ0ZrrRbIWCSETCImL9QJeL+VKx6HkeoIgIG4uISuu+TfftrROTY+PjD295ot5q15vNWqPVarWjJEHCfC4oFwuD1WqlXBwuVfZbtWrpktHloyOlIOg+XmyNZQHlKbfWK0ySZrvTbnZsakgpQQQrCqFcKQwMVLR22xZhO0WGZ8O66icJ0vvJSk5q1OlE09P1OE4ECQmddmuiXD5XLhXyuUBpQhAWZpZeo2PW+juP6+xNEGS2LEKIbu2CABhjwk7cbIWdJLbMGokADVtEKBcKg4Nl3/e2K5V2wf2eCaH2hqC3Y0f0zURFFJZWO6w3mlEUAwApLYIsDMCeUsVCvlDI5QJfKcIsnYLilqDNlj/nhI89f5X9XzdfCxARXEtaHMftMAzDKDXSHUbArsMsl/MHByqFXK5bu4J57sx7lgm6P0uX8TDZTagVljCMGs1WJ0qsFaRsVAWzRRClte+pnO97vqe153ualFsIsnMhZIkMQREx1hpj0sTESRIlSZoatiKIhASIwlaAPaJSIV8sF3O5wJmXXh8EIv53FPRsPhJ6e2ohyzC6Tpk4Mc12p9MOkyRxc++yKEQsCAsAISGhVkprpRQSKewZhN6LmUWsldQYa61w5iZ60gMBFibCIPCKxUK5kPc83duJ5Ba+dbes762My9Mj6B5xQbpj7maDLdd2GsVxu90JwzhJLUv34e+aidntQtudbH/PdUb3wCw+z3AgK0Lf0/l8vlgIglxAc9c9dM8Ou62ae60s+XQKOvs21/+8Q1u6k3iSpFGSRnGSJsYYw8yZ2mZjMHBHr9slC4Aj1hKi0//A94LAywWe5+mufGW79Ah2J9LvEWjxzAn6STBJ/1f3bxRB7HFB3DpsNsamaZqmJjVsLTNzZoj6SLVESKSISGvledrTnvaUUtS9rTu5xh3GPOz1wvHTImjZ8VpkZ9++89Jhz266aupOKYR9m5O6K5Jl56a2p7N7W4WfcY2eZ8gzi4t3fBTmV+h2dOlny4I/Dc+616zFdPzrzJgAzfWF2xv4bB9hl4r2bCOR/B+CtlXmyBOUdwAAAPplWElmTU0AKgAAAAgABwEOAAIAAAALAAAAYgESAAMAAAABAAEAAAEaAAUAAAABAAAAbgEbAAUAAAABAAAAdgEoAAMAAAABAAIAAAEyAAIAAAAUAAAAfodpAAQAAAABAAAAkgAAAABTY3JlZW5zaG90AAAAAACQAAAAAQAAAJAAAAABMjAyNjowNTowNiAwMDoyNDozNwAABZADAAIAAAAUAAAA1JKGAAcAAAASAAAA6KABAAMAAAAB//8AAKACAAQAAAABAAABV6ADAAQAAAABAAABPAAAAAAyMDI2OjA1OjA2IDAwOjI0OjM3AEFTQ0lJAAAAU2NyZWVuc2hvdKRrcNwAAAAVdEVYdGV4aWY6Q29sb3JTcGFjZQA2NTUzNTN7AG4AAAAhdEVYdGV4aWY6RGF0ZVRpbWUAMjAyNjowNTowNiAwMDoyNDozN55ACv8AAAApdEVYdGV4aWY6RGF0ZVRpbWVPcmlnaW5hbAAyMDI2OjA1OjA2IDAwOjI0OjM3DcziOQAAABN0RVh0ZXhpZjpFeGlmT2Zmc2V0ADE0NhBDKLoAAAAgdEVYdGV4aWY6SW1hZ2VEZXNjcmlwdGlvbgBTY3JlZW5zaG90GQMcpwAAABh0RVh0ZXhpZjpQaXhlbFhEaW1lbnNpb24AMzQzuNMAvQAAABh0RVh0ZXhpZjpQaXhlbFlEaW1lbnNpb24AMzE2KMHhAQAAABZ0RVh0ZXhpZjpVc2VyQ29tbWVudABBU0NJSbTjWt4AAAAodEVYdGljYzpjb3B5cmlnaHQAQ29weXJpZ2h0IEFwcGxlIEluYy4sIDIwMjLktL+cAAAAGnRFWHRpY2M6ZGVzY3JpcHRpb24ARGlzcGxheSBQM495u7wAAAAASUVORK5CYII=" style="width:80px;height:80px;border-radius:50%;object-fit:cover;margin-bottom:.5rem;box-shadow:0 2px 12px rgba(0,0,0,.3)">'
+      +'<div style="font-size:19px;font-weight:700;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.4)">'+saludoStr+', '+nombre+'!</div>'
+      +'<div style="font-size:12px;color:rgba(255,255,255,.85);margin-top:2px">Bienvenide a Panteres Grogues Pàdel 🏳️‍🌈</div>'
+    +'</div>'
+
+    // CTA principal
+    +'<div style="background:var(--navy);border-radius:var(--radius-lg);padding:.875rem 1.25rem;margin-bottom:.625rem;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="irAJugar()">'
+      +'<span style="font-size:26px">🏓</span>'
+      +'<div style="flex:1">'
+        +'<div style="font-size:17px;font-weight:700;color:var(--bg3)">¡A Jugaaarrr !!!!</div>'
+        +'<div style="font-size:11px;color:rgba(253,246,160,.7)">Apúntate a tu próximo partido</div>'
+      +'</div>'
+      +'<span style="font-size:16px;color:var(--bg3)">→</span>'
+    +'</div>'
+
+    // Grid de accesos rápidos
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:.625rem">'
+      +'<div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:.75rem;text-align:center;cursor:pointer" onclick="openProfile('+currentUser.id+')">'
+        +'<div style="font-size:22px;margin-bottom:2px">👤</div>'
+        +'<div style="font-size:12px;font-weight:500;color:var(--text)">Mi perfil</div>'
+      +'</div>'
+      +'<div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:.75rem;text-align:center;cursor:pointer" onclick="irATab(\'agenda\')">'
+        +'<div style="font-size:22px;margin-bottom:2px">📅</div>'
+        +'<div style="font-size:12px;font-weight:500;color:var(--text)">Agenda</div>'
+        +'<div style="font-size:10px;color:var(--text2)">'+EVENTOS.length+' eventos</div>'
+      +'</div>'
+      +'<div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:.75rem;text-align:center;cursor:pointer" onclick="irATab(\'partidos\')">'
+        +'<div style="font-size:22px;margin-bottom:2px">🌐</div>'
+        +'<div style="font-size:12px;font-weight:500;color:var(--text)">Partidos</div>'
+      +'</div>'
+      +'<div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:.75rem;text-align:center;cursor:pointer" onclick="irATab(\'resultados\')">'
+        +'<div style="font-size:22px;margin-bottom:2px">📋</div>'
+        +'<div style="font-size:12px;font-weight:500;color:var(--text)">Resultados</div>'
+      +'</div>'
+    +'</div>'
+
+    // Mi posición en el ranking + Utilidades
+    +(()=>{
+      const pos=getRanked().findIndex(j=>j.id===currentUser.id)+1;
+      const rk=calcRk(currentUser);
+      return '<div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:.625rem .875rem;display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:6px" onclick="irATab(\'ranking\')">'
+        +'<div style="width:36px;height:36px;background:var(--bg2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--navy);flex-shrink:0">'+pos+'º</div>'
+        +'<div>'
+          +'<div style="font-size:12px;font-weight:600;color:var(--text)">Tu posición en el ranking</div>'
+          +'<div style="font-size:11px;color:var(--text2)">Eficacia: '+(rk.eficacia*100).toFixed(1)+'% · '+currentUser.pj+' partidos</div>'
+        +'</div>'
+        +'<span style="font-size:12px;color:var(--text2);margin-left:auto">→</span>'
+      +'</div>'
+      // Instagram y WhatsApp
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">'
+        +'<a href="https://www.instagram.com/panteresgrogue" target="_blank" style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:.75rem;text-align:center;text-decoration:none;display:block;cursor:pointer">'
+          +'<div style="font-size:22px;margin-bottom:2px">📸</div>'
+          +'<div style="font-size:12px;font-weight:500;color:var(--text)">Instagram</div>'
+          +'<div style="font-size:10px;color:var(--text2)">@panteresgrogue</div>'
+        +'</a>'
+        +'<div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:.75rem;text-align:center;cursor:pointer" onclick="alert(\'Enlace al grupo de WhatsApp pendiente\')">'
+          +'<div style="font-size:22px;margin-bottom:2px">💬</div>'
+          +'<div style="font-size:12px;font-weight:500;color:var(--text)">WhatsApp</div>'
+          +'<div style="font-size:10px;color:var(--text2)">Grupo de la sección</div>'
+        +'</div>'
+      +'</div>'
+      +'<button class="btn btn-block" style="display:flex;align-items:center;gap:10px;padding:10px 14px;text-align:left;background:var(--bg)" onclick="abrirUtilidades()">'
+        +'<span style="font-size:18px">🗺️</span>'
+        +'<div style="flex:1">'
+          +'<div style="font-size:13px;font-weight:600;color:var(--text)">Utilidades</div>'
+          +'<div style="font-size:11px;color:var(--text2)">Clubs, seguro, hospitales, más...</div>'
+        +'</div>'
+        +'<span style="font-size:12px;color:var(--text2)">→</span>'
+      +'</button>'
+      // Log de actividad
+      +'<div style="margin-top:.75rem">'
+        +'<div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;display:flex;align-items:center;justify-content:space-between">'
+          +'<span>'+(isCoord()?'📋 Actividad reciente':'📋 Mi actividad')+'</span>'
+          +(isCoord()?'<select id="log-filtro" onchange="renderLogLanding()" style="font-size:11px;height:24px;padding:0 6px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg)"><option value="">Todos</option>'+JUGADORES.map(j=>'<option value="'+j.nombre+'">'+nombreCorto(j.nombreCompleto)+'</option>').join('')+'</select>':'')
+        +'</div>'
+        +'<div id="log-landing"></div>'
+      +'</div>';
+    })();
+}
+
+function volverBienvenida(){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-bienvenida').classList.add('active');
+  renderBienvenida();
+  setTimeout(renderLogLanding,50);
+}
+
+function abrirUtilidades(){
+  document.getElementById('util-sheet-overlay').classList.add('open');
+}
+
+function irAJugar(){
+  const btn=document.querySelector('.nav-item:nth-child(3)');
+  if(btn)showTab('jugar',btn);
+}
+function irATab(tab){
+  // Find the nav button for this tab
+  const navItems=document.querySelectorAll('.nav-item');
+  const tabMap={'seccion':0,'agenda':1,'jugar':2,'partidos':3,'resultados':4,'ranking':5};
+  const idx=tabMap[tab];
+  if(idx!==undefined&&navItems[idx])showTab(tab,navItems[idx]);
+}
+
+function finishLogin(){
+  document.getElementById('screen-login').classList.remove('active');
+  document.getElementById('screen-app').classList.add('active');
+  document.getElementById('top-name').textContent=nombreCorto(currentUser.nombreCompleto);
+  document.getElementById('coord-pill').style.display=isCoord()?'inline-block':'none';
+  // Activar tab bienvenida
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-bienvenida').classList.add('active');
+  renderBienvenida();
+  setTimeout(renderLogLanding,50);
+  // Pre-render other tabs
+  renderRanking();renderJugar();renderPartidos();renderResultados();renderCalendar();
+  // Recordatorios
+  setTimeout(checkRecordatorios,800);
+}
+function doLogout(){
+  currentUser=null;
+  document.getElementById('screen-app').classList.remove('active');
+  document.getElementById('screen-login').classList.add('active');
+  document.querySelectorAll('.nav-item').forEach((b,i)=>b.classList.toggle('active',i===0));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-seccion').classList.add('active');
+}
+
+// ─── RANKING ──────────────────────────────────────────────────
+function renderRanking(){
+  const ws=getRanked();
+  document.getElementById('rank-body').innerHTML=ws.map((j,i)=>{
+    const me=currentUser&&j.id===currentUser.id;
+    const ps=j.pen>0?'-'+Math.round(j.pen*100)+'%':'—';
+    return '<tr class="'+(me?'me':'')+'" onclick="openProfile('+j.id+')">'
+      +'<td>'+(i+1)+'</td>'
+      +'<td><div style="display:flex;align-items:center;gap:6px"><div class="avatar '+AVC(j.nombre)+'">'+INI(j.nombre)+'</div><span>'+j.nombre+(me?' ✓':'')+'</span></div></td>'
+      +'<td>'+j.pj+'</td><td>'+j.pg+'</td><td>'+j.jj+'</td><td>'+j.jg+'</td>'
+      +'<td>'+(j.eficacia*100).toFixed(0)+'%</td>'
+      +'<td>'+ps+'</td>'
+      +'</tr>';
+  }).join('');
+}
+
+function openProfile(id){
+  const j=JUGADORES.find(x=>x.id===id);if(!j)return;
+  const rk=calcRk(j);
+  const isOwn=currentUser&&id===currentUser.id;
+
+  const fotoHtml=j.foto
+    ?'<div style="width:72px;height:72px;border-radius:50%;overflow:hidden;flex-shrink:0"><img src="'+j.foto+'" style="width:100%;height:100%;object-fit:cover"></div>'
+    :'<div class="profile-av '+AVC(j.nombre)+'" style="width:72px;height:72px;font-size:24px;position:relative">'
+      +INI(j.nombre)
+      +(isOwn?'<button onclick="subirFoto('+id+')" style="position:absolute;bottom:0;right:0;width:22px;height:22px;border-radius:50%;background:var(--navy);border:2px solid var(--bg);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--bg3)">+</button>':'')
+      +'</div>';
+
+  const fotoChangeBtn=isOwn&&j.foto
+    ?'<button onclick="subirFoto('+id+')" style="font-size:11px;color:var(--text2);background:none;border:none;cursor:pointer;margin-top:4px">Cambiar foto</button>':'';
+
+  const telHtml=isOwn||j.mostrarTel
+    ?'<a class="profile-link" href="tel:'+j.tel+'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.6 3.35 2 2 0 0 1 3.56 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.64a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.5 16a2 2 0 0 1 .5.92z"/></svg>'+j.tel+'</a>'
+    :'<span class="profile-link hidden"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Teléfono oculto</span>';
+
+  const penStr=rk.pen>0
+    ?'<div style="font-size:12px;color:#BA7517">Penalización -'+Math.round(rk.pen*100)+'% (pocos partidos)</div>'
+    :'<div style="font-size:12px;color:#27500A">Sin penalización</div>';
+
+  const privacyHtml=isOwn?'<div class="sheet-divider"></div><div class="privacy-section"><div class="privacy-title">⚙️ Privacidad</div>'
+    +'<div class="privacy-row"><input type="checkbox" id="priv-tel" '+(j.mostrarTel?'checked':'')
+    +' onchange="togglePrivacy('+id+',\'mostrarTel\',this.checked)"><div><div class="privacy-row-label">Mostrar mi teléfono</div><div class="privacy-row-sub">Visible para otros jugadores</div></div></div>'
+    +'<div class="privacy-row"><input type="checkbox" id="priv-ig" '+(j.autorizaIG?'checked':'')
+    +' onchange="togglePrivacy('+id+',\'autorizaIG\',this.checked)"><div><div class="privacy-row-label">Autorizo etiquetas en Instagram</div><div class="privacy-row-sub">La sección puede etiquetarme en el perfil oficial</div></div></div>'
+    +'</div>'
+    +'<div class="sheet-divider"></div>'
+    +'<div class="privacy-section"><div class="privacy-title">🔐 Mis datos</div>'
+      +'<div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5">Tienes derecho a acceder, rectificar y suprimir tus datos conforme al RGPD.</div>'
+      +'<button class="btn btn-sm btn-block" style="margin-bottom:6px;font-size:12px" onclick="abrirPoliticaApp()">📄 Ver política de privacidad</button>'
+      +'<button class="btn btn-sm btn-block" style="font-size:12px;color:var(--danger);border-color:rgba(192,57,43,.3)" onclick="solicitarBaja()">🗑️ Solicitar baja y eliminar mis datos</button>'
+    +'</div>':'';
+
+  document.getElementById('profile-content').innerHTML=
+    '<div class="profile-header">'
+      +'<div style="display:flex;flex-direction:column;align-items:center;gap:4px">'
+        +fotoHtml+fotoChangeBtn
+        +'<input type="file" id="foto-input-'+id+'" accept="image/*" style="display:none" onchange="procesarFoto('+id+',this)">'
+      +'</div>'
+      +'<div style="flex:1;min-width:0">'
+        +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
+          +'<div class="profile-name">'+(isOwn?j.nombreCompleto:nombreCorto(j.nombreCompleto))+'</div>'
+          +(isOwn?'<span class="own-badge">Tú</span>':'')
+        +'</div>'
+        +'<div class="profile-sub">'+j.nombre+'</div>'
+        +'<div class="profile-links" style="margin-top:5px">'
+          +'<a class="profile-link" href="https://instagram.com/'+j.ig.replace('@','')+'" target="_blank"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>'+j.ig+'</a>'
+          +telHtml
+        +'</div>'
+      +'</div>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem">'
+      +'<div style="background:var(--bg2);border-radius:var(--radius);padding:10px 12px"><div style="font-size:11px;color:var(--text2)">Partidos jugados</div><div style="font-size:24px;font-weight:600;color:var(--text);margin-top:2px">'+j.pj+'</div></div>'
+      +'<div style="background:var(--bg2);border-radius:var(--radius);padding:10px 12px"><div style="font-size:11px;color:var(--text2)">Partidos ganados</div><div style="font-size:24px;font-weight:600;color:var(--text);margin-top:2px">'+j.pg+'</div></div>'
+      +'<div style="background:var(--bg2);border-radius:var(--radius);padding:10px 12px"><div style="font-size:11px;color:var(--text2)">Juegos jugados</div><div style="font-size:24px;font-weight:600;color:var(--text);margin-top:2px">'+j.jj+'</div></div>'
+      +'<div style="background:var(--bg2);border-radius:var(--radius);padding:10px 12px"><div style="font-size:11px;color:var(--text2)">Juegos ganados</div><div style="font-size:24px;font-weight:600;color:var(--text);margin-top:2px">'+j.jg+'</div></div>'
+      +'<div style="background:var(--bg2);border-radius:var(--radius);padding:10px 12px;grid-column:1/-1"><div style="font-size:11px;color:var(--text2)">Eficacia</div><div style="display:flex;align-items:baseline;gap:8px;margin-top:2px"><div style="font-size:24px;font-weight:600;color:var(--text)">'+(rk.eficacia*100).toFixed(1)+'%</div>'+penStr+'</div></div>'
+    +'</div>'
+    +privacyHtml;
+
+  document.getElementById('profile-overlay').classList.add('open');
+}
+
+// ─── LOG DE ACTIVIDAD ────────────────────────────────────────
+let activityLog=[];
+
+function logActividad(tipo,texto,jugador){
+  activityLog.unshift({
+    id:Date.now(),tipo,texto,
+    jugador:jugador||currentUser?.nombre||'',
+    ts:new Date().toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})
+  });
+  // Mantener max 200 entradas
+  if(activityLog.length>200)activityLog=activityLog.slice(0,200);
+}
+
+// ─── NOTIFICACIONES ──────────────────────────────────────────
+let notificaciones=[];
+
+function addNotif(tipo,titulo,texto,tab){
+  notificaciones.unshift({
+    id:Date.now(),tipo,titulo,texto,tab,
+    leida:false,
+    ts:new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
+  });
+  actualizarBadge();
+}
+
+function actualizarBadge(){
+  const badge=document.getElementById('notif-badge');
+  if(!badge)return;
+  const noLeidas=notificaciones.filter(n=>!n.leida).length;
+  badge.style.display=noLeidas>0?'block':'none';
+}
+
+function abrirNotificaciones(){
+  renderNotificaciones();
+  document.getElementById('notif-overlay').classList.add('open');
+}
+
+function renderNotificaciones(){
+  const el=document.getElementById('notif-list');
+  if(!notificaciones.length){
+    el.innerHTML='<div style="text-align:center;padding:2rem 0;color:var(--text2);font-size:14px">Sin notificaciones</div>';
+    return;
+  }
+  const iconos={partidos:'🔄',resultados:'📋',jugar:'📅',agenda:'🗓️'};
+  el.innerHTML=notificaciones.map(n=>`
+    <div onclick="irNotif('${n.id}')" style="display:flex;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--border);cursor:pointer;background:${n.leida?'transparent':'var(--info-bg)'};border-radius:var(--radius);padding:10px;margin-bottom:4px">
+      <div style="font-size:22px;flex-shrink:0">${iconos[n.tab]||'🔔'}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:${n.leida?'400':'600'};color:var(--text)">${n.titulo}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px;line-height:1.4">${n.texto}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:3px">${n.ts}</div>
+      </div>
+      ${!n.leida?'<div style="width:8px;height:8px;background:#E40303;border-radius:50%;flex-shrink:0;margin-top:4px"></div>':''}
+    </div>`).join('');
+}
+
+function irNotif(id){
+  const n=notificaciones.find(x=>x.id==id);
+  if(!n)return;
+  n.leida=true;
+  actualizarBadge();
+  document.getElementById('notif-overlay').classList.remove('open');
+  if(n.tab){
+    const navItems=document.querySelectorAll('.nav-item');
+    const tabMap={'seccion':0,'agenda':1,'jugar':2,'partidos':3,'resultados':4,'ranking':5};
+    const idx=tabMap[n.tab];
+    if(idx!==undefined&&navItems[idx])showTab(n.tab,navItems[idx]);
+  }
+}
+
+function marcarTodasLeidas(){
+  notificaciones.forEach(n=>n.leida=true);
+  actualizarBadge();
+  renderNotificaciones();
+}
+
+function checkRecordatorios(){
+  if(!currentUser)return;
+  const jsNow=NOW_DAY===0?6:NOW_DAY-1;
+  SLOTS.forEach(slot=>{
+    const dow=SLOT_DOW[slot.id];
+    if(dow===undefined)return;
+    const diff=(dow-jsNow+7)%7;
+    // Exactamente 2 días de diferencia
+    if(diff!==2)return;
+    // ¿Está apuntado?
+    const inscrito=slot.jugadores.find(p=>p.nombre===currentUser.nombre);
+    if(!inscrito)return;
+    // ¿Ya se mandó este recordatorio hoy?
+    const key='rec-'+slot.id+'-'+NOW.toDateString();
+    if(sessionStorage.getItem(key))return;
+    sessionStorage.setItem(key,'1');
+    // Mandamos la notificación con un pequeño delay para que se vea después del login
+    setTimeout(()=>{
+      addNotif('jugar',
+        '⏰ Recordatorio — partido en 2 días',
+        slot.label+' — '+slot.club+' · Si no puedes venir, date de baja para que entre alguien de la reserva.',
+        'jugar');
+    },1500);
+  });
+}
+
+function renderLogLanding(){
+  const el=document.getElementById('log-landing');if(!el)return;
+  const filtro=document.getElementById('log-filtro')?.value||'';
+  const iconos={jugar:'📅',partidos:'🌐',resultados:'📋',agenda:'🗓️'};
+
+  let entradas=isCoord()
+    ?(filtro?activityLog.filter(e=>e.jugador===filtro):activityLog)
+    :activityLog.filter(e=>e.jugador===currentUser?.nombre);
+
+  if(!entradas.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--text2);padding:.5rem 0;text-align:center">Sin actividad registrada todavía</div>';
+    return;
+  }
+
+  el.innerHTML=entradas.slice(0,10).map(e=>'<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border)">'
+    +'<span style="font-size:14px;flex-shrink:0">'+( iconos[e.tipo]||'📌')+'</span>'
+    +'<div style="flex:1;min-width:0">'
+      +(isCoord()&&!document.getElementById('log-filtro')?.value?'<div style="font-size:10px;font-weight:600;color:var(--navy)">'+e.jugador+'</div>':'')
+      +'<div style="font-size:12px;color:var(--text);line-height:1.4">'+e.texto+'</div>'
+      +'<div style="font-size:10px;color:var(--text3);margin-top:1px">'+e.ts+'</div>'
+    +'</div>'
+  +'</div>').join('');
+}
+
+function abrirPoliticaApp(){
+  closeProfile();
+  document.getElementById('politica-overlay').classList.add('open');
+}
+function solicitarBaja(){
+  if(confirm('¿Seguro que quieres solicitar la baja y eliminar tus datos?\n\nEsta acción es irreversible. El coordinador procesará tu solicitud en un plazo máximo de 30 días.')){
+    showToast('Solicitud enviada · El coordinador la procesará en 30 días');
+    closeProfile();
+  }
+}
+
+function subirFoto(id){document.getElementById('foto-input-'+id)?.click();}
+function procesarFoto(id,input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{const j=JUGADORES.find(x=>x.id===id);if(j){j.foto=e.target.result;openProfile(id);showToast('Foto actualizada');}};
+  reader.readAsDataURL(file);
+}
+function togglePrivacy(id,field,val){
+  const j=JUGADORES.find(x=>x.id===id);if(j)j[field]=val;
+  showToast(field==='mostrarTel'?(val?'Teléfono visible':'Teléfono oculto'):(val?'Etiquetas activadas':'Etiquetas desactivadas'));
+  renderRanking();
+}
+function closeProfileOutside(e){if(e.target===document.getElementById('profile-overlay'))closeProfile();}
+function closeProfile(){document.getElementById('profile-overlay').classList.remove('open');}
+
+// ─── JUGAR ────────────────────────────────────────────────────
+function isSlotOpen(id){
+  const dow=SLOT_DOW[id];if(dow===undefined)return true;
+  const jsNow=NOW_DAY===0?6:NOW_DAY-1; // 0=Lun...6=Dom
+  const diff=(dow-jsNow+7)%7;
+  // Semana actual → siempre abierta
+  if(diff===0)return true;
+  // Semana siguiente → abre el mismo día de la semana (diff=7, es decir hoy) a las 19h
+  // diff>0 significa que el slot es en días futuros esta semana o la siguiente
+  // La lista de la semana siguiente se abre cuando jsNow===dow y NOW_H>=19
+  // O cuando jsNow ya pasó ese día esta semana (jsNow>dow en índice de semana)
+  if(jsNow>dow)return true;       // ya pasó ese día esta semana → abierta para la siguiente
+  if(jsNow===dow&&NOW_H>=19)return true; // es hoy el mismo día y ya son las 19h
+  return false;
+}
+
+function slotOpenLabel(id){
+  const dow=SLOT_DOW[id];if(dow===undefined)return'Abierta';
+  const jsNow=NOW_DAY===0?6:NOW_DAY-1;
+  const diff=(dow-jsNow+7)%7;
+  if(diff===0)return'Abierta · semana actual';
+  if(jsNow>dow)return'Abierta · semana siguiente';
+  if(jsNow===dow&&NOW_H>=19)return'Abierta desde las 19:00';
+  if(jsNow===dow&&NOW_H<19)return'Abre hoy a las 19:00';
+  return'Abre el '+DS[dow]+' a las 19:00';
+}
+
+function renderJugar(){
+  const s1=document.getElementById('jugar-step1');
+  const s2=document.getElementById('jugar-step2');
+  const radios=SLOTS.map(s=>{
+    const open=isSlotOpen(s.id);
+    const enrolled=currentUser&&s.jugadores.find(p=>p.nombre===currentUser.nombre);
+    const rivalSlot=estaApuntadoEnDiaRival(s.id);
+    const dot=enrolled?'✓ Apuntado':rivalSlot?'Apuntado en '+rivalSlot.club:open?(s.jugadores.length+' apuntados'):'Cerrada 🔒';
+    const dotColor=enrolled?'#27500A':rivalSlot?'#BA7517':open?'var(--navy)':'var(--text3)';
+    const isSel=s.id===selJugarSlot;
+    return'<label class="radio-option'+(isSel?' selected':'')+'" onclick="selJugarSlot=\''+s.id+'\';renderJugar()">'
+      +'<input type="radio" name="slot" value="'+s.id+'" '+(isSel?'checked':'')+' onclick="event.stopPropagation()">'
+      +'<div style="flex:1">'
+        +'<div class="radio-option-title">'+s.label+' <span style="font-weight:400;color:var(--text2)">— '+s.club+'</span></div>'
+        +'<div class="radio-option-sub" style="color:'+dotColor+'">'+dot+'</div>'
+      +'</div>'
+      +(!open?'<span style="font-size:16px">🔒</span>':enrolled?'<span style="font-size:16px">✅</span>':'')
+      +'</label>';
+  }).join('');
+  // Botón: "Apuntarme" si no apuntado al slot seleccionado, "Ver lista" si ya apuntado
+  const selSlot=getSlot(selJugarSlot);
+  const selEnrolled=currentUser&&selSlot&&selSlot.jugadores.find(p=>p.nombre===currentUser.nombre);
+  const btnLabel=selEnrolled?'Ver lista':'Apuntarme';
+  s1.innerHTML='<div style="margin-bottom:1rem">'+radios+'</div>'
+    +'<button class="btn btn-primary btn-block" onclick="confirmarSlot()">'+btnLabel+'</button>';
+  s2.style.display='none';
+}
+
+function confirmarSlot(){
+  const s1=document.getElementById('jugar-step1');
+  const s2=document.getElementById('jugar-step2');
+  const slot=getSlot(selJugarSlot);if(!slot)return;
+  const open=isSlotOpen(selJugarSlot);
+  const label=slotOpenLabel(selJugarSlot);
+  const pl=slot.jugadores;
+  const enrolled=currentUser&&pl.find(p=>p.nombre===currentUser.nombre);
+  const sorted=sortedInsByTs(selJugarSlot);
+  const maxTit=slot.pistas*4;
+  const tit=sorted.slice(0,maxTit),res=sorted.slice(maxTit);
+  const sc=pl.filter(p=>p.socio).length;
+  const esDom=selJugarSlot==='dom';
+  const esSinPistas=slot.pistas===0&&!esDom;
+  const warning=enrolled&&isBajaWarning(selJugarSlot);
+  const rival=!enrolled&&estaApuntadoEnDiaRival(selJugarSlot);
+
+  const pRow=(p,lbl)=>'<div class="player-row"><span class="ppos">'+lbl+'</span>'
+    +'<div class="avatar '+AVC(p.nombre)+'">'+INI(p.nombre)+'</div>'
+    +'<span class="pname">'+p.nombre+(currentUser&&p.nombre===currentUser.nombre?' ✓':'')+'</span>'
+    +(p.socio?'<span class="badge badge-socio">Up</span>':'')
+    +'<span style="font-size:10px;color:var(--text3)">'+(p.tsStr||'')+'</span></div>';
+
+  const sb=enrolled?'<span class="badge badge-enrolled">Apuntado</span>'
+    :open?'<span class="badge badge-open">Abierta</span>'
+    :'<span class="badge badge-closed">Cerrada</span>';
+
+  let bajaHtml='';
+  if(enrolled){
+    bajaHtml=warning
+      ?'<div class="baja-locked" style="margin-top:8px">⚠️ Si te das de baja hoy, por favor busca un@sustitut@ para el partido antes de confirmar la baja.</div>'
+       +'<button class="btn btn-danger btn-sm" onclick="darBaja(\''+selJugarSlot+'\')" style="margin-top:6px;width:100%">Darme de baja</button>'
+      :'<button class="btn btn-danger btn-sm" onclick="darBaja(\''+selJugarSlot+'\')" style="margin-top:8px;width:100%">Darme de baja</button>';
+  }
+
+  // Si ya está apuntado en el mismo día en otro club → bloquear con mensaje
+  let ebHtml='';
+  if(!enrolled&&open){
+    if(rival){
+      ebHtml='<div class="baja-locked" style="margin-top:8px">Ya estás apuntado en <strong>'+rival.label+' — '+rival.club+'</strong>. Date de baja primero y luego apúntate aquí.</div>';
+    } else {
+      ebHtml='<div class="enroll-box">'
+        +'<div class="checkbox-row"><input type="checkbox" id="sc-slot"><label for="sc-slot">Soy socio del Club Cornellà Up</label></div>'
+        +'<div class="checkbox-sub">Márcalo si eres socio del Up</div>'
+        +'<button class="btn btn-primary btn-sm btn-block" onclick="apuntarse(\''+selJugarSlot+'\')">Confirmar inscripción</button>'
+        +'</div>';
+    }
+  }
+
+  const pistasInfo=esDom?'<div style="font-size:12px;color:var(--text2);margin-bottom:.5rem">📍 Ubicación por WhatsApp · Americana</div>'
+    :esSinPistas?'<div style="font-size:12px;color:var(--text2);margin-bottom:.5rem">Lista abierta · partidos por confirmar</div>'
+    :'<div style="font-size:12px;color:var(--text2);margin-bottom:.5rem">'+slot.pistas+' pista'+(slot.pistas!==1?'s':'')+' · '+maxTit+' titulares máx.</div>';
+
+  const playersBlock=pl.length?'<div class="players-list">'
+    +'<div class="players-label"><span>Apuntados ('+pl.length+')</span><span>'+sc+' socios Up</span></div>'
+    +(esDom||esSinPistas?sorted.map((p,i)=>pRow(p,i+1)).join(''):tit.map((p,i)=>pRow(p,i+1)).join(''))
+    +(!esDom&&!esSinPistas&&res.length?'<div class="reserva-sep">Reserva ('+res.length+')</div>'+res.map((p,i)=>pRow(p,'R'+(i+1))).join(''):'')
+    +'</div>':'<div style="font-size:13px;color:var(--text2);text-align:center;padding:1.5rem 0">Nadie apuntado todavía</div>';
+
+  s2.innerHTML='<button class="btn btn-sm" id="btn-volver-jugar" style="margin-bottom:1rem">← Volver</button>'
+    +'<div class="card">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">'
+      +'<div><div style="font-size:15px;font-weight:600;color:var(--text)">'+slot.label+' — '+slot.club+'</div>'
+      +'<div style="font-size:12px;color:var(--text2)">'+label+'</div></div>'+sb
+    +'</div>'+pistasInfo+ebHtml+playersBlock+bajaHtml+'</div>';
+
+  s1.style.display='none';s2.style.display='block';
+  document.getElementById('btn-volver-jugar').onclick=()=>{s1.style.display='block';s2.style.display='none';renderJugar();};
+}
+
+function apuntarse(slotId){
+  if(!currentUser)return;
+  const slot=getSlot(slotId);if(!slot)return;
+  if(slot.jugadores.find(p=>p.nombre===currentUser.nombre)){showToast('Ya estás apuntado');return;}
+  if(!isSlotOpen(slotId)){
+    const dow=SLOT_DOW[slotId];
+    showToast('❌ Lista cerrada · Abre el '+DS[(dow-1+7)%7]+' a las 19:00');return;
+  }
+  const socio=document.getElementById('sc-slot')?.checked||false;
+  const ts=Date.now(),tsStr=new Date(ts).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  slot.jugadores.push({nombre:currentUser.nombre,socio,ts,tsStr});
+  const pos=slot.jugadores.length,maxTit=slot.pistas*4;
+  const posLabel=pos<=maxTit?'Titular #'+pos:'Reserva R'+(pos-maxTit);
+  logActividad('jugar','✅ Apuntado — '+slot.label+' '+slot.club+' · '+posLabel);
+  addNotif('jugar','📅 Apuntado a partido',
+    slot.label+' — '+slot.club+' · '+posLabel,
+    'jugar');
+  showToast('✓ Apuntado · '+slot.label+' '+slot.club+' · '+posLabel);
+  confirmarSlot();
+}
+function darBaja(slotId){
+  if(!currentUser)return;
+  const slot=getSlot(slotId);if(!slot)return;
+  slot.jugadores=slot.jugadores.filter(p=>p.nombre!==currentUser.nombre);
+  logActividad('jugar','❌ Baja — '+slot.label+' '+slot.club);
+  showToast('Dado de baja de '+slot.label+' '+slot.club);
+  confirmarSlot();
+}
+
+// ─── PARTIDOS ─────────────────────────────────────────────────
+function renderPartidos(){
+  const opts=SLOTS.map(s=>'<option value="'+s.id+'" '+(s.id===selPartidosSlot?'selected':'')+'>'+s.label+' — '+s.club+' ('+s.jugadores.length+')</option>').join('');
+  document.getElementById('partidos-days').innerHTML='<select onchange="selPartidosSlot=this.value;renderPartidosDia()" style="font-size:14px;font-weight:600;height:46px;border-color:var(--border2);background:var(--bg);width:100%;margin-bottom:1rem">'+opts+'</select>';
+  renderPartidosDia();
+}
+
+function renderPartidosDia(){
+  const slot=getSlot(selPartidosSlot);if(!slot)return;
+  const gen=partidosDelSlot[selPartidosSlot];
+  const cp=document.getElementById('coord-partidos');
+  if(isCoord()){
+    const sorted=sortedInsByRk(selPartidosSlot);
+    const maxTit=slot.pistas*4;
+    const tit=sorted.slice(0,maxTit),res=sorted.slice(maxTit);
+    const numIndoor=gen?gen.numIndoor:(_indoorTemp[selPartidosSlot]||0);
+    cp.innerHTML='<div class="coord-box">'
+      +'<div class="coord-box-title"><span class="coord-pill">Coord.</span> '+slot.label+' — '+slot.club+'</div>'
+      +'<div class="pistas-row"><span style="flex:1;font-size:13px;color:var(--text2)">Pistas'
+        +(slot.pistas!==slot.pistasDefault?' <span style="color:#BA7517">(default:'+slot.pistasDefault+')</span>':'')
+        +'<br><span style="font-size:12px"><strong>'+tit.length+'</strong> titulares · <strong>'+res.length+'</strong> reserva</span></span>'
+        +'<div class="pistas-ctrl"><button class="pistas-btn" onclick="chPistas(-1)">−</button>'
+        +'<span class="pistas-num">'+slot.pistas+'</span>'
+        +'<button class="pistas-btn" onclick="chPistas(1)">+</button></div></div>'
+      +'<div class="pistas-row" style="margin-bottom:.75rem"><span style="flex:1;font-size:13px;color:var(--text2)">Pistas indoor<br><span style="font-size:11px">Lotería aleatoria</span></span>'
+        +'<div class="pistas-ctrl"><button class="pistas-btn" onclick="chIndoor(-1)">−</button>'
+        +'<span class="pistas-num" id="indoor-num">'+numIndoor+'</span>'
+        +'<button class="pistas-btn" onclick="chIndoor(1)">+</button></div></div>'
+      +'<button class="btn btn-primary btn-sm btn-block" onclick="genPartidos()">'+(gen?'🔄 Regenerar partidos':'Generar partidos')+'</button></div>';
+  } else cp.innerHTML='';
+
+  const pg=document.getElementById('partidos-output');
+  if(!gen){pg.innerHTML='<div class="card"><div class="empty-state">'+(slot.jugadores.length?'Los partidos aún no se han generado':'No hay nadie apuntado')+'</div></div>';return;}
+
+  const{pistas,reservas,waText,indoorPistas}=gen;
+  const allConfirmed=p=>p.jugadores.every(j=>j.confirmado);
+
+  pg.innerHTML=pistas.map((p,i)=>{
+    const isIndoor=indoorPistas.includes(i);
+    const confirmed=allConfirmed(p);
+    const names=p.jugadores.map(j=>j.nombre).join(', ');
+    const hora=p.hora||'';
+
+    // Detalle expandible
+    const jugRows=p.jugadores.map(j=>{
+      const isSelf=currentUser&&j.nombre===currentUser.nombre;
+      return '<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:0.5px solid var(--border)">'
+        +'<div class="avatar '+AVC(j.nombre)+'" style="width:22px;height:22px;font-size:9px">'+INI(j.nombre)+'</div>'
+        +'<span style="font-size:13px;flex:1">'+j.nombre+'<span style="font-size:10px;color:var(--text2);margin-left:4px">#'+getRkPos(j.nombre)+'</span></span>'
+        +(j.confirmado?'<span style="font-size:11px;color:#27500A;font-weight:600">✓</span>'
+          :isSelf?'<button class="btn btn-sm" style="font-size:11px;padding:2px 8px" onclick="confirmarAsistencia(\''+selPartidosSlot+'\','+i+',\''+j.nombre+'\')">Confirmar</button>'
+          :'<span style="font-size:11px;color:var(--text3)">—</span>')
+        +(isCoord()?'<button class="btn btn-sm" style="font-size:10px;padding:2px 6px;color:var(--text2)" onclick="abrirMoverJugador(\''+selPartidosSlot+'\','+i+',\''+j.nombre+'\')">↕️</button>':'')
+        +'</div>';
+    }).join('');
+
+    const coordControls=isCoord()?
+      '<div style="display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap">'
+        +'<input type="time" value="'+hora+'" onchange="setHoraPista(\''+selPartidosSlot+'\','+i+',this.value)" style="font-size:12px;height:30px;padding:2px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);width:100px">'
+        +'<button class="btn btn-sm" style="font-size:11px;padding:3px 9px" onclick="toggleIndoor(\''+selPartidosSlot+'\','+i+')">'+(isIndoor?'🏠 Quitar indoor':'Marcar indoor')+'</button>'
+      +'</div>':'';
+
+    return '<div style="border:0.5px solid var(--border);border-radius:var(--radius);margin-bottom:6px;overflow:hidden">'
+      +'<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--bg2);cursor:pointer" onclick="togglePistaExpand('+i+')">'
+        +'<span style="font-size:13px;font-weight:600;color:var(--text);min-width:68px">Partido '+(i+1)+'</span>'
+        +(isIndoor?'<span style="font-size:10px;background:var(--info-bg);color:var(--navy);padding:1px 5px;border-radius:4px;font-weight:600">🏠</span>':'')
+        +(hora?'<span style="font-size:12px;font-weight:500;color:var(--navy)">🕐 '+hora+'</span>':'<span style="font-size:11px;color:var(--text3)">Sin hora</span>')
+        +(confirmed?'<span style="font-size:11px;color:#27500A;font-weight:600">✅</span>':'')
+        +'<span style="font-size:11px;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+names+'</span>'
+        +'<span id="pista-arrow-'+i+'" style="font-size:12px;color:var(--text2);transition:transform .2s">▶</span>'
+      +'</div>'
+      +'<div id="pista-detail-'+i+'" style="display:none;padding:10px 12px;background:var(--bg)">'
+        +jugRows
+        +coordControls
+      +'</div>'
+    +'</div>';
+  }).join('')
+  +(reservas.length?'<div class="reserva-box"><div style="font-size:11px;font-weight:600;color:#BA7517;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Reserva ('+reservas.length+')</div>'
+    +'<div>'+reservas.map(p=>'<span class="chip" style="font-size:11px">'+p.nombre+'</span>').join('')+'</div></div>':'')
+  +'<div class="wa-box"><div class="wa-header"><span>WhatsApp</span><button class="btn btn-sm" onclick="copyWA()">Copiar</button></div><div class="wa-text" id="wa-text">'+waText+'</div></div>';
+}
+
+function chPistas(d){const slot=getSlot(selPartidosSlot);if(!slot)return;slot.pistas=Math.max(0,Math.min(15,slot.pistas+d));renderPartidosDia();}
+function chIndoor(d){
+  const slot=getSlot(selPartidosSlot);if(!slot)return;
+  const gen=partidosDelSlot[selPartidosSlot];
+  const cur=gen?gen.numIndoor:(_indoorTemp[selPartidosSlot]||0);
+  const next=Math.max(0,Math.min(slot.pistas,cur+d));
+  if(gen){gen.numIndoor=next;asignarIndoor(selPartidosSlot);}
+  else _indoorTemp[selPartidosSlot]=next;
+  renderPartidosDia();
+}
+function toggleIndoor(slotId,i){
+  const gen=partidosDelSlot[slotId];if(!gen)return;
+  const idx=gen.indoorPistas.indexOf(i);
+  if(idx>=0)gen.indoorPistas.splice(idx,1);else gen.indoorPistas.push(i);
+  renderPartidosDia();
+}
+function setHoraPista(slotId,i,hora){
+  const gen=partidosDelSlot[slotId];if(!gen)return;
+  gen.pistas[i].hora=hora;
+  gen.waText=buildWA(getSlot(slotId),gen);
+  const el=document.getElementById('wa-text');if(el)el.textContent=gen.waText;
+}
+function confirmarAsistencia(slotId,pistaIdx,nombre){
+  const gen=partidosDelSlot[slotId];if(!gen)return;
+  const j=gen.pistas[pistaIdx].jugadores.find(x=>x.nombre===nombre);
+  if(j)j.confirmado=true;
+  renderPartidosDia();showToast('✓ '+nombre+' ha confirmado asistencia');
+}
+function asignarIndoor(slotId){
+  const gen=partidosDelSlot[slotId];if(!gen)return;
+  const n=gen.numIndoor,idx=[...Array(gen.pistas.length).keys()];
+  for(let i=idx.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[idx[i],idx[j]]=[idx[j],idx[i]];}
+  gen.indoorPistas=idx.slice(0,n);
+}
+function buildWA(slot,gen){
+  let wa='🎾 *'+slot.label+' — '+slot.club+'*\n';
+  wa+='Partidos: '+gen.pistas.length+' · Jugadores: '+(gen.pistas.length*4)+'\n';
+  if(gen.numIndoor>0)wa+='🏠 '+gen.numIndoor+' partido'+(gen.numIndoor!==1?'s':'')+' indoor\n';
+  wa+='\n';
+  gen.pistas.forEach((p,i)=>{
+    const indoor=gen.indoorPistas.includes(i)?'🏠 ':'';
+    const hora=p.hora?' · 🕐 '+p.hora:'';
+    wa+='*Partido '+(i+1)+'*'+hora+(indoor?' '+indoor:'')+'\n';
+    wa+=p.jugadores.map(j=>j.nombre).join(' · ')+'\n\n';
+  });
+  if(gen.reservas.length)wa+='*Reserva:* '+gen.reservas.map(p=>p.nombre).join(', ');
+  return wa;
+}
+function genPartidos(){
+  const slot=getSlot(selPartidosSlot);if(!slot)return;
+  const sorted=sortedInsByRk(selPartidosSlot);
+  const maxTit=slot.pistas*4;
+  const tit=sorted.slice(0,maxTit),res=sorted.slice(maxTit);
+  if(tit.length<4){showToast('Mínimo 4 jugadores');return;}
+  const numIndoor=_indoorTemp[selPartidosSlot]||0;
+  const pistas=[];
+  for(let i=0;i<slot.pistas;i++){
+    const g=tit.slice(i*4,(i+1)*4);
+    if(g.length===4){
+      const horaAnt=partidosDelSlot[selPartidosSlot]?.pistas[i]?.hora||'';
+      pistas.push({jugadores:g.map(j=>({nombre:j.nombre,confirmado:false})),hora:horaAnt});
+    }
+  }
+  const gen={pistas,reservas:res,numIndoor,indoorPistas:[]};
+  if(numIndoor>0)asignarIndoor(selPartidosSlot);
+  gen.waText=buildWA(slot,gen);
+  partidosDelSlot[selPartidosSlot]=gen;
+  // Notificar a los jugadores de cada pista
+  pistas.forEach((p,i)=>{
+    p.jugadores.forEach(j=>{
+      if(currentUser&&j.nombre===currentUser.nombre)return; // no notificarse a sí mismo
+      // En real esto iría a todos — en demo solo si es el usuario logueado
+    });
+  });
+  // Notificación local para el usuario si está en un partido
+  const miPista=pistas.find(p=>p.jugadores.find(j=>j.nombre===currentUser?.nombre));
+  if(miPista){
+    addNotif('partidos',
+      (partidosDelSlot[selPartidosSlot]?'🔄 Partidos regenerados':'✅ Partidos generados'),
+      slot.label+' — '+slot.club+' · Tu partido ha sido actualizado. Confirma tu asistencia.',
+      'partidos');
+  }
+  logActividad('partidos','🔄 Partidos generados — '+slot.label+' '+slot.club,currentUser?.nombre);
+  renderPartidosDia();showToast('✓ Partidos de '+slot.label+' '+slot.club+' generados');
+}
+function abrirMoverJugador(slotId,pistaOrigen,nombre){
+  const gen=partidosDelSlot[slotId];if(!gen)return;
+  const numPistas=gen.pistas.length;
+  if(numPistas<2){showToast('Solo hay un partido — no se puede mover');return;}
+
+  const j=JUGADORES.find(x=>x.nombre===nombre);
+  const nombreMostrar=j?nombreCorto(j.nombreCompleto):nombre;
+
+  const opciones=gen.pistas.map((p,i)=>{
+    if(i===pistaOrigen)return'';
+    const jugNames=p.jugadores.map(j=>j.nombre).join(', ');
+    const count=p.jugadores.length;
+    const countColor=count<4?'color:#27500A':count===4?'color:var(--text2)':'color:#BA7517';
+    return'<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border)">'
+      +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:13px;font-weight:500;color:var(--text)">Partido '+(i+1)+(p.hora?' · 🕐 '+p.hora:'')
+          +' <span style="font-size:11px;font-weight:600;'+countColor+'">('+count+' jugadores)</span></div>'
+        +'<div style="font-size:11px;color:var(--text2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+jugNames+'</div>'
+      +'</div>'
+      +'<button class="btn btn-sm btn-primary" style="font-size:12px;flex-shrink:0;margin-left:10px" onclick="moverJugador(\''+slotId+'\','+pistaOrigen+','+i+',\''+nombre+'\')">Mover</button>'
+    +'</div>';
+  }).join('');
+
+  document.getElementById('mover-content').innerHTML=
+    '<div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:4px">↕️ Mover jugador</div>'
+    +'<div style="font-size:13px;color:var(--text2);margin-bottom:1rem">Mover a <strong>'+nombreMostrar+'</strong> desde Partido '+(pistaOrigen+1)+' a:</div>'
+    +opciones;
+
+  document.getElementById('mover-overlay').classList.add('open');
+}
+
+function moverJugador(slotId,pistaOrigen,pistaDestino,nombre){
+  const gen=partidosDelSlot[slotId];if(!gen)return;
+  const pOrigen=gen.pistas[pistaOrigen];
+  const pDestino=gen.pistas[pistaDestino];
+
+  const idxOrigen=pOrigen.jugadores.findIndex(j=>j.nombre===nombre);
+  if(idxOrigen===-1)return;
+
+  const jugadorAMover=pOrigen.jugadores.splice(idxOrigen,1)[0];
+  jugadorAMover.confirmado=false;
+  pDestino.jugadores.push(jugadorAMover);
+
+  // Resetear confirmaciones de los partidos afectados
+  pOrigen.jugadores.forEach(j=>j.confirmado=false);
+  pDestino.jugadores.forEach(j=>j.confirmado=false);
+
+  gen.waText=buildWA(getSlot(slotId),gen);
+
+  const countOrigen=pOrigen.jugadores.length;
+  const countDestino=pDestino.jugadores.length;
+  let aviso='';
+  if(countOrigen<4)aviso=' · ⚠️ Partido '+(pistaOrigen+1)+' tiene solo '+countOrigen+' jugadores';
+  if(countDestino>4)aviso+=' · ⚠️ Partido '+(pistaDestino+1)+' tiene '+countDestino+' jugadores';
+
+  document.getElementById('mover-overlay').classList.remove('open');
+  renderPartidosDia();
+  showToast(nombre+' → Partido '+(pistaDestino+1)+(aviso?aviso:''));
+
+  addNotif('partidos','↕️ Partidos modificados',
+    'El coordinador ha realizado cambios. Comprueba tu asignación.',
+    'partidos');
+}
+
+function togglePistaExpand(i){
+  const detail=document.getElementById('pista-detail-'+i);
+  const arrow=document.getElementById('pista-arrow-'+i);
+  if(!detail)return;
+  const open=detail.style.display==='block';
+  detail.style.display=open?'none':'block';
+  arrow.style.transform=open?'':'rotate(90deg)';
+}
+
+function copyWA(){navigator.clipboard.writeText(document.getElementById('wa-text').textContent).then(()=>showToast('Copiado ✓'));}
+
+// ─── RESULTADOS ───────────────────────────────────────────────
+let selResCalDate=null;
+let resCalYear=new Date().getFullYear(),resCalMonth=new Date().getMonth();
+
+function renderCalendarioResultados(){
+  // Fechas con partidos
+  const fechasConPartidos=new Set(partidos.map(p=>p.fecha));
+  const todayStr=NOW.toISOString().slice(0,10);
+
+  const lbl=MESES[resCalMonth]+' '+resCalYear;
+  const fl=new Date(resCalYear,resCalMonth,1),ll=new Date(resCalYear,resCalMonth+1,0);
+  let sd=fl.getDay()-1;if(sd<0)sd=6;
+
+  let h=DSH.map(d=>'<div class="cal-dow">'+d+'</div>').join('');
+  for(let i=0;i<sd;i++){
+    const pd=new Date(resCalYear,resCalMonth,-sd+i+1);
+    h+='<div class="cal-day other-m"><span class="cal-num">'+pd.getDate()+'</span></div>';
+  }
+  for(let d=1;d<=ll.getDate();d++){
+    const ds=resCalYear+'-'+String(resCalMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const hasRes=fechasConPartidos.has(ds)&&ds<=todayStr;
+    const isT=ds===todayStr;
+    const isSel=ds===selResCalDate;
+    const isFuturo=ds>todayStr;
+    const cls=['cal-day',isT?'today':'',hasRes?'has-ev':'',isSel?'sel-date':'',isFuturo?'other-m':''].filter(Boolean).join(' ');
+    h+='<div class="'+cls+'" '+(hasRes&&!isFuturo?'onclick="selResCalDia(\''+ds+'\')"':'')+'>'
+      +'<span class="cal-num">'+d+'</span>'
+      +(hasRes?'<div class="ev-dots"><div class="ev-dot" style="background:#378ADD"></div></div>':'')
+      +'</div>';
+  }
+
+  document.getElementById('res-cal').innerHTML=
+    '<div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">'
+        +'<button class="btn btn-sm" onclick="changeResCalMonth(-1)">←</button>'
+        +'<span style="font-size:15px;font-weight:600;color:var(--text)">'+lbl+'</span>'
+        +'<button class="btn btn-sm" onclick="changeResCalMonth(1)">→</button>'
+      +'</div>'
+      +'<div class="cal-grid">'+h+'</div>'
+      +(fechasConPartidos.size===0?'<div style="font-size:12px;color:var(--text2);text-align:center;padding:.5rem 0">No hay resultados registrados todavía</div>':'')
+    +'</div>';
+
+  // Partidos del día seleccionado
+  const content=document.getElementById('res-day-content');
+  if(selResCalDate){
+    const dia=partidos.filter(p=>p.fecha===selResCalDate);
+    const d=new Date(selResCalDate+'T12:00:00');
+    content.innerHTML='<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:.75rem">'+DS[(d.getDay()+6)%7]+' '+d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear()+'</div>'
+      +(dia.length?dia.map(p=>renderPartidoCard(p,true)).join('')
+        :'<div class="empty-state" style="padding:1.5rem 0">No hay partidos este día</div>');
+  } else {
+    content.innerHTML='<div style="font-size:13px;color:var(--text2);text-align:center;padding:1rem 0">Selecciona un día con resultados para verlos</div>';
+  }
+}
+
+function selResCalDia(fecha){
+  selResCalDate=selResCalDate===fecha?null:fecha;
+  renderCalendarioResultados();
+}
+function changeResCalMonth(d){
+  resCalMonth+=d;
+  if(resCalMonth>11){resCalMonth=0;resCalYear++;}
+  if(resCalMonth<0){resCalMonth=11;resCalYear--;}
+  renderCalendarioResultados();
+}
+
+function buscarPartidoGeneradoDeJugador(){
+  if(!currentUser)return null;
+  for(const slotId of Object.keys(partidosDelSlot)){
+    const gen=partidosDelSlot[slotId];if(!gen)continue;
+    for(let pi=0;pi<gen.pistas.length;pi++){
+      const pista=gen.pistas[pi];
+      if(pista.jugadores.find(j=>j.nombre===currentUser.nombre)){
+        return{slot:getSlot(slotId),slotId,pistaIdx:pi,
+          jugadores:pista.jugadores.map(j=>j.nombre),
+          hora:pista.hora||null,indoor:gen.indoorPistas.includes(pi)};
+      }
+    }
+  }
+  return null;
+}
+
+function renderResultados(){
+  const todayStr=NOW.toISOString().slice(0,10);
+  if(selResDate>todayStr)selResDate=todayStr;
+  const esPasado=selResDate<todayStr;
+  const esHoy=selResDate===todayStr;
+
+  if(!isCoord()){
+    const miPartido=buscarPartidoGeneradoDeJugador();
+    if(miPartido){
+      document.getElementById('res-cal').innerHTML='';
+      const content=document.getElementById('res-day-content');
+      const jugs=miPartido.jugadores;
+      const yaRegistrado=partidos.find(p=>
+        p.fecha===todayStr&&jugs.every(j=>p.jugadores.includes(j))
+      );
+      // Cabecera compacta con jugadores en línea
+      const jugadoresHtml=jugs.map((n,i)=>{
+        const isSelf=currentUser&&n===currentUser.nombre;
+        return '<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:var(--radius);background:'+(isSelf?'var(--info-bg)':'transparent')+';border:0.5px solid '+(isSelf?'var(--navy)':'var(--border)')+'">'
+          +'<span style="font-size:10px;color:var(--text2);min-width:14px">'+(i+1)+'º</span>'
+          +'<div class="avatar '+AVC(n)+'" style="width:22px;height:22px;font-size:9px">'+INI(n)+'</div>'
+          +'<span style="font-size:13px;font-weight:'+(isSelf?'600':'400')+';color:var(--text);flex:1">'+n+'</span>'
+          +(isSelf?'<span style="font-size:10px;color:var(--navy);font-weight:600">Tú</span>':'')
+        +'</div>';
+      }).join('');
+
+      content.innerHTML=
+        '<div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:.75rem;margin-bottom:.75rem">'
+          +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">'
+            +'<span style="font-size:13px;font-weight:600;color:var(--text)">'+miPartido.slot.label+' — '+miPartido.slot.club+'</span>'
+            +(miPartido.hora
+              ?'<span style="font-size:14px;font-weight:600;color:var(--navy)">🕐 '+miPartido.hora+'</span>'
+              :'<span style="font-size:11px;color:var(--text3)">Hora por confirmar</span>')
+          +'</div>'
+          +(miPartido.indoor?'<div style="font-size:11px;color:var(--navy);font-weight:600;margin-bottom:.5rem">🏠 Partido indoor</div>':'')
+          +jugadoresHtml
+        +'</div>'
+        +(yaRegistrado?renderPartidoCard(yaRegistrado,false):renderFormJugador(jugs));
+    } else {
+      // Sin partido generado hoy → calendario de resultados anteriores
+      renderCalendarioResultados();
+    }
+    return;
+  }
+
+  // Coordinador
+  const fechasConPartidos=[...new Set(partidos.map(p=>p.fecha))].sort();
+  const fechasNav=[...new Set([...fechasConPartidos,todayStr])].sort();
+  const idx=fechasNav.indexOf(selResDate);
+  const prev=idx>0?fechasNav[idx-1]:null;
+  const next=idx<fechasNav.length-1?fechasNav[idx+1]:null;
+  const fmtF=str=>{const d=new Date(str+'T12:00:00');return DS[(d.getDay()+6)%7]+' '+d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();};
+  const coordPartidosDia=partidos.filter(p=>p.fecha===selResDate);
+
+  document.getElementById('res-cal').innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:10px 14px;margin-bottom:1rem">'
+    +'<button class="btn btn-sm" onclick="navResDate(\''+prev+'\')" '+(prev?'':'disabled style="opacity:.3"')+'>←</button>'
+    +'<div style="text-align:center"><div style="font-size:14px;font-weight:600;color:var(--text)">'+fmtF(selResDate)+'</div>'
+    +'<div style="font-size:11px;color:var(--text2);margin-top:2px">'+(esHoy?'Hoy':esPasado?'Día pasado':'Hoy')+'</div></div>'
+    +'<button class="btn btn-sm" onclick="navResDate(\''+next+'\')" '+(next?'':'disabled style="opacity:.3"')+'>→</button></div>';
+
+  _coordScores=[[0,0],[0,0],[0,0]];
+  const slotsConPartidos=Object.keys(partidosDelSlot).filter(id=>partidosDelSlot[id]&&partidosDelSlot[id].pistas.length>0);
+
+  // Partidos ya guardados del día seleccionado
+  const listaPartidos=coordPartidosDia.length
+    ?coordPartidosDia.map(p=>renderPartidoCard(p,false)).join('')
+    :'<div class="empty-state" style="padding:1.5rem 0">No hay resultados para este día</div>';
+
+  if(slotsConPartidos.length===0){
+    document.getElementById('res-day-content').innerHTML=
+      '<div class="card" style="text-align:center;padding:2rem 1rem">'
+        +'<div style="font-size:32px;margin-bottom:.75rem">🎾</div>'
+        +'<div style="font-size:15px;font-weight:500;color:var(--text);margin-bottom:6px">Sin partidos generados</div>'
+        +'<div style="font-size:13px;color:var(--text2)">Genera los partidos desde la pestaña Partidos para poder meter resultados.</div>'
+      +'</div>'
+      +'<div id="res-list">'+listaPartidos+'</div>';
+    return;
+  }
+
+  // Selector de slot
+  const slotOpts=slotsConPartidos.map(id=>{
+    const s=getSlot(id);
+    return'<option value="'+id+'">'+s.label+' — '+s.club+'</option>';
+  }).join('');
+
+  document.getElementById('res-day-content').innerHTML=
+    '<div class="coord-box" style="margin-bottom:1rem">'
+      +'<div class="coord-box-title"><span class="coord-pill">Coord.</span> '+fmtF(selResDate)+'</div>'
+      +'<div class="form-group"><label class="form-label">Slot</label>'
+        +'<select id="res-slot-sel" onchange="onResSlotChange()">'
+          +'<option value="">Selecciona slot...</option>'+slotOpts
+        +'</select></div>'
+      +'<div id="res-partido-wrap" style="display:none">'
+        +'<div class="form-group"><label class="form-label">Partido</label>'
+          +'<select id="res-partido-sel" onchange="onResPartidoChange()"></select>'
+        +'</div>'
+      +'</div>'
+      +'<div id="res-jugadores-wrap" style="display:none"></div>'
+      +'<div id="res-scores-wrap" style="display:none">'
+        +[0,1,2].map(si=>'<div class="score-card"><div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px">Set '+(si+1)+'</div>'
+          +'<div style="font-size:11px;color:var(--text2);margin-bottom:10px" id="res-rot-'+si+'"></div>'
+          +'<div class="score-row-ctrl">'
+            +'<div class="score-side"><div class="score-ctrl">'
+              +'<button class="sc-btn" onclick="chScCoord('+si+',0,-1)">−</button>'
+              +'<div class="sc-num" id="csc-'+si+'-0">0</div>'
+              +'<button class="sc-btn" onclick="chScCoord('+si+',0,1)">+</button>'
+            +'</div></div>'
+            +'<div class="sc-vs">vs</div>'
+            +'<div class="score-side"><div class="score-ctrl">'
+              +'<button class="sc-btn" onclick="chScCoord('+si+',1,-1)">−</button>'
+              +'<div class="sc-num" id="csc-'+si+'-1">0</div>'
+              +'<button class="sc-btn" onclick="chScCoord('+si+',1,1)">+</button>'
+            +'</div></div>'
+          +'</div></div>').join('')
+        +'<button class="btn btn-primary btn-sm btn-block" style="margin-top:.5rem" onclick="guardarResCoord()">Guardar resultado</button>'
+      +'</div>'
+    +'</div>'
+    +'<div id="res-list">'+listaPartidos+'</div>';
+}
+
+function renderFormJugador(jugadores){
+  _resScores=[[0,0],[0,0],[0,0]];
+  const [j1,j2,j3,j4]=jugadores;
+  const rots=[{izq:j1+'+'+j4,der:j2+'+'+j3},{izq:j1+'+'+j3,der:j2+'+'+j4},{izq:j1+'+'+j2,der:j3+'+'+j4}];
+  return rots.map((r,si)=>
+    '<div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:.625rem;margin-bottom:.5rem">'
+      +'<div style="font-size:11px;color:var(--text2);margin-bottom:.5rem;font-weight:500">Set '+(si+1)+' · '+r.izq+' vs '+r.der+'</div>'
+      +'<div class="score-row-ctrl">'
+        +'<div class="score-side"><div class="score-ctrl">'
+          +'<button class="sc-btn" onclick="chScRes('+si+',0,-1)">−</button><div class="sc-num" id="rsc-'+si+'-0">0</div><button class="sc-btn" onclick="chScRes('+si+',0,1)">+</button>'
+        +'</div></div>'
+        +'<div class="sc-vs">vs</div>'
+        +'<div class="score-side"><div class="score-ctrl">'
+          +'<button class="sc-btn" onclick="chScRes('+si+',1,-1)">−</button><div class="sc-num" id="rsc-'+si+'-1">0</div><button class="sc-btn" onclick="chScRes('+si+',1,1)">+</button>'
+        +'</div></div>'
+      +'</div>'
+    +'</div>').join('')
+  +'<button class="btn btn-primary btn-block" style="margin-top:.5rem" onclick="guardarResDesdePartido(\''+jugadores.join(',')+'\')">Guardar resultado</button>'
+  +'<div style="font-size:11px;color:var(--text2);text-align:center;margin-top:6px">Otro jugador del partido tendrá que validarlo</div>';
+}
+
+function onResSlotChange(){
+  const slotId=document.getElementById('res-slot-sel').value;
+  const pistaWrap=document.getElementById('res-partido-wrap');
+  const jugWrap=document.getElementById('res-jugadores-wrap');
+  const scWrap=document.getElementById('res-scores-wrap');
+  if(!slotId){pistaWrap.style.display='none';jugWrap.style.display='none';scWrap.style.display='none';return;}
+  const gen=partidosDelSlot[slotId];if(!gen){return;}
+  const pistaOpts=gen.pistas.map((p,i)=>'<option value="'+i+'">Pista '+(i+1)+' — '+p.jugadores.map(j=>j.nombre).join(', ')+'</option>').join('');
+  document.getElementById('res-partido-sel').innerHTML='<option value="">Selecciona partido...</option>'+pistaOpts;
+  pistaWrap.style.display='block';
+  jugWrap.style.display='none';scWrap.style.display='none';
+}
+
+function onResPartidoChange(){
+  const slotId=document.getElementById('res-slot-sel').value;
+  const pistaIdx=parseInt(document.getElementById('res-partido-sel').value);
+  const jugWrap=document.getElementById('res-jugadores-wrap');
+  const scWrap=document.getElementById('res-scores-wrap');
+  if(isNaN(pistaIdx)){jugWrap.style.display='none';scWrap.style.display='none';return;}
+  const gen=partidosDelSlot[slotId];if(!gen)return;
+  const jugs=gen.pistas[pistaIdx].jugadores.map(j=>j.nombre);
+  const [j1,j2,j3,j4]=jugs;
+  // Mostrar jugadores
+  jugWrap.style.display='block';
+  jugWrap.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem">'
+    +jugs.map(n=>'<span class="chip"><div class="avatar '+AVC(n)+'" style="width:20px;height:20px;font-size:8px">'+INI(n)+'</div>'+n+'</span>').join('')
+    +'</div>';
+  // Actualizar labels de rotación
+  const rots=[j1+'+'+j4+' vs '+j2+'+'+j3,j1+'+'+j3+' vs '+j2+'+'+j4,j1+'+'+j2+' vs '+j3+'+'+j4];
+  rots.forEach((r,i)=>{const el=document.getElementById('res-rot-'+i);if(el)el.textContent=r;});
+  // Reset scores
+  _coordScores=[[0,0],[0,0],[0,0]];
+  [0,1,2].forEach(si=>{
+    [0,1].forEach(lado=>{const el=document.getElementById('csc-'+si+'-'+lado);if(el)el.textContent='0';});
+  });
+  scWrap.style.display='block';
+}
+
+function guardarResCoord(){
+  const slotId=document.getElementById('res-slot-sel')?.value;
+  const pistaIdx=parseInt(document.getElementById('res-partido-sel')?.value);
+  if(!slotId||isNaN(pistaIdx)){showToast('Selecciona slot y pista');return;}
+  const gen=partidosDelSlot[slotId];if(!gen)return;
+  const jugs=gen.pistas[pistaIdx].jugadores.map(j=>j.nombre);
+  const sets=_coordScores.map(s=>({p1:s[0],p2:s[1]}));
+  guardarPartidoComun(jugs,sets,selResDate);
+}
+
+function navResDate(fecha){if(!fecha)return;selResDate=fecha;renderResultados();}
+
+function chScCoord(si,lado,d){_coordScores[si][lado]=Math.max(0,Math.min(7,_coordScores[si][lado]+d));document.getElementById('csc-'+si+'-'+lado).textContent=_coordScores[si][lado];}
+function chScRes(si,lado,d){_resScores[si][lado]=Math.max(0,Math.min(7,_resScores[si][lado]+d));document.getElementById('rsc-'+si+'-'+lado).textContent=_resScores[si][lado];}
+
+function guardarRes(){
+  const jA=document.getElementById('jA')?.value,jB=document.getElementById('jB')?.value;
+  const jC=document.getElementById('jC')?.value,jD=document.getElementById('jD')?.value;
+  if(!jA||!jB||!jC||!jD){showToast('Completa todos los campos');return;}
+  if(new Set([jA,jB,jC,jD]).size!==4){showToast('Los 4 jugadores deben ser distintos');return;}
+  const sets=_coordScores.map(s=>({p1:s[0],p2:s[1]}));
+  guardarPartidoComun([jA,jB,jC,jD],sets,selResDate);
+}
+
+function guardarResDesdePartido(jugsStr){
+  const jugadores=jugsStr.split(',');
+  const sets=_resScores.map(s=>({p1:s[0],p2:s[1]}));
+  guardarPartidoComun(jugadores,sets,selResDate);
+}
+
+function guardarPartidoComun(jugadores,sets,fecha){
+  const d=new Date(fecha+'T12:00:00'),dia=DS[(d.getDay()+6)%7];
+  const nuevo={id:Date.now(),fecha,dia,jugadores,sets,introducidoPor:currentUser?.nombre||'',validadoPor:null};
+  const ind=calcInd(nuevo),maxJG=Math.max(...Object.values(ind)),totJJ=sets.reduce((a,s)=>a+s.p1+s.p2,0);
+  jugadores.forEach(n=>{const j=JUGADORES.find(x=>x.nombre===n);if(!j)return;j.pj++;if(ind[n]===maxJG)j.pg++;j.jj+=totJJ;j.jg+=ind[n];});
+  partidos.push(nuevo);
+  // Si el usuario logueado es uno de los 4, notificar que otro puede validar
+  if(currentUser&&jugadores.includes(currentUser.nombre)){
+    const otros=jugadores.filter(n=>n!==currentUser.nombre);
+    addNotif('resultados',
+      '📋 Resultado introducido · Necesita validación',
+      dia+' · Introducido por '+nombreCorto(currentUser.nombreCompleto)+'. Los jugadores '+otros.map(n=>{const j=JUGADORES.find(x=>x.nombre===n);return j?nombreCorto(j.nombreCompleto):n;}).join(', ')+' pueden validarlo.',
+      'resultados');
+  }
+  renderResultados();renderRanking();
+  logActividad('resultados','📋 Resultado introducido — '+dia+' · '+jugadores.join(', '));
+  showToast('✓ Resultado guardado · Pendiente de validación');
+}
+
+function renderPartidoCard(p,soloLectura){
+  const d=new Date(p.fecha+'T12:00:00');
+  const js=p.jugadores;
+  const isPlayer=currentUser&&js.includes(currentUser.nombre);
+  const hasValidated=p.validadoPor&&p.validadoPor!==p.introducidoPor;
+  const canValidate=!soloLectura&&isPlayer&&currentUser.nombre!==p.introducidoPor&&!hasValidated;
+  const rotLabels=[js[0]+'+'+js[3]+' vs '+js[1]+'+'+js[2],js[0]+'+'+js[2]+' vs '+js[1]+'+'+js[3],js[0]+'+'+js[1]+' vs '+js[2]+'+'+js[3]];
+  const setsHtml=p.sets.map((s,i)=>'<div class="rot-row"><span class="rot-lbl">Set '+(i+1)+'</span>'
+    +'<span style="font-size:11px;color:var(--text2)">'+rotLabels[i].split(' vs ')[0]+'</span>'
+    +'<span class="rot-vs" style="font-weight:600">'+s.p1+' - '+s.p2+'</span>'
+    +'<span style="font-size:11px;color:var(--text2);text-align:right">'+rotLabels[i].split(' vs ')[1]+'</span></div>').join('');
+  const jugChips='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">'+js.map(n=>'<span class="chip" style="font-size:11px"><div class="avatar '+AVC(n)+'" style="width:18px;height:18px;font-size:8px">'+INI(n)+'</div>'+n+'</span>').join('')+'</div>';
+  const estadoHtml=hasValidated?'<div style="font-size:11px;color:#27500A;font-weight:600;margin-top:8px">✅ Validado por '+p.validadoPor+'</div>'
+    :p.introducidoPor?'<div style="font-size:11px;color:#BA7517;margin-top:8px">⏳ Pendiente de validación</div>':'';
+  const validarBtn=canValidate?'<button class="btn btn-sm btn-primary" style="margin-top:8px;width:100%;font-size:12px" onclick="validarResultado('+p.id+')">Validar resultado</button>':'';
+  const editarBtn=isCoord()?'<button class="btn btn-sm" style="margin-top:6px;width:100%;font-size:12px" onclick="editarResultado('+p.id+')">✏️ Modificar (Coord.)</button>':'';
+  const waBtn='<button class="btn btn-sm" style="margin-top:6px;width:100%;font-size:12px" onclick="copyWAResultado('+p.id+')">📤 Copiar para WhatsApp</button>';
+  return '<div class="res-card"><div class="res-fecha">'+p.dia+' '+d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear()+'</div>'
+    +jugChips+setsHtml+estadoHtml+validarBtn+editarBtn+waBtn+'</div>';
+}
+
+function validarResultado(id){
+  const p=partidos.find(x=>x.id===id);if(!p||!currentUser)return;
+  if(currentUser.nombre===p.introducidoPor){showToast('No puedes validar tu propio resultado');return;}
+  p.validadoPor=currentUser.nombre;
+  addNotif('resultados','✅ Resultado validado',
+    p.dia+' · '+p.jugadores.join(', ')+' — validado por '+currentUser.nombre,
+    'resultados');
+  logActividad('resultados','✅ Resultado validado — '+p.dia+' · '+p.jugadores.join(', '));
+  renderResultados();showToast('✅ Resultado validado');
+}
+function editarResultado(id){
+  const p=partidos.find(x=>x.id===id);if(!p)return;
+  selResDate=p.fecha;partidos=partidos.filter(x=>x.id!==id);
+  renderResultados();renderRanking();showToast('Edita el resultado y guarda de nuevo');
+}
+function copyWAResultado(id){
+  const p=partidos.find(x=>x.id===id);if(!p)return;
+  const ind=calcInd(p),maxJG=Math.max(...Object.values(ind));
+  const js=p.jugadores;const d=new Date(p.fecha+'T12:00:00');
+  let wa='🎾 *Resultados '+p.dia+' '+d.getDate()+'/'+(d.getMonth()+1)+'*\n\n';
+  const rots=[js[0]+'+'+js[3],js[0]+'+'+js[2],js[0]+'+'+js[1]];
+  const rotsr=[js[1]+'+'+js[2],js[1]+'+'+js[3],js[2]+'+'+js[3]];
+  p.sets.forEach((s,i)=>wa+='Set '+(i+1)+': '+rots[i]+' '+s.p1+' - '+s.p2+' '+rotsr[i]+'\n');
+  navigator.clipboard.writeText(wa).then(()=>showToast('📤 Copiado para WhatsApp'));
+}
+
+// ─── AGENDA ───────────────────────────────────────────────────
+function renderCalendar(){
+  document.getElementById('cal-lbl').textContent=MESES[calMonth]+' '+calYear;
+  const fl=new Date(calYear,calMonth,1),ll=new Date(calYear,calMonth+1,0);
+  let sd=fl.getDay()-1;if(sd<0)sd=6;
+  const evByD={};EVENTOS.forEach(e=>{if(!evByD[e.fecha])evByD[e.fecha]=[];evByD[e.fecha].push(e);});
+  const tod=NOW.toISOString().slice(0,10);
+  let h=DSH.map(d=>'<div class="cal-dow">'+d+'</div>').join('');
+  for(let i=0;i<sd;i++){const pd=new Date(calYear,calMonth,-sd+i+1);h+='<div class="cal-day other-m"><span class="cal-num">'+pd.getDate()+'</span></div>';}
+  for(let d=1;d<=ll.getDate();d++){
+    const ds=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const evs=evByD[ds]||[],isT=ds===tod,isSel=ds===selDateStr,hasEv=evs.length>0;
+    const dots=evs.map(e=>'<div class="ev-dot dot-'+e.tipo+'"></div>').join('');
+    const cls=['cal-day',isT?'today':'',hasEv?'has-ev':'',isSel?'sel-date':''].filter(Boolean).join(' ');
+    h+='<div class="'+cls+'" '+(hasEv?'onclick="selCalDate(\''+ds+'\')"':'')+'><span class="cal-num">'+d+'</span>'+(dots?'<div class="ev-dots">'+dots+'</div>':'')+'</div>';
+  }
+  document.getElementById('cal-grid').innerHTML=h;
+  renderEvList();
+}
+function selCalDate(ds){selDateStr=selDateStr===ds?null:ds;renderCalendar();}
+function changeMonth(d){calMonth+=d;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}selDateStr=null;renderCalendar();}
+
+function renderEvList(){
+  const el=document.getElementById('ev-list'),lbl=document.getElementById('ev-lbl');
+  let evs;
+  if(selDateStr){evs=EVENTOS.filter(e=>e.fecha===selDateStr);const d=new Date(selDateStr+'T12:00:00');lbl.textContent=d.getDate()+' de '+MESES[d.getMonth()];}
+  else{evs=EVENTOS.filter(e=>{const d=new Date(e.fecha+'T12:00:00');return d.getFullYear()===calYear&&d.getMonth()===calMonth;}).sort((a,b)=>a.fecha.localeCompare(b.fecha));lbl.textContent='Eventos de '+MESES[calMonth];}
+  el.innerHTML=evs.length?evs.map(e=>renderEventoCard(e)).join(''):'<div class="empty-state">No hay eventos este mes</div>';
+}
+
+function renderEventoCard(e){
+  const d=new Date(e.fecha+'T12:00:00'),dow=DS[(d.getDay()+6)%7].slice(0,3);
+  const T={torneo:'Torneo',social:'Social',otro:'Actividad'};
+  const miIns=currentUser&&e.inscritos.find(i=>i.nombre===currentUser.nombre);
+  const haPagado=miIns&&e.pagos.includes(currentUser.nombre);
+  const esTorneo=e.tipo==='torneo';
+
+  let inscHtml='';
+  if(miIns){
+    inscHtml='<div style="background:var(--success-bg);border:0.5px solid #C0DD97;border-radius:var(--radius);padding:8px 10px;margin-top:8px">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between">'
+        +'<span style="font-size:13px;font-weight:600;color:var(--success-t)">✓ Apuntado</span>'
+        +(haPagado?'<span style="font-size:11px;font-weight:600;color:#27500A">✅ Pago confirmado</span>'
+          :'<span style="font-size:11px;color:#BA7517">⏳ Pago pendiente</span>')
+      +'</div>'
+      +(esTorneo&&miIns.pareja?'<div style="font-size:12px;color:var(--success-t);margin-top:3px">Pareja: <strong>'+miIns.pareja+'</strong></div>':'')
+      +'<button class="btn btn-danger btn-sm" style="margin-top:8px;width:100%;font-size:12px" onclick="bajaEvento('+e.id+')">Darme de baja</button>'
+    +'</div>';
+  } else {
+    inscHtml='<div style="margin-top:8px">'
+      +(esTorneo?'<div style="margin-bottom:6px"><label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px">Nombre de tu pareja (obligatorio)</label>'
+        +'<input type="text" id="pareja-'+e.id+'" placeholder="Nombre de tu compañer@" style="height:36px;font-size:13px"></div>':'')
+      +'<button class="btn btn-primary btn-sm btn-block" style="font-size:13px" onclick="apuntarseEvento('+e.id+')">Apuntarme</button>'
+    +'</div>';
+  }
+
+  let listaHtml='';
+  if(isCoord()&&e.inscritos.length){
+    listaHtml='<button class="btn btn-sm" style="margin-top:8px;width:100%;font-size:12px" onclick="abrirListaEvento('+e.id+')">'
+      +'Ver inscritos ('+e.inscritos.length+') · '+e.pagos.length+' pagados ↑'
+    +'</button>';
+  } else if(e.inscritos.length){
+    listaHtml='<div style="font-size:12px;color:var(--text2);margin-top:6px">'+e.inscritos.length+' inscrito'+(e.inscritos.length!==1?'s':'')+(e.precio>0?' · '+e.pagos.length+' pagados':'')+'</div>';
+  }
+
+  // Indicadores compactos para la cabecera colapsada
+  const badges='<div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:3px">'
+    +'<span class="ev-type et-'+e.tipo+'" style="margin-top:0">'+T[e.tipo]+'</span>'
+    +(e.precio>0?'<span style="font-size:10px;font-weight:600;color:var(--text2)">'+e.precio+'€</span>':'')
+    +(esTorneo?'<span style="font-size:10px;color:var(--text2)">Parejas</span>':'')
+    +(miIns?'<span style="font-size:10px;font-weight:600;color:#27500A">✓ Apuntado'+(haPagado?' · Pagado':'')+'</span>':'')
+    +(e.inscritos.length&&!miIns?'<span style="font-size:10px;color:var(--text2)">'+e.inscritos.length+' inscritos</span>':'')
+  +'</div>';
+
+  return '<div class="ev-card'+(e.fecha===selDateStr?' hl':'')+'" style="cursor:pointer" onclick="toggleEvento('+e.id+',event)">'
+    +'<div class="ev-date"><div class="ev-day-n">'+d.getDate()+'</div><div class="ev-day-s">'+dow+'</div></div>'
+    +'<div class="ev-div"></div>'
+    +'<div class="ev-body" style="flex:1">'
+      +'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">'
+        +'<div class="ev-title" style="flex:1">'+e.titulo+'</div>'
+        +'<span id="ev-arrow-'+e.id+'" style="font-size:11px;color:var(--text2);flex-shrink:0;margin-top:2px">▶</span>'
+      +'</div>'
+      +badges
+      +'<div id="ev-detail-'+e.id+'" style="display:none">'
+        +'<div class="ev-desc" style="margin-top:8px">'+e.desc+'</div>'
+        +inscHtml+listaHtml
+      +'</div>'
+    +'</div>'
+  +'</div>';
+}
+
+function toggleEvento(id,ev){
+  // No cerrar si se pulsó un botón interno
+  if(ev.target.closest('button')||ev.target.closest('input'))return;
+  const detail=document.getElementById('ev-detail-'+id);
+  const arrow=document.getElementById('ev-arrow-'+id);
+  if(!detail)return;
+  const open=detail.style.display==='block';
+  detail.style.display=open?'none':'block';
+  arrow.style.transform=open?'':'rotate(90deg)';
+}
+
+function apuntarseEvento(id){
+  if(!currentUser)return;
+  const e=EVENTOS.find(x=>x.id===id);if(!e)return;
+  if(e.inscritos.find(i=>i.nombre===currentUser.nombre)){showToast('Ya estás apuntado');return;}
+  const esTorneo=e.tipo==='torneo';
+  const pareja=esTorneo?(document.getElementById('pareja-'+id)?.value.trim()||''):'';
+  if(esTorneo&&!pareja){showToast('Indica el nombre de tu pareja');return;}
+  e.inscritos.push({nombre:currentUser.nombre,pareja});
+  addNotif('agenda','🗓️ Inscrito en evento',e.titulo+' · '+(e.precio>0?e.precio+'€':'Gratuito'),'agenda');
+  renderEvList();showToast('✓ Apuntado a '+e.titulo);
+}
+function bajaEvento(id){
+  if(!currentUser)return;
+  const e=EVENTOS.find(x=>x.id===id);if(!e)return;
+  e.inscritos=e.inscritos.filter(i=>i.nombre!==currentUser.nombre);
+  e.pagos=e.pagos.filter(n=>n!==currentUser.nombre);
+  renderEvList();showToast('Dado de baja de '+e.titulo);
+}
+function validarPago(id,nombre){
+  if(!isCoord())return;
+  const e=EVENTOS.find(x=>x.id===id);if(!e)return;
+  if(!e.pagos.includes(nombre))e.pagos.push(nombre);
+  renderEvList();showToast('✅ Pago validado · '+nombre);
+}
+function abrirListaEvento(id){
+  const e=EVENTOS.find(x=>x.id===id);if(!e)return;
+  const esTorneo=e.tipo==='torneo';
+  const rows=e.inscritos.map(ins=>{
+    const pagado=e.pagos.includes(ins.nombre);
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:0.5px solid var(--border)">'
+      +'<div class="avatar '+AVC(ins.nombre)+'" style="width:28px;height:28px;font-size:11px">'+INI(ins.nombre)+'</div>'
+      +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:13px;font-weight:500;color:var(--text)">'+ins.nombre+'</div>'
+        +(esTorneo&&ins.pareja?'<div style="font-size:11px;color:var(--text2)">con '+ins.pareja+'</div>':'')
+      +'</div>'
+      +(pagado
+        ?'<span style="font-size:12px;color:#27500A;font-weight:600">✅ Pagado</span>'
+        :'<button class="btn btn-sm" style="font-size:11px;padding:4px 10px;background:var(--green-bg);color:var(--green-t);border-color:#C0DD97" onclick="validarPagoSheet('+id+',\''+ins.nombre+'\')">Marcar pago</button>')
+    +'</div>';
+  }).join('');
+  document.getElementById('ev-sheet-content').innerHTML=
+    '<div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:4px">'+e.titulo+'</div>'
+    +'<div style="font-size:12px;color:var(--text2);margin-bottom:1rem">'+e.inscritos.length+' inscritos · '+e.pagos.length+' pagados</div>'
+    +rows;
+  document.getElementById('ev-sheet-overlay').classList.add('open');
+}
+function cerrarListaEvento(ev){
+  if(ev.target===document.getElementById('ev-sheet-overlay'))
+    document.getElementById('ev-sheet-overlay').classList.remove('open');
+}
+function validarPagoSheet(id,nombre){
+  validarPago(id,nombre);
+  abrirListaEvento(id);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────
+const demoSel=document.getElementById('demo-sel');
+JUGADORES.forEach(j=>{
+  const o=document.createElement('option');
+  o.value=j.id;
+  const isC=COORDS.includes(j.nombre);
+  o.textContent=(isC?'⭐ ':'')+nombreCorto(j.nombreCompleto)+(isC?' (Coord.)':'');
+  demoSel.appendChild(o);
+});
+renderCalendar();
+</script>
+</body>
+</html>
