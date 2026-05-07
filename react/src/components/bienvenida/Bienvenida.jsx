@@ -23,7 +23,7 @@ export default function Bienvenida({
   return (
     <div>
       <div className="hero-pride">
-        <img src="/icons/icon-192.png" alt="Panteres Grogues Padel" className="hero-avatar" />
+        <img src="/icons/landing-logo.png" alt="Panteres Grogues Padel" className="hero-avatar" />
         <div className="hero-title">
           {saludoPorHora()}, {nombre}!
         </div>
