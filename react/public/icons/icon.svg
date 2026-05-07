@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#FDF6A0" />
+  <circle cx="256" cy="232" r="132" fill="#0D1B3E" />
+  <path d="M174 312c18 24 48 40 82 40 34 0 64-16 82-40" fill="none" stroke="#FDF6A0" stroke-width="24" stroke-linecap="round" />
+  <circle cx="216" cy="212" r="16" fill="#FDF6A0" />
+  <circle cx="296" cy="212" r="16" fill="#FDF6A0" />
+  <rect x="120" y="384" width="272" height="48" rx="24" fill="#0D1B3E" />
+  <text x="256" y="418" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#FDF6A0">PÀDEL</text>
+</svg>
