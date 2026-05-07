@@ -1,13 +1,12 @@
-const CACHE_NAME = "panteres-padel-v1";
+const CACHE_NAME = "panteres-padel-v3";
 const OFFLINE_URL = "/offline.html";
 const ASSETS_TO_CACHE = [
   "/",
   "/offline.html",
-  "/manifest.json",
-  "/icons/icon.svg",
-  "/icons/icon-maskable.svg",
-  "/icons/icon-192.png",
-  "/icons/icon-512.png"
+  "/manifest.json?v=3",
+  "/pwa-icon-192.png?v=3",
+  "/pwa-icon-512.png?v=3",
+  "/apple-touch-icon.png?v=3"
 ];
 
 self.addEventListener("install", (event) => {
