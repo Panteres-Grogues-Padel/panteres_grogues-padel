@@ -86,8 +86,12 @@ export default function App() {
           {activeTab === "bienvenida" ? (
             <Bienvenida
               currentUser={auth.currentUser}
+              ranking={ranking}
               onGoToJugar={() => setActiveTab("jugar")}
               onGoToPartidos={() => setActiveTab("partidos")}
+              onGoToAgenda={() => setActiveTab("agenda")}
+              onGoToResultados={() => setActiveTab("resultados")}
+              onGoToRanking={() => setActiveTab("ranking")}
             />
           ) : null}
           {activeTab === "ranking" ? (
