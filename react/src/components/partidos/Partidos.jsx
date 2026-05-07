@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function Partidos({
   partidos,
@@ -23,6 +23,14 @@ export default function Partidos({
     return [...set].sort();
   }, [slots, partidos]);
 
+  useEffect(() => {
+    if (!slotId && slots.length) setSlotId(slots[0].id);
+  }, [slotId, slots]);
+
+  useEffect(() => {
+    if (!semana && semanasDisponibles.length) setSemana(semanasDisponibles[0]);
+  }, [semana, semanasDisponibles]);
+
   const partidosFiltrados = useMemo(
     () =>
       partidos.filter((p) => {
@@ -39,6 +47,8 @@ export default function Partidos({
   );
 
   function handleGenerarClick() {
+    if (!slotId) return;
+    if (!semana) return;
     if (yaGenerado) {
       const ok = window.confirm("Ya existen partidos para ese slot y semana. ¿Regenerar?");
       if (!ok) return;

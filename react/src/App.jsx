@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import LoginScreen from "./components/auth/LoginScreen";
+import Bienvenida from "./components/bienvenida/Bienvenida";
 import Ranking from "./components/ranking/Ranking";
 import Jugar from "./components/jugar/Jugar";
 import Partidos from "./components/partidos/Partidos";
@@ -15,7 +16,7 @@ import { useResultados } from "./hooks/useResultados";
 
 export default function App() {
   const auth = useAuth();
-  const [activeTab, setActiveTab] = useState("ranking");
+  const [activeTab, setActiveTab] = useState("bienvenida");
   const [flashMessage, setFlashMessage] = useState("");
   const [jugadorSeleccionado, setJugadorSeleccionado] = useState(null);
   const { slots, apuntarEnSlot, bajaEnSlot } = useSlots(auth.currentUser);
@@ -82,6 +83,13 @@ export default function App() {
         </header>
 
         <main className="content">
+          {activeTab === "bienvenida" ? (
+            <Bienvenida
+              currentUser={auth.currentUser}
+              onGoToJugar={() => setActiveTab("jugar")}
+              onGoToPartidos={() => setActiveTab("partidos")}
+            />
+          ) : null}
           {activeTab === "ranking" ? (
             <>
               {rankingLoading ? <p className="info-box">Cargando ranking...</p> : null}
@@ -170,6 +178,7 @@ export default function App() {
 
         <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
       </div>
+      {flashMessage ? <div className="toast">{flashMessage}</div> : null}
       {jugadorSeleccionado ? (
         <div className="toast" onClick={() => setJugadorSeleccionado(null)}>
           {jugadorSeleccionado.nombreCompleto}

@@ -1,4 +1,4 @@
-const TABS = ["ranking", "jugar", "partidos", "resultados", "agenda"];
+const TABS = ["bienvenida", "ranking", "jugar", "partidos", "resultados", "agenda"];
 
 export default function BottomNav({ activeTab, setActiveTab }) {
   return (
