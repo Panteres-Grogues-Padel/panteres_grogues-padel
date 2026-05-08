@@ -19,7 +19,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("bienvenida");
   const [flashMessage, setFlashMessage] = useState("");
   const [jugadorSeleccionado, setJugadorSeleccionado] = useState(null);
-  const { slots, apuntarEnSlot, bajaEnSlot } = useSlots(auth.currentUser);
+  const { slots, slotsNotice, apuntarEnSlot, bajaEnSlot } = useSlots(auth.currentUser);
   const { ranking, loading: rankingLoading, error: rankingError } = useRanking();
   const { partidos, generarPartidos, asignarHora, toggleIndoor, moverJugador, confirmarAsistencia } =
     usePartidos(auth.currentUser);
@@ -107,6 +107,7 @@ export default function App() {
               currentUser={auth.currentUser}
               onApuntar={handleApuntar}
               onBaja={handleBaja}
+              backendNotice={slotsNotice}
               message={flashMessage}
             />
           ) : null}

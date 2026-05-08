@@ -45,6 +45,7 @@ function getSemanaObjetivo(slot, now = new Date()) {
 export function useSlots(currentUser) {
   const [slots, setSlots] = useState(SLOTS_INICIALES);
   const [inscripciones, setInscripciones] = useState([]);
+  const [slotsNotice, setSlotsNotice] = useState("");
 
   const useFallback = !supabase || !currentUser?.id || currentUser.fromFallback === true;
 
@@ -54,7 +55,8 @@ export function useSlots(currentUser) {
       .select("id,label,club,dia_semana,pistas_activo,activo")
       .eq("activo", true)
       .order("dia_semana", { ascending: true });
-    if (!error && data) {
+    if (!error && data?.length) {
+      setSlotsNotice("");
       setSlots(
         data.map((s) => ({
           id: s.id,
@@ -65,7 +67,11 @@ export function useSlots(currentUser) {
           jugadores: []
         }))
       );
+      return;
     }
+    // Si no hay slots en BD (o falla la lectura), evitamos dejar la pestaña vacía.
+    setSlotsNotice("No se han encontrado slots activos en Supabase (tabla slots). Se muestran slots de respaldo.");
+    setSlots(SLOTS_INICIALES);
   }
 
   async function loadInscripcionesSupabase() {
@@ -234,5 +240,5 @@ export function useSlots(currentUser) {
     return { ok: true };
   }
 
-  return { slots: slotsConEstado, rawSlots: slots, apuntarEnSlot, bajaEnSlot };
+  return { slots: slotsConEstado, rawSlots: slots, slotsNotice, apuntarEnSlot, bajaEnSlot };
 }

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import DetalleSlot from "./DetalleSlot";
 
-export default function Jugar({ slots, currentUser, onApuntar, onBaja, message }) {
+export default function Jugar({ slots, currentUser, onApuntar, onBaja, backendNotice, message }) {
   const [selectedSlotId, setSelectedSlotId] = useState(slots[0]?.id ?? "");
   const [showLista, setShowLista] = useState(false);
 
@@ -32,8 +32,16 @@ export default function Jugar({ slots, currentUser, onApuntar, onBaja, message }
   return (
     <div>
       <h2 className="section-title">Jugar</h2>
-      {!showLista ? (
+      {!slots.length ? (
         <div className="card">
+          <div className="slot-meta" style={{ textAlign: "center", padding: "1rem 0" }}>
+            No hay slots disponibles.
+          </div>
+        </div>
+      ) : null}
+      {backendNotice ? <p className="error-box">{backendNotice}</p> : null}
+      {!showLista ? (
+        <div className="card" style={{ display: slots.length ? "block" : "none" }}>
           {slots.map((slot) => {
             const rival = slots.find(
               (s) => s.id !== slot.id && s.diaSemana === slot.diaSemana && s.apuntado
@@ -70,7 +78,11 @@ export default function Jugar({ slots, currentUser, onApuntar, onBaja, message }
               </label>
             );
           })}
-          <button className="btn btn-primary btn-block mt-8" onClick={() => setShowLista(true)}>
+          <button
+            className="btn btn-primary btn-block mt-8"
+            onClick={() => setShowLista(true)}
+            disabled={!selectedSlot}
+          >
             {selectedEnrolled ? "Ver lista" : "Apuntarme"}
           </button>
         </div>
