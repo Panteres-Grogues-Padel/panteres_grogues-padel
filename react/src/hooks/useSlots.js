@@ -73,6 +73,7 @@ export function useSlots(currentUser) {
       slots.map((slot) => ({
         ...slot,
         abierto: isSlotOpen({ diaSemana: slot.diaSemana }),
+        bajaWarning: isBajaWarning({ diaSemana: slot.diaSemana }),
         semanaObjetivo: getSemanaObjetivo(slot),
         jugadores: useFallback
           ? slot.jugadores

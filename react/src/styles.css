@@ -498,6 +498,68 @@ select {
   color: var(--text2);
 }
 
+.badge-enrolled {
+  background: #eaf3de;
+  color: #27500a;
+}
+
+.slot-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.back-lnk {
+  border: none;
+  background: transparent;
+  color: var(--navy);
+  font-size: 13px;
+  padding: 0;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.enroll-box {
+  margin-top: 10px;
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+  background: var(--bg2);
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.checkbox-sub {
+  font-size: 11px;
+  color: var(--text2);
+  margin-bottom: 8px;
+}
+
+.baja-locked {
+  margin-top: 10px;
+  border: 0.5px solid #f1d3ad;
+  border-radius: var(--radius);
+  background: #fff7eb;
+  color: #8b4a00;
+  font-size: 12px;
+  line-height: 1.35;
+  padding: 8px 10px;
+}
+
+.reserva-sep {
+  margin-top: 6px;
+  margin-bottom: 2px;
+  font-size: 11px;
+  color: var(--text2);
+  font-weight: 600;
+}
+
 .rank-table {
   width: 100%;
   border-collapse: collapse;
