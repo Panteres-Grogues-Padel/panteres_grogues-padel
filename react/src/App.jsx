@@ -56,14 +56,16 @@ export default function App() {
     if (res.warning) showMessage(res.warning);
   }
 
-  async function handleGenerar(slotId, semana) {
+  async function handleGenerar(slotId, semana, options = {}) {
     const slot = slots.find((s) => s.id === slotId);
     if (!slot) return showMessage("Slot no encontrado");
     const res = await generarPartidos({
       jugadoresRanking: ranking,
       slotId,
       semana: semana || slot.semanaObjetivo,
-      currentUserId: auth.currentUser.id
+      currentUserId: auth.currentUser.id,
+      numPistas: options.numPistas,
+      numIndoor: options.numIndoor
     });
     if (!res.ok) return showMessage(res.error);
     showMessage(`Partidos generados: ${res.cantidad}`);
@@ -126,6 +128,7 @@ export default function App() {
               onMover={async (origenId, destinoId, jugadorId) => {
                 const ok = await moverJugador(origenId, destinoId, jugadorId);
                 if (!ok) showMessage("No se pudo mover el jugador");
+                return ok;
               }}
               onConfirmar={async (partidoId, jugadorId, confirmado) => {
                 const res = await confirmarAsistencia(partidoId, jugadorId, confirmado);
@@ -133,6 +136,7 @@ export default function App() {
               }}
               isCoord={isCoord}
               slots={slots}
+              ranking={ranking}
               currentUser={auth.currentUser}
             />
           ) : null}

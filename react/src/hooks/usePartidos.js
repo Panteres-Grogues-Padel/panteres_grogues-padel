@@ -27,6 +27,7 @@ function flattenPartidos(data) {
       items.push({
         id: pista.id,
         pistaId: pista.id,
+        numeroPista: pista.numero_pista,
         partidoGeneradoId: pg.id,
         slotId: pg.slot_id,
         slotLabel: pg.slots?.label ?? pg.slot_id,
@@ -147,11 +148,14 @@ export function usePartidos(currentUser) {
     return map;
   }, [partidos]);
 
-  async function generarPartidos({ jugadoresRanking, slotId, semana, currentUserId }) {
+  async function generarPartidos({ jugadoresRanking, slotId, semana, currentUserId, numPistas, numIndoor }) {
     if (useFallback) {
-      const generados = groupsOf4(jugadoresRanking).map((g, idx) => ({
+      const maxTit = Math.max(0, Number(numPistas || 0)) * 4;
+      const titulares = maxTit > 0 ? jugadoresRanking.slice(0, maxTit) : jugadoresRanking;
+      const generados = groupsOf4(titulares).map((g, idx) => ({
         id: `${Date.now()}-${idx}`,
         pistaId: `${Date.now()}-${idx}`,
+        numeroPista: idx + 1,
         partidoGeneradoId: `pg-${Date.now()}`,
         slotId,
         slotLabel: slotId,
@@ -180,7 +184,9 @@ export function usePartidos(currentUser) {
 
     const inscritosIds = new Set((inscripciones ?? []).map((i) => i.jugador_id));
     const candidatos = jugadoresRanking.filter((j) => inscritosIds.has(j.id));
-    const grupos = groupsOf4(candidatos);
+    const maxTit = Math.max(0, Number(numPistas || 0)) * 4;
+    const titulares = maxTit > 0 ? candidatos.slice(0, maxTit) : candidatos;
+    const grupos = groupsOf4(titulares);
     if (!grupos.length) return { ok: false, error: "No hay suficientes jugadores para generar pistas de 4." };
 
     const { data: prevGenerated } = await supabase
@@ -197,7 +203,7 @@ export function usePartidos(currentUser) {
           slot_id: slotId,
           semana,
           num_pistas: grupos.length,
-          num_indoor: 0,
+          num_indoor: Math.max(0, Math.min(Number(numIndoor || 0), grupos.length)),
           generado_por: currentUserId
         },
         { onConflict: "slot_id,semana" }
@@ -215,13 +221,21 @@ export function usePartidos(currentUser) {
       await supabase.from("pistas_partido").delete().eq("partido_generado_id", partidoGeneradoId);
     }
 
+    const indoorCount = Math.max(0, Math.min(Number(numIndoor || 0), grupos.length));
+    const indexes = [...Array(grupos.length).keys()];
+    for (let i = indexes.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indexes[i], indexes[j]] = [indexes[j], indexes[i]];
+    }
+    const indoorSet = new Set(indexes.slice(0, indoorCount));
+
     for (let i = 0; i < grupos.length; i += 1) {
       const { data: pista, error: pistaError } = await supabase
         .from("pistas_partido")
         .insert({
           partido_generado_id: partidoGeneradoId,
           numero_pista: i + 1,
-          es_indoor: false
+          es_indoor: indoorSet.has(i)
         })
         .select("id")
         .single();

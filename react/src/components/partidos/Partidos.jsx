@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
+import PartidoCard from "./PartidoCard";
+import MoverJugador from "./MoverJugador";
 
 export default function Partidos({
   partidos,
   slots,
+  ranking,
   currentUser,
   onGenerar,
   onHora,
@@ -13,7 +16,9 @@ export default function Partidos({
 }) {
   const [slotId, setSlotId] = useState(slots[0]?.id ?? "");
   const [semana, setSemana] = useState(slots[0]?.semanaObjetivo ?? "");
-  const [filtroSlot, setFiltroSlot] = useState("all");
+  const [numPistas, setNumPistas] = useState(0);
+  const [numIndoor, setNumIndoor] = useState(0);
+  const [moverState, setMoverState] = useState({ open: false, origen: null, jugador: null });
 
   const semanasDisponibles = useMemo(() => {
     const set = new Set([
@@ -28,21 +33,29 @@ export default function Partidos({
   }, [slotId, slots]);
 
   useEffect(() => {
+    const slot = slots.find((s) => s.id === slotId);
+    if (slot) {
+      setNumPistas(slot.pistas ?? 0);
+      setNumIndoor(0);
+    }
+  }, [slotId, slots]);
+
+  useEffect(() => {
     if (!semana && semanasDisponibles.length) setSemana(semanasDisponibles[0]);
   }, [semana, semanasDisponibles]);
 
-  const partidosFiltrados = useMemo(
-    () =>
-      partidos.filter((p) => {
-        const okSlot = filtroSlot === "all" || p.slotId === filtroSlot;
-        const okSemana = !semana || p.semana === semana;
-        return okSlot && okSemana;
-      }),
-    [partidos, filtroSlot, semana]
-  );
+  const slotActual = useMemo(() => slots.find((s) => s.id === slotId), [slots, slotId]);
+  const partidosFiltrados = useMemo(() => partidos.filter((p) => p.slotId === slotId && (!semana || p.semana === semana)), [partidos, slotId, semana]);
+  const rankingPosByJugador = useMemo(() => {
+    const map = {};
+    (ranking ?? []).forEach((r, idx) => {
+      map[r.id] = idx + 1;
+    });
+    return map;
+  }, [ranking]);
 
   const yaGenerado = useMemo(
-    () => partidos.some((p) => p.slotId === slotId && p.semana === semana),
+    () => partidosFiltrados.length > 0,
     [partidos, slotId, semana]
   );
 
@@ -53,48 +66,87 @@ export default function Partidos({
       const ok = window.confirm("Ya existen partidos para ese slot y semana. ¿Regenerar?");
       if (!ok) return;
     }
-    onGenerar(slotId, semana);
+    onGenerar(slotId, semana, { numPistas, numIndoor });
+  }
+
+  const reservas = useMemo(() => {
+    if (!slotActual) return [];
+    const idsAsignados = new Set(partidosFiltrados.flatMap((p) => p.jugadores.map((j) => j.jugadorId)));
+    const candidates = (ranking ?? []).filter((r) => slotActual.jugadores?.some((j) => j.nombre === r.nombre && !idsAsignados.has(r.id)));
+    return candidates;
+  }, [slotActual, partidosFiltrados, ranking]);
+
+  function buildWaText() {
+    if (!slotActual || !partidosFiltrados.length) return "";
+    let wa = `🎾 *${slotActual.label} — ${slotActual.club}*\n`;
+    wa += `Partidos: ${partidosFiltrados.length} · Jugadores: ${partidosFiltrados.reduce((acc, p) => acc + p.jugadores.length, 0)}\n`;
+    const indoorCount = partidosFiltrados.filter((p) => p.indoor).length;
+    if (indoorCount > 0) wa += `🏠 ${indoorCount} partido${indoorCount !== 1 ? "s" : ""} indoor\n`;
+    wa += "\n";
+    partidosFiltrados.forEach((p, i) => {
+      const hora = p.hora ? ` · 🕐 ${p.hora}` : "";
+      const indoor = p.indoor ? " 🏠" : "";
+      wa += `*Partido ${i + 1}*${hora}${indoor}\n`;
+      wa += `${p.jugadores.map((j) => j.nombre).join(" · ")}\n\n`;
+    });
+    if (reservas.length) wa += `*Reserva:* ${reservas.map((r) => r.nombre).join(", ")}`;
+    return wa;
+  }
+
+  function onOpenMover(origenPartido, jugador) {
+    setMoverState({ open: true, origen: origenPartido, jugador });
+  }
+
+  async function onMove(destinoId) {
+    const ok = await onMover(moverState.origen.id, destinoId, moverState.jugador.jugadorId);
+    if (ok) setMoverState({ open: false, origen: null, jugador: null });
   }
 
   return (
     <div>
-      <div className="row-between">
-        <h2 className="section-title">Partidos</h2>
+      <h2 className="section-title">Partidos</h2>
+      <div id="partidos-days">
+        <select value={slotId} onChange={(e) => setSlotId(e.target.value)} style={{ fontSize: "14px", fontWeight: 600, height: "46px", borderColor: "var(--border2)", background: "var(--bg)", width: "100%", marginBottom: "1rem" }}>
+          {slots.map((slot) => (
+            <option key={slot.id} value={slot.id}>
+              {slot.label} — {slot.club} ({slot.jugadores?.length ?? 0})
+            </option>
+          ))}
+        </select>
       </div>
-      {isCoord ? (
-        <div className="card">
-          <div className="stack">
-            <select value={slotId} onChange={(e) => setSlotId(e.target.value)}>
-              {slots.map((slot) => (
-                <option key={slot.id} value={slot.id}>
-                  {slot.label} · {slot.club}
-                </option>
-              ))}
-            </select>
-            <select value={semana} onChange={(e) => setSemana(e.target.value)}>
-              {semanasDisponibles.map((sem) => (
-                <option key={sem} value={sem}>
-                  Semana {sem}
-                </option>
-              ))}
-            </select>
-            <button className="btn btn-primary btn-sm" onClick={handleGenerarClick}>
-              {yaGenerado ? "Regenerar slot" : "Generar para slot"}
-            </button>
-          </div>
-        </div>
-      ) : null}
 
-      <div className="card">
-        <div className="stack">
-          <select value={filtroSlot} onChange={(e) => setFiltroSlot(e.target.value)}>
-            <option value="all">Todos los slots</option>
-            {slots.map((slot) => (
-              <option key={slot.id} value={slot.id}>
-                {slot.label} · {slot.club}
-              </option>
-            ))}
-          </select>
+      {isCoord ? (
+        <div className="coord-box">
+          <div className="coord-box-title">
+            <span className="coord-pill">Coord.</span> {slotActual?.label} — {slotActual?.club}
+          </div>
+          <div className="pistas-row">
+            <span style={{ flex: 1, fontSize: "13px", color: "var(--text2)" }}>
+              Pistas
+              <br />
+              <span style={{ fontSize: "12px" }}>
+                <strong>{(slotActual?.jugadores?.length ?? 0) > numPistas * 4 ? numPistas * 4 : slotActual?.jugadores?.length ?? 0}</strong> titulares ·{" "}
+                <strong>{Math.max(0, (slotActual?.jugadores?.length ?? 0) - numPistas * 4)}</strong> reserva
+              </span>
+            </span>
+            <div className="pistas-ctrl">
+              <button className="pistas-btn" onClick={() => setNumPistas((v) => Math.max(0, v - 1))}>−</button>
+              <span className="pistas-num">{numPistas}</span>
+              <button className="pistas-btn" onClick={() => setNumPistas((v) => Math.min(15, v + 1))}>+</button>
+            </div>
+          </div>
+          <div className="pistas-row" style={{ marginBottom: ".75rem" }}>
+            <span style={{ flex: 1, fontSize: "13px", color: "var(--text2)" }}>
+              Pistas indoor
+              <br />
+              <span style={{ fontSize: "11px" }}>Lotería aleatoria</span>
+            </span>
+            <div className="pistas-ctrl">
+              <button className="pistas-btn" onClick={() => setNumIndoor((v) => Math.max(0, v - 1))}>−</button>
+              <span className="pistas-num">{numIndoor}</span>
+              <button className="pistas-btn" onClick={() => setNumIndoor((v) => Math.min(numPistas, v + 1))}>+</button>
+            </div>
+          </div>
           <select value={semana} onChange={(e) => setSemana(e.target.value)}>
             {semanasDisponibles.map((sem) => (
               <option key={sem} value={sem}>
@@ -102,75 +154,62 @@ export default function Partidos({
               </option>
             ))}
           </select>
+          <button className="btn btn-primary btn-sm btn-block" onClick={handleGenerarClick}>
+            {yaGenerado ? "🔄 Regenerar partidos" : "Generar partidos"}
+          </button>
         </div>
-      </div>
+      ) : null}
 
-      {partidosFiltrados.map((p) => (
-        <article className="card" key={p.id}>
-          <p>
-            <strong>
-              {p.slotLabel} · {p.club}
-            </strong>
-          </p>
-          <p className="slot-meta">Semana: {p.semana}</p>
-          <p className="slot-meta">
-            Jugadores: {p.jugadores.map((j) => j.nombre).join(", ")}
-          </p>
-          {p.jugadores.length < 4 ? (
-            <p className="error-box">Partido incompleto: faltan jugadores para llegar a 4.</p>
-          ) : null}
-          {p.jugadores.length === 4 ? (
-            <div className="info-box">
-              <div>Set 1: {p.jugadores[0].nombre}+{p.jugadores[3].nombre} vs {p.jugadores[1].nombre}+{p.jugadores[2].nombre}</div>
-              <div>Set 2: {p.jugadores[0].nombre}+{p.jugadores[2].nombre} vs {p.jugadores[1].nombre}+{p.jugadores[3].nombre}</div>
-              <div>Set 3: {p.jugadores[0].nombre}+{p.jugadores[1].nombre} vs {p.jugadores[2].nombre}+{p.jugadores[3].nombre}</div>
-            </div>
-          ) : null}
-
-          <div className="stack mt-8">
-            {p.jugadores.map((j) => (
-              <div key={j.jugadorId} className="row-between">
-                <span>
-                  {j.posicion}. {j.nombre} {j.confirmado ? "✅" : "⏳"}
-                </span>
-                {currentUser?.id === j.jugadorId ? (
-                  <button
-                    className="btn btn-sm"
-                    onClick={() => onConfirmar(p.id, j.jugadorId, !j.confirmado)}
-                  >
-                    {j.confirmado ? "Desconfirmar" : "Confirmar"}
-                  </button>
-                ) : null}
-              </div>
-            ))}
-          </div>
-
-          {isCoord ? (
-            <div className="stack">
-              <input
-                type="time"
-                value={p.hora || ""}
-                onChange={(e) => onHora(p.id, e.target.value)}
+      {!partidosFiltrados.length ? (
+        <div className="card">
+          <div className="empty-state">{slotActual?.jugadores?.length ? "Los partidos aún no se han generado" : "No hay nadie apuntado"}</div>
+        </div>
+      ) : (
+        <>
+          {partidosFiltrados
+            .sort((a, b) => (a.numeroPista ?? 0) - (b.numeroPista ?? 0))
+            .map((p, i) => (
+              <PartidoCard
+                key={p.id}
+                partido={p}
+                index={i}
+                isCoord={isCoord}
+                currentUser={currentUser}
+                onConfirmar={onConfirmar}
+                onHora={onHora}
+                onIndoor={onIndoor}
+                onOpenMover={onOpenMover}
+                rankingPosByJugador={rankingPosByJugador}
               />
-              <label className="privacy-row">
-                <input type="checkbox" checked={Boolean(p.indoor)} onChange={() => onIndoor(p.id)} />
-                <span>Indoor</span>
-              </label>
-              {partidos
-                .filter((other) => other.id !== p.id)
-                .map((other) => (
-                  <button
-                    key={other.id}
-                    className="btn btn-sm"
-                    onClick={() => onMover(p.id, other.id, p.jugadores[0]?.jugadorId)}
-                  >
-                    Mover {p.jugadores[0]?.nombre ?? "jugador"} a pista #{other.id.slice(0, 6)}
-                  </button>
-                ))}
+            ))}
+
+          {reservas.length ? (
+            <div className="reserva-box">
+              <div style={{ fontSize: "11px", fontWeight: 600, color: "#BA7517", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: "6px" }}>
+                Reserva ({reservas.length})
+              </div>
+              <div>{reservas.map((p) => <span key={p.id} className="chip" style={{ fontSize: "11px" }}>{p.nombre}</span>)}</div>
             </div>
           ) : null}
-        </article>
-      ))}
+
+          <div className="wa-box">
+            <div className="wa-header">
+              <span>WhatsApp</span>
+              <button className="btn btn-sm" onClick={() => navigator.clipboard?.writeText(buildWaText())}>Copiar</button>
+            </div>
+            <div className="wa-text">{buildWaText()}</div>
+          </div>
+        </>
+      )}
+
+      <MoverJugador
+        open={moverState.open}
+        origenPartido={moverState.origen}
+        jugador={moverState.jugador}
+        destinos={partidosFiltrados.filter((p) => p.id !== moverState.origen?.id)}
+        onClose={() => setMoverState({ open: false, origen: null, jugador: null })}
+        onMove={onMove}
+      />
     </div>
   );
 }

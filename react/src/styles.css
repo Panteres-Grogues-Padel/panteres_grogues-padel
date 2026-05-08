@@ -671,6 +671,147 @@ select {
   padding: 10px;
 }
 
+.coord-pill {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--navy);
+  color: var(--bg3);
+}
+
+.pistas-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.875rem;
+  background: var(--bg2);
+  border-radius: var(--radius);
+  margin-bottom: 0.75rem;
+  border: 0.5px solid var(--border);
+}
+
+.pistas-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pistas-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 0.5px solid var(--border2);
+  background: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pistas-num {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+  min-width: 24px;
+  text-align: center;
+}
+
+.empty-state {
+  font-size: 14px;
+  color: var(--text2);
+  text-align: center;
+  padding: 2.5rem 0;
+}
+
+.coord-box {
+  background: var(--bg2);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.coord-box-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #3c3489;
+  margin-bottom: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  background: var(--bg2);
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--text);
+  margin: 2px;
+}
+
+.reserva-box {
+  padding: 0.75rem 1rem;
+  background: var(--bg2);
+  border-radius: var(--radius-lg);
+  margin-bottom: 0.75rem;
+  border: 0.5px solid var(--border);
+}
+
+.wa-box {
+  padding: 0.875rem;
+  background: var(--bg2);
+  border-radius: var(--radius-lg);
+  border: 0.5px solid var(--border);
+  margin-bottom: 0.75rem;
+}
+
+.wa-header {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.wa-text {
+  font-size: 12px;
+  color: var(--text);
+  white-space: pre-wrap;
+  line-height: 1.7;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.32);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 50;
+}
+
+.overlay-sheet {
+  width: 100%;
+  max-width: 480px;
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+  padding: 1rem;
+  max-height: 78vh;
+  overflow: auto;
+}
+
 .toast {
   position: fixed;
   bottom: 70px;
