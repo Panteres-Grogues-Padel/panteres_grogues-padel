@@ -21,10 +21,15 @@ export const SLOTS_INICIALES = [
   { id: "lun-up", label: "Lunes", club: "Club Up", diaSemana: 0, pistas: 3, jugadores: ["JoseGB", "MigueB", "ZoaH"] },
   { id: "lun-del", label: "Lunes", club: "Club Delfos", diaSemana: 0, pistas: 2, jugadores: ["AndresA"] },
   { id: "mar-up", label: "Martes", club: "Club Up", diaSemana: 1, pistas: 2, jugadores: [] },
-  { id: "mie-up", label: "Miercoles", club: "Club Up", diaSemana: 2, pistas: 5, jugadores: ["SergiIbso", "Jordi_V", "Fresco", "PacoCh"] },
+  { id: "mar-del", label: "Martes", club: "Club Delfos", diaSemana: 1, pistas: 2, jugadores: [] },
+  { id: "mie-man", label: "Miércoles", club: "Mañana", diaSemana: 2, pistas: 1, jugadores: [] },
+  { id: "mie-up", label: "Miércoles", club: "Club Up", diaSemana: 2, pistas: 5, jugadores: ["SergiIbso", "Jordi_V", "Fresco", "PacoCh"] },
+  { id: "mie-del", label: "Miércoles", club: "Club Delfos", diaSemana: 2, pistas: 0, jugadores: [] },
+  { id: "jue-up", label: "Jueves", club: "Club Up", diaSemana: 3, pistas: 1, jugadores: [] },
   { id: "jue-del", label: "Jueves", club: "Club Delfos", diaSemana: 3, pistas: 2, jugadores: [] },
   { id: "vie-up", label: "Viernes", club: "Club Up", diaSemana: 4, pistas: 7, jugadores: ["Javi_C", "RobertoL", "Guille", "David_L"] },
-  { id: "dom", label: "Domingo", club: "Americana", diaSemana: 6, pistas: 1, jugadores: [] }
+  { id: "vie-del", label: "Viernes", club: "Club Delfos", diaSemana: 4, pistas: 1, jugadores: [] },
+  { id: "dom", label: "Domingo", club: "Americana", diaSemana: 6, pistas: 0, jugadores: [] }
 ];
 
 export const PARTIDOS_INICIALES = [
