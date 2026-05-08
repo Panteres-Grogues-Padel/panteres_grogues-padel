@@ -45,8 +45,8 @@ export default function App() {
     window.setTimeout(() => setFlashMessage(""), 2500);
   }
 
-  async function handleApuntar(slotId) {
-    const res = await apuntarEnSlot(slotId);
+  async function handleApuntar(slotId, options = {}) {
+    const res = await apuntarEnSlot(slotId, options);
     if (!res.ok) showMessage(res.error);
   }
 
@@ -102,7 +102,13 @@ export default function App() {
             </>
           ) : null}
           {activeTab === "jugar" ? (
-            <Jugar slots={slots} onApuntar={handleApuntar} onBaja={handleBaja} message={flashMessage} />
+            <Jugar
+              slots={slots}
+              currentUser={auth.currentUser}
+              onApuntar={handleApuntar}
+              onBaja={handleBaja}
+              message={flashMessage}
+            />
           ) : null}
           {activeTab === "partidos" ? (
             <Partidos

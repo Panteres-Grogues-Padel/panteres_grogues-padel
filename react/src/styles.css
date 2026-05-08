@@ -499,8 +499,15 @@ select {
 }
 
 .badge-enrolled {
-  background: #eaf3de;
+  background: #eaf0ff;
+  color: #1d4f91;
+}
+
+.badge-socio {
+  background: #e7f7ea;
   color: #27500a;
+  font-size: 10px;
+  padding: 2px 6px;
 }
 
 .slot-head {
@@ -521,18 +528,28 @@ select {
 }
 
 .enroll-box {
-  margin-top: 10px;
+  margin-top: 0.875rem;
   border: 0.5px solid var(--border);
   border-radius: var(--radius);
-  padding: 10px;
+  padding: 0.875rem;
   background: var(--bg2);
 }
 
 .checkbox-row {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.checkbox-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--navy);
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .checkbox-sub {
@@ -542,22 +559,54 @@ select {
 }
 
 .baja-locked {
-  margin-top: 10px;
-  border: 0.5px solid #f1d3ad;
-  border-radius: var(--radius);
-  background: #fff7eb;
-  color: #8b4a00;
   font-size: 12px;
-  line-height: 1.35;
+  color: #c0392b;
   padding: 8px 10px;
+  background: rgba(192, 57, 43, 0.08);
+  border-radius: var(--radius);
+  margin-top: 8px;
+  border: 0.5px solid rgba(192, 57, 43, 0.2);
 }
 
-.reserva-sep {
-  margin-top: 6px;
-  margin-bottom: 2px;
+.slot-info {
+  margin-bottom: 0.5rem;
+}
+
+.player-time {
+  font-size: 10px;
+  color: var(--text3);
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 11px;
-  color: var(--text2);
   font-weight: 600;
+  flex-shrink: 0;
+}
+
+.av-teal { background: #e1f5ee; color: #0f6e56; }
+.av-purple { background: #eeedfe; color: #3c3489; }
+.av-coral { background: #faece7; color: #993c1d; }
+.av-blue { background: #e6f1fb; color: #0c447c; }
+.av-amber { background: #fff2de; color: #8a5600; }
+.av-pink { background: #fde8f3; color: #8b1d55; }
+.av-green { background: #e6f7e9; color: #1f6b2f; }
+.av-gray { background: #eceff4; color: #374151; }
+
+.reserva-sep {
+  font-size: 10px;
+  font-weight: 600;
+  color: #ba7517;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 8px 0 4px;
+  padding-top: 8px;
+  border-top: 0.5px dashed var(--border);
 }
 
 .rank-table {

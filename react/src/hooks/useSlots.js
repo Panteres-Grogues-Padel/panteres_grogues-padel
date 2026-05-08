@@ -8,6 +8,24 @@ function formatDate(d) {
   return d.toISOString().slice(0, 10);
 }
 
+function formatTsStr(isoTs) {
+  if (!isoTs) return "";
+  return new Date(isoTs).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+}
+
+function normalizePlayerEntry(entry, idx = 0) {
+  if (!entry) return null;
+  if (typeof entry === "string") {
+    return { nombre: entry, socio: false, ts: idx + 1, tsStr: "" };
+  }
+  return {
+    nombre: entry.nombre ?? "",
+    socio: Boolean(entry.socio),
+    ts: entry.ts ?? idx + 1,
+    tsStr: entry.tsStr ?? ""
+  };
+}
+
 function getMonday(date = new Date()) {
   const d = new Date(date);
   const day = d.getDay();
@@ -57,7 +75,7 @@ export function useSlots(currentUser) {
     const mondayNext = formatDate(new Date(getMonday(now).getTime() + 7 * 24 * 3600 * 1000));
     const { data, error } = await supabase
       .from("inscripciones")
-      .select("id,jugador_id,slot_id,semana,jugadores(nombre)")
+      .select("id,jugador_id,slot_id,semana,es_socio,created_at,jugadores(nombre)")
       .in("semana", [mondayCurrent, mondayNext]);
     if (!error && data) setInscripciones(data);
   }
@@ -75,13 +93,33 @@ export function useSlots(currentUser) {
         abierto: isSlotOpen({ diaSemana: slot.diaSemana }),
         bajaWarning: isBajaWarning({ diaSemana: slot.diaSemana }),
         semanaObjetivo: getSemanaObjetivo(slot),
-        jugadores: useFallback
-          ? slot.jugadores
-          : inscripciones
+        jugadores: (
+          useFallback
+            ? slot.jugadores.map((j, idx) => normalizePlayerEntry(j, idx)).filter(Boolean)
+            : inscripciones
               .filter((ins) => ins.slot_id === slot.id && ins.semana === getSemanaObjetivo(slot))
-              .map((ins) => ins.jugadores?.nombre ?? ins.jugador_id),
+              .map((ins, idx) => ({
+                nombre: ins.jugadores?.nombre ?? ins.jugador_id,
+                socio: Boolean(ins.es_socio),
+                ts: ins.created_at ? new Date(ins.created_at).getTime() : idx + 1,
+                tsStr: formatTsStr(ins.created_at)
+              }))
+        ).sort((a, b) => (a.ts ?? 0) - (b.ts ?? 0)),
+        sociosCount: (
+          useFallback
+            ? slot.jugadores.map((j, idx) => normalizePlayerEntry(j, idx)).filter(Boolean)
+            : inscripciones
+                .filter((ins) => ins.slot_id === slot.id && ins.semana === getSemanaObjetivo(slot))
+                .map((ins) => ({ socio: Boolean(ins.es_socio) }))
+        ).filter((p) => p.socio).length,
         apuntado: useFallback
-          ? Boolean(currentUser && slot.jugadores.includes(currentUser.nombre))
+          ? Boolean(
+              currentUser &&
+                slot.jugadores
+                  .map((j, idx) => normalizePlayerEntry(j, idx))
+                  .filter(Boolean)
+                  .find((p) => p.nombre === currentUser.nombre)
+            )
           : Boolean(
               currentUser &&
                 inscripciones.find(
@@ -99,7 +137,7 @@ export function useSlots(currentUser) {
     return slots.find((s) => s.id === slotId);
   }
 
-  async function apuntarEnSlot(slotId) {
+  async function apuntarEnSlot(slotId, options = {}) {
     if (!currentUser) return { ok: false, error: "Debes iniciar sesion." };
     const slot = slotsConEstado.find((s) => s.id === slotId);
     if (!slot) return { ok: false, error: "Slot no encontrado." };
@@ -113,10 +151,26 @@ export function useSlots(currentUser) {
     }
 
     if (useFallback) {
+      const ts = Date.now();
       setSlots((prev) =>
         prev.map((s) =>
-          s.id === slotId && !s.jugadores.includes(currentUser.nombre)
-            ? { ...s, jugadores: [...s.jugadores, currentUser.nombre] }
+          s.id === slotId &&
+          !s.jugadores
+            .map((j, idx) => normalizePlayerEntry(j, idx))
+            .filter(Boolean)
+            .find((p) => p.nombre === currentUser.nombre)
+            ? {
+                ...s,
+                jugadores: [
+                  ...s.jugadores,
+                  {
+                    nombre: currentUser.nombre,
+                    socio: Boolean(options.socio),
+                    ts,
+                    tsStr: new Date(ts).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })
+                  }
+                ]
+              }
             : s
         )
       );
@@ -127,7 +181,7 @@ export function useSlots(currentUser) {
       jugador_id: currentUser.id,
       slot_id: slotId,
       semana: slot.semanaObjetivo,
-      es_socio: false
+      es_socio: Boolean(options.socio)
     });
     if (error) return { ok: false, error: error.message };
     await createActivityLog({
@@ -147,7 +201,12 @@ export function useSlots(currentUser) {
     if (useFallback) {
       setSlots((prev) =>
         prev.map((s) =>
-          s.id === slotId ? { ...s, jugadores: s.jugadores.filter((n) => n !== currentUser.nombre) } : s
+          s.id === slotId
+            ? {
+                ...s,
+                jugadores: s.jugadores.filter((p, idx) => normalizePlayerEntry(p, idx)?.nombre !== currentUser.nombre)
+              }
+            : s
         )
       );
     } else {

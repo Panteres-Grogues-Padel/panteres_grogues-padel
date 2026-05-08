@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import DetalleSlot from "./DetalleSlot";
 
-export default function Jugar({ slots, onApuntar, onBaja, message }) {
+export default function Jugar({ slots, currentUser, onApuntar, onBaja, message }) {
   const [selectedSlotId, setSelectedSlotId] = useState(slots[0]?.id ?? "");
   const [showLista, setShowLista] = useState(false);
 
@@ -77,6 +77,7 @@ export default function Jugar({ slots, onApuntar, onBaja, message }) {
       ) : (
         <DetalleSlot
           slot={selectedSlot}
+          currentUser={currentUser}
           enrolled={selectedEnrolled}
           rivalSlot={rivalSlot}
           warning={Boolean(selectedEnrolled && selectedSlot?.bajaWarning)}
