@@ -60,9 +60,10 @@ export function useSlots(currentUser) {
     !isJugadorUuid(currentUser.id);
 
   async function loadSlotsSupabase() {
+    // Tabla slots (seed): id, label, club, dia_semana, pistas_default, pistas_activo, activo — no existe columna nombre.
     const { data, error } = await supabase
       .from("slots")
-      .select("id,label,club,dia_semana,pistas_activo,activo")
+      .select("id,label,club,dia_semana,pistas_default,pistas_activo,activo")
       .eq("activo", true)
       .order("dia_semana", { ascending: true });
     if (error) {
@@ -80,6 +81,7 @@ export function useSlots(currentUser) {
           label: s.label,
           club: s.club,
           diaSemana: s.dia_semana,
+          pistasDefault: s.pistas_default,
           pistas: s.pistas_activo,
           jugadores: []
         }))
@@ -97,9 +99,10 @@ export function useSlots(currentUser) {
     const now = new Date();
     const mondayCurrent = formatDate(getMonday(now));
     const mondayNext = formatDate(new Date(getMonday(now).getTime() + 7 * 24 * 3600 * 1000));
+    // jugadores(nombre): FK a tabla jugadores. slots(label): FK slot_id → slots (nombre del día es label, no nombre).
     const { data, error } = await supabase
       .from("inscripciones")
-      .select("id,jugador_id,slot_id,semana,es_socio,inscrito_at,jugadores(nombre)")
+      .select("id,jugador_id,slot_id,semana,es_socio,inscrito_at,jugadores(nombre),slots(label)")
       .in("semana", [mondayCurrent, mondayNext]);
     if (!error && data) setInscripciones(data);
   }
