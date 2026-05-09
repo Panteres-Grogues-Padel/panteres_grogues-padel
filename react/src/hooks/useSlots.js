@@ -10,8 +10,24 @@ function isJugadorUuid(id) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id.trim());
 }
 
-function formatDate(d) {
-  return d.toISOString().slice(0, 10);
+/** Fecha calendario local YYYY-MM-DD (alinear con columnas `date` en Postgres; evitar desfase UTC de toISOString). */
+function formatDateLocal(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function normalizeSemanaValue(v) {
+  if (v == null) return "";
+  const s = String(v);
+  return s.length >= 10 ? s.slice(0, 10) : s;
+}
+
+function addDays(d, n) {
+  const x = new Date(d.getTime());
+  x.setDate(x.getDate() + n);
+  return x;
 }
 
 function formatTsStr(isoTs) {
@@ -41,11 +57,28 @@ function getMonday(date = new Date()) {
   return d;
 }
 
+/** Semana de alta (lunes ISO): si la lista ya pasó al siguiente ciclo, apunta al lunes siguiente. */
 function getSemanaObjetivo(slot, now = new Date()) {
   const monday = getMonday(now);
   const open = isSlotOpen({ diaSemana: slot.diaSemana });
   if (open) monday.setDate(monday.getDate() + 7);
-  return formatDate(monday);
+  return formatDateLocal(monday);
+}
+
+/**
+ * Semanas a mostrar / comprobar para un slot: la de la semana calendario actual y la de alta.
+ * Si solo filtramos por getSemanaObjetivo tras el día del slot, la BD puede seguir con inscripciones
+ * de la semana anterior (p. ej. semana 2026-05-04 en BD y objetivo 2026-05-11) y la lista queda vacía.
+ */
+function semanasRelevantesParaSlot(slot, now = new Date()) {
+  const lunesEsta = formatDateLocal(getMonday(now));
+  const objetivo = getSemanaObjetivo(slot, now);
+  return lunesEsta === objetivo ? [lunesEsta] : [lunesEsta, objetivo];
+}
+
+function inscripcionEnSemanasRelevantes(ins, slot, now = new Date()) {
+  const s = normalizeSemanaValue(ins.semana);
+  return semanasRelevantesParaSlot(slot, now).includes(s);
 }
 
 export function useSlots(currentUser) {
@@ -97,13 +130,23 @@ export function useSlots(currentUser) {
   async function loadInscripcionesSupabase() {
     if (!currentUser?.id) return;
     const now = new Date();
-    const mondayCurrent = formatDate(getMonday(now));
-    const mondayNext = formatDate(new Date(getMonday(now).getTime() + 7 * 24 * 3600 * 1000));
-    // jugadores(nombre): FK a tabla jugadores. slots(label): FK slot_id → slots (nombre del día es label, no nombre).
+    const m0 = getMonday(now);
+    const semanaActual = normalizeSemanaValue(formatDateLocal(m0));
+    const semanas = [
+      normalizeSemanaValue(formatDateLocal(addDays(m0, -7))),
+      semanaActual,
+      normalizeSemanaValue(formatDateLocal(addDays(m0, 7)))
+    ];
+    // jugadores(nombre): FK jugadores. slots(label): FK slot_id → slots.
     const { data, error } = await supabase
       .from("inscripciones")
       .select("id,jugador_id,slot_id,semana,es_socio,inscrito_at,jugadores(nombre),slots(label)")
-      .in("semana", [mondayCurrent, mondayNext]);
+      .in("semana", semanas);
+    // TODO(quitar): depuración semana vs BD (esperado p. ej. 2026-05-04)
+    console.log("[useSlots] Semana que busca la app (lunes semana actual):", semanaActual);
+    console.log("[useSlots] Semanas en .in(...) para inscripciones:", semanas);
+    console.log("[useSlots] Inscripciones recibidas de Supabase:", data);
+    if (error) console.log("[useSlots] Error inscripciones:", error);
     if (!error && data) setInscripciones(data);
   }
 
@@ -113,52 +156,51 @@ export function useSlots(currentUser) {
     loadInscripcionesSupabase();
   }, [useFallback, currentUser?.id]);
 
-  const slotsConEstado = useMemo(
-    () =>
-      slots.map((slot) => ({
-        ...slot,
-        abierto: isSlotOpen({ diaSemana: slot.diaSemana }),
-        bajaWarning: isBajaWarning({ diaSemana: slot.diaSemana }),
-        semanaObjetivo: getSemanaObjetivo(slot),
-        jugadores: (
-          useFallback
-            ? slot.jugadores.map((j, idx) => normalizePlayerEntry(j, idx)).filter(Boolean)
-            : inscripciones
-              .filter((ins) => ins.slot_id === slot.id && ins.semana === getSemanaObjetivo(slot))
+  const slotsConEstado = useMemo(() => {
+    const now = new Date();
+    return slots.map((slot) => ({
+      ...slot,
+      abierto: isSlotOpen({ diaSemana: slot.diaSemana }),
+      bajaWarning: isBajaWarning({ diaSemana: slot.diaSemana }),
+      semanaObjetivo: getSemanaObjetivo(slot, now),
+      jugadores: (
+        useFallback
+          ? slot.jugadores.map((j, idx) => normalizePlayerEntry(j, idx)).filter(Boolean)
+          : inscripciones
+              .filter((ins) => ins.slot_id === slot.id && inscripcionEnSemanasRelevantes(ins, slot, now))
               .map((ins, idx) => ({
                 nombre: ins.jugadores?.nombre ?? ins.jugador_id,
                 socio: Boolean(ins.es_socio),
                 ts: ins.inscrito_at ? new Date(ins.inscrito_at).getTime() : idx + 1,
                 tsStr: formatTsStr(ins.inscrito_at)
               }))
-        ).sort((a, b) => (a.ts ?? 0) - (b.ts ?? 0)),
-        sociosCount: (
-          useFallback
-            ? slot.jugadores.map((j, idx) => normalizePlayerEntry(j, idx)).filter(Boolean)
-            : inscripciones
-                .filter((ins) => ins.slot_id === slot.id && ins.semana === getSemanaObjetivo(slot))
-                .map((ins) => ({ socio: Boolean(ins.es_socio) }))
-        ).filter((p) => p.socio).length,
-        apuntado: useFallback
-          ? Boolean(
-              currentUser &&
-                slot.jugadores
-                  .map((j, idx) => normalizePlayerEntry(j, idx))
-                  .filter(Boolean)
-                  .find((p) => p.nombre === currentUser.nombre)
-            )
-          : Boolean(
-              currentUser &&
-                inscripciones.find(
-                  (ins) =>
-                    ins.slot_id === slot.id &&
-                    ins.semana === getSemanaObjetivo(slot) &&
-                    ins.jugador_id === currentUser.id
-                )
-            )
-      })),
-    [slots, currentUser, inscripciones, useFallback]
-  );
+      ).sort((a, b) => (a.ts ?? 0) - (b.ts ?? 0)),
+      sociosCount: (
+        useFallback
+          ? slot.jugadores.map((j, idx) => normalizePlayerEntry(j, idx)).filter(Boolean)
+          : inscripciones
+              .filter((ins) => ins.slot_id === slot.id && inscripcionEnSemanasRelevantes(ins, slot, now))
+              .map((ins) => ({ socio: Boolean(ins.es_socio) }))
+      ).filter((p) => p.socio).length,
+      apuntado: useFallback
+        ? Boolean(
+            currentUser &&
+              slot.jugadores
+                .map((j, idx) => normalizePlayerEntry(j, idx))
+                .filter(Boolean)
+                .find((p) => p.nombre === currentUser.nombre)
+          )
+        : Boolean(
+            currentUser &&
+              inscripciones.find(
+                (ins) =>
+                  ins.slot_id === slot.id &&
+                  ins.jugador_id === currentUser.id &&
+                  inscripcionEnSemanasRelevantes(ins, slot, now)
+              )
+          )
+    }));
+  }, [slots, currentUser, inscripciones, useFallback]);
 
   function getSlot(slotId) {
     return slots.find((s) => s.id === slotId);
@@ -237,12 +279,20 @@ export function useSlots(currentUser) {
         )
       );
     } else {
+      const now = new Date();
+      const miInscripcion = inscripciones.find(
+        (ins) =>
+          ins.slot_id === slotId &&
+          ins.jugador_id === currentUser.id &&
+          inscripcionEnSemanasRelevantes(ins, slot, now)
+      );
+      const semanaBaja = miInscripcion ? normalizeSemanaValue(miInscripcion.semana) : slot.semanaObjetivo;
       const { error } = await supabase
         .from("inscripciones")
         .delete()
         .eq("jugador_id", currentUser.id)
         .eq("slot_id", slotId)
-        .eq("semana", slot.semanaObjetivo);
+        .eq("semana", semanaBaja);
       if (error) return { ok: false, error: error.message };
       await createActivityLog({
         jugadorId: currentUser.id,
