@@ -3,6 +3,22 @@ export function getDiaSemanaActual() {
   return today === 0 ? 6 : today - 1;
 }
 
+/** 0=Lun … 6=Dom; unifica string/number desde PostgREST o mock. */
+export function normalizeDiaSemana(slotOrDow) {
+  const raw = slotOrDow != null && typeof slotOrDow === "object" ? slotOrDow.diaSemana : slotOrDow;
+  if (raw === null || raw === undefined || raw === "") return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** Exclusividad: mismo día de la semana del slot (no el mismo id). */
+export function sameDiaSemanaSlot(a, b) {
+  const da = normalizeDiaSemana(a);
+  const db = normalizeDiaSemana(b);
+  if (da == null || db == null) return false;
+  return da === db;
+}
+
 /**
  * ¿Lista abierta para apuntarse? 0=Lun … 6=Dom (getDiaSemanaActual).
  * Regla: la lista abre el mismo día de la semana 7 días antes a las 19:00.

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import DetalleSlot from "./DetalleSlot";
+import { sameDiaSemanaSlot } from "../../utils/slots";
 
 /** Recibe `slots` desde App (hook useSlots); no importa useSlots aquí. */
 export default function Jugar({ slots, currentUser, onApuntar, onBaja, backendNotice, message }) {
@@ -30,7 +31,7 @@ export default function Jugar({ slots, currentUser, onApuntar, onBaja, backendNo
   const rivalSlot = useMemo(() => {
     if (!selectedSlot) return null;
     return (
-      slots.find((s) => s.id !== selectedSlot.id && s.diaSemana === selectedSlot.diaSemana && s.apuntado) ?? null
+      slots.find((s) => s.id !== selectedSlot.id && sameDiaSemanaSlot(s, selectedSlot) && s.apuntado) ?? null
     );
   }, [slots, selectedSlot]);
 
@@ -49,7 +50,7 @@ export default function Jugar({ slots, currentUser, onApuntar, onBaja, backendNo
         <div className="card" style={{ display: slots.length ? "block" : "none" }}>
           {slots.map((slot) => {
             const rival = slots.find(
-              (s) => s.id !== slot.id && s.diaSemana === slot.diaSemana && s.apuntado
+              (s) => s.id !== slot.id && sameDiaSemanaSlot(s, slot) && s.apuntado
             );
             const dot = slot.apuntado
               ? "✓ Apuntado"

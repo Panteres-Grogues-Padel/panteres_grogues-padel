@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 // Fallback offline: todos los slots del prototipo (index.html) en `utils/mockData.js` → SLOTS_INICIALES
 import { SLOTS_INICIALES } from "../utils/mockData";
-import { isBajaWarning, isSlotOpen } from "../utils/slots";
+import { isBajaWarning, isSlotOpen, sameDiaSemanaSlot } from "../utils/slots";
 import { supabase } from "../lib/supabase";
 import { createActivityLog } from "../lib/engagement";
 
@@ -90,6 +90,11 @@ function semanasRelevantesParaSlot(slot, now = new Date()) {
 function inscripcionEnSemanasRelevantes(ins, slot, now = new Date()) {
   const s = normalizeSemanaValue(ins.semana);
   return semanasRelevantesParaSlot(slot, now).includes(s);
+}
+
+function jugadorIdCoincide(insJugadorId, currentUserId) {
+  if (currentUserId == null || insJugadorId == null) return false;
+  return String(insJugadorId).trim().toLowerCase() === String(currentUserId).trim().toLowerCase();
 }
 
 export function useSlots(currentUser) {
@@ -241,7 +246,7 @@ export function useSlots(currentUser) {
               inscripciones.find(
                 (ins) =>
                   ins.slot_id === slot.id &&
-                  ins.jugador_id === currentUser.id &&
+                  jugadorIdCoincide(ins.jugador_id, currentUser.id) &&
                   inscripcionEnSemanasRelevantes(ins, slot, now)
               )
           )
@@ -259,7 +264,7 @@ export function useSlots(currentUser) {
     if (!slot.abierto) return { ok: false, error: "La lista aun no esta abierta." };
 
     const slotMismoDia = slotsConEstado.find(
-      (s) => s.diaSemana === slot.diaSemana && s.id !== slot.id && s.apuntado
+      (s) => s.id !== slot.id && s.apuntado && sameDiaSemanaSlot(s, slot)
     );
     if (slotMismoDia) {
       return { ok: false, error: `Ya estas apuntado en ${slotMismoDia.label} ${slotMismoDia.club}.` };
@@ -293,7 +298,7 @@ export function useSlots(currentUser) {
     }
 
     const { error } = await supabase.from("inscripciones").insert({
-      jugador_id: currentUser.id,
+      jugador_id: String(currentUser.id).trim(),
       slot_id: slotId,
       semana: slot.semanaObjetivo,
       es_socio: Boolean(options.socio)
@@ -325,23 +330,47 @@ export function useSlots(currentUser) {
         )
       );
     } else {
+      const jugadorUuid = String(currentUser.id).trim();
+      if (!isJugadorUuid(jugadorUuid)) {
+        return { ok: false, error: "Tu perfil no tiene un id de jugador válido para Supabase." };
+      }
+
+      const { data: filasInsc, error: selErr } = await supabase
+        .from("inscripciones")
+        .select("semana")
+        .eq("jugador_id", jugadorUuid)
+        .eq("slot_id", slotId);
+
+      if (selErr) return { ok: false, error: selErr.message };
+      if (!filasInsc?.length) {
+        return { ok: false, error: "No hay inscripción en este slot para tu usuario." };
+      }
+
       const now = new Date();
-      const miInscripcion = inscripciones.find(
-        (ins) =>
-          ins.slot_id === slotId &&
-          ins.jugador_id === currentUser.id &&
-          inscripcionEnSemanasRelevantes(ins, slot, now)
-      );
-      const semanaBaja = miInscripcion ? normalizeSemanaValue(miInscripcion.semana) : slot.semanaObjetivo;
-      const { error } = await supabase
+      const objNorm = normalizeSemanaValue(slot.semanaObjetivo);
+      const relSet = new Set(semanasRelevantesParaSlot(slot, now).map((d) => normalizeSemanaValue(d)));
+      const semanasEnBd = filasInsc.map((f) => normalizeSemanaValue(f.semana)).filter(Boolean);
+
+      const semanaPrioritaria =
+        semanasEnBd.find((s) => s === objNorm) ??
+        semanasEnBd.find((s) => relSet.has(s)) ??
+        semanasEnBd[0];
+
+      const { data: deleted, error: delErr } = await supabase
         .from("inscripciones")
         .delete()
-        .eq("jugador_id", currentUser.id)
+        .eq("jugador_id", jugadorUuid)
         .eq("slot_id", slotId)
-        .eq("semana", semanaBaja);
-      if (error) return { ok: false, error: error.message };
+        .eq("semana", semanaPrioritaria)
+        .select("id");
+
+      if (delErr) return { ok: false, error: delErr.message };
+      if (!deleted?.length) {
+        return { ok: false, error: "No se eliminó la inscripción (semana o permisos)." };
+      }
+
       await createActivityLog({
-        jugadorId: currentUser.id,
+        jugadorId: jugadorUuid,
         tipo: "jugar",
         texto: `Se da de baja de ${slot.label} · ${slot.club} (${slot.semanaObjetivo})`
       });
