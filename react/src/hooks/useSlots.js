@@ -104,29 +104,43 @@ export function useSlots(currentUser) {
     !isJugadorUuid(currentUser.id);
 
   async function loadSlotsSupabase() {
-    // Tabla slots (seed): id, label, club, dia_semana, pistas_default, pistas_activo, activo — no existe columna nombre.
-    const { data, error } = await supabase
-      .from("slots")
-      .select("id,label,club,dia_semana,pistas_default,pistas_activo,activo")
-      .eq("activo", true)
-      .order("dia_semana", { ascending: true });
-    if (error) {
-      setSlotsNotice(
-        `Error al leer slots (tabla slots, campo activo): ${error.message}. Se muestran slots de respaldo.`
-      );
-      setSlots(SLOTS_INICIALES);
-      return;
+    // Sin filtros extra: solo activo = true. Paginación por si PostgREST/Supabase limita filas por petición.
+    const selectCols = "id,label,club,dia_semana,pistas_default,pistas_activo,activo";
+    const pageSize = 200;
+    const allRows = [];
+    let from = 0;
+
+    for (;;) {
+      const { data, error } = await supabase
+        .from("slots")
+        .select(selectCols)
+        .eq("activo", true)
+        .order("dia_semana", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, from + pageSize - 1);
+
+      if (error) {
+        setSlotsNotice(
+          `Error al leer slots (tabla slots, campo activo): ${error.message}. Se muestran slots de respaldo.`
+        );
+        setSlots(SLOTS_INICIALES);
+        return;
+      }
+      if (!data?.length) break;
+      allRows.push(...data);
+      if (data.length < pageSize) break;
+      from += pageSize;
     }
-    if (data?.length) {
+
+    if (allRows.length) {
       setSlotsNotice("");
       setSlots(
-        data.map((s) => ({
+        allRows.map((s) => ({
           id: s.id,
           label: s.label,
           club: s.club,
           diaSemana: s.dia_semana,
           pistasDefault: Number(s.pistas_default ?? 0),
-          // UI y cupos: solo pistas_activo (no pistas_default)
           pistas: Number(s.pistas_activo ?? 0),
           jugadores: []
         }))
