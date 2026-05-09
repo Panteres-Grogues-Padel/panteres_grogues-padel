@@ -157,22 +157,43 @@ export function useSlots(currentUser) {
     if (!currentUser?.id) return;
     const now = new Date();
     const m0 = getMondayUtc(now);
-    // Lunes ISO semana calendario UTC (p. ej. 2026-05-04 si hoy es sáb 9 may 2026)
     const semanaLunesEsta = normalizeSemanaValue(formatDateUTC(m0));
-    // Lunes de la semana siguiente (p. ej. 2026-05-11) — muchas inscripciones van aquí cuando la lista ya es “de la próxima semana”
     const semanaLunesProxima = normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, 7)));
+    // Ventana amplia de lunes ISO (sin límite artificial en el cliente más allá de este filtro de fechas)
     const semanas = [
+      normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, -14))),
       normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, -7))),
       semanaLunesEsta,
       semanaLunesProxima,
-      normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, 14)))
+      normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, 14))),
+      normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, 21)))
     ];
-    // jugadores(nombre): FK jugadores. slots(label): FK slot_id → slots.
-    const { data, error } = await supabase
-      .from("inscripciones")
-      .select("id,jugador_id,slot_id,semana,es_socio,inscrito_at,jugadores(nombre),slots(label)")
-      .in("semana", semanas);
-    if (!error && data) setInscripciones(data);
+    const selectCols = "id,jugador_id,slot_id,semana,es_socio,inscrito_at,jugadores(nombre)";
+    const pageSize = 500;
+    const allRows = [];
+    let from = 0;
+
+    for (;;) {
+      const { data, error } = await supabase
+        .from("inscripciones")
+        .select(selectCols)
+        .in("semana", semanas)
+        .order("slot_id", { ascending: true })
+        .order("inscrito_at", { ascending: true, nullsFirst: true })
+        .order("id", { ascending: true })
+        .range(from, from + pageSize - 1);
+
+      if (error) {
+        setInscripciones([]);
+        return;
+      }
+      if (!data?.length) break;
+      allRows.push(...data);
+      if (data.length < pageSize) break;
+      from += pageSize;
+    }
+
+    setInscripciones(allRows);
   }
 
   useEffect(() => {
