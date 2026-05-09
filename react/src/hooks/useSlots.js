@@ -88,15 +88,28 @@ function inscripcionEnSemanasRelevantes(ins, slot, now = new Date()) {
 }
 
 function jugadorIdCoincide(insJugadorId, currentUserId) {
-  if (import.meta.env.DEV) {
-    console.log(
-      "Comparando IDs:",
-      String(insJugadorId).toLowerCase().trim(),
-      "vs",
-      String(currentUserId).toLowerCase().trim()
-    );
-  }
   return jugadoresCoinciden(insJugadorId, currentUserId);
+}
+
+/** Lunes ISO ±N semanas desde `m0` (UTC) para no perder filas por desfase cliente/BD. */
+function semanasVentanaCarga(m0, semanasRadio = 14) {
+  const out = [];
+  for (let w = -semanasRadio; w <= semanasRadio; w += 1) {
+    out.push(normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, w * 7))));
+  }
+  return [...new Set(out)];
+}
+
+/** ¿Ya hay inscripción del jugador en otro slot el mismo día de semana y misma semana calendario? */
+function inscripcionExclusividadDia(slotTarget, semanaNorm, jugadorId, rows, slotDefs) {
+  for (const ins of rows) {
+    if (ins.slot_id === slotTarget.id) continue;
+    if (!jugadoresCoinciden(ins.jugador_id, jugadorId)) continue;
+    if (normalizeSemanaValue(ins.semana) !== semanaNorm) continue;
+    const def = slotDefs.find((x) => x.id === ins.slot_id);
+    if (def && sameDiaSemanaSlot(def, slotTarget)) return def;
+  }
+  return null;
 }
 
 export function useSlots(currentUser) {
@@ -166,17 +179,7 @@ export function useSlots(currentUser) {
     if (!currentUser?.id) return;
     const now = new Date();
     const m0 = getMondayUtc(now);
-    const semanaLunesEsta = normalizeSemanaValue(formatDateUTC(m0));
-    const semanaLunesProxima = normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, 7)));
-    // Ventana amplia de lunes ISO (sin límite artificial en el cliente más allá de este filtro de fechas)
-    const baseSemanas = [
-      normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, -14))),
-      normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, -7))),
-      semanaLunesEsta,
-      semanaLunesProxima,
-      normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, 14))),
-      normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, 21)))
-    ];
+    const baseSemanas = semanasVentanaCarga(m0, 14);
     const extra = (extraSemanasRaw ?? []).map(normalizeSemanaValue).filter(Boolean);
     const semanas = [...new Set([...baseSemanas, ...extra])];
     const selectCols = "id,jugador_id,slot_id,semana,es_socio,inscrito_at,jugadores(nombre)";
@@ -196,6 +199,10 @@ export function useSlots(currentUser) {
 
       if (error) {
         console.warn("[loadInscripcionesSupabase]", error.message);
+        if (reloadToken !== undefined && reloadToken !== inscripcionesReloadGenRef.current) {
+          return;
+        }
+        setInscripciones([]);
         return;
       }
       if (!data?.length) break;
@@ -213,11 +220,15 @@ export function useSlots(currentUser) {
   useEffect(() => {
     if (useFallback) {
       setInscripciones([]);
+      setSlots(SLOTS_INICIALES);
+      setSlotsNotice("");
       return undefined;
     }
 
     const reloadToken = ++inscripcionesReloadGenRef.current;
     setInscripciones([]);
+    setSlots([]);
+    setSlotsNotice("");
 
     let cancelled = false;
     (async () => {
@@ -328,8 +339,16 @@ export function useSlots(currentUser) {
       return { ok: false, error: "Tu perfil no tiene un id de jugador válido para Supabase." };
     }
     const semana = slot.semanaObjetivo;
-
     const semanaNorm = normalizeSemanaValue(semana);
+
+    const conflicto = inscripcionExclusividadDia(slot, semanaNorm, jugadorId, inscripciones, slots);
+    if (conflicto) {
+      return {
+        ok: false,
+        error: `Ya tienes lista ese día: ${conflicto.label} — ${conflicto.club}. Date de baja ahí primero.`
+      };
+    }
+
     const { error } = await supabase.from("inscripciones").insert({
       jugador_id: jugadorId,
       slot_id: slotId,
