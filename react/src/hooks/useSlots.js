@@ -4,7 +4,7 @@ import { SLOTS_INICIALES } from "../utils/mockData";
 import { isBajaWarning, isSlotOpen, sameDiaSemanaSlot } from "../utils/slots";
 import { supabase } from "../lib/supabase";
 import { createActivityLog } from "../lib/engagement";
-import { isJugadorUuid } from "../utils/jugador";
+import { isJugadorUuid, jugadoresCoinciden, normalizeJugadorUuid } from "../utils/jugador";
 
 /** Lunes ISO de la semana del calendario UTC (alineado con `CURRENT_DATE` y semana ISO en Postgres/Supabase). */
 function getMondayUtc(date = new Date()) {
@@ -88,8 +88,15 @@ function inscripcionEnSemanasRelevantes(ins, slot, now = new Date()) {
 }
 
 function jugadorIdCoincide(insJugadorId, currentUserId) {
-  if (currentUserId == null || insJugadorId == null) return false;
-  return String(insJugadorId).trim().toLowerCase() === String(currentUserId).trim().toLowerCase();
+  if (import.meta.env.DEV) {
+    console.log(
+      "Comparando IDs:",
+      String(insJugadorId).toLowerCase().trim(),
+      "vs",
+      String(currentUserId).toLowerCase().trim()
+    );
+  }
+  return jugadoresCoinciden(insJugadorId, currentUserId);
 }
 
 export function useSlots(currentUser) {
@@ -215,6 +222,7 @@ export function useSlots(currentUser) {
           : inscripciones
               .filter((ins) => ins.slot_id === slot.id && inscripcionEnSemanasRelevantes(ins, slot, now))
               .map((ins, idx) => ({
+                jugadorId: normalizeJugadorUuid(ins.jugador_id),
                 nombre: ins.jugadores?.nombre ?? ins.jugador_id,
                 socio: Boolean(ins.es_socio),
                 ts: ins.inscrito_at ? new Date(ins.inscrito_at).getTime() : idx + 1,
@@ -292,7 +300,7 @@ export function useSlots(currentUser) {
       return { ok: true };
     }
 
-    const jugadorId = String(currentUser.id).trim();
+    const jugadorId = normalizeJugadorUuid(currentUser.id);
     if (!isJugadorUuid(jugadorId)) {
       return { ok: false, error: "Tu perfil no tiene un id de jugador válido para Supabase." };
     }
@@ -333,7 +341,7 @@ export function useSlots(currentUser) {
         )
       );
     } else {
-      const jugadorUuid = String(currentUser.id).trim();
+      const jugadorUuid = normalizeJugadorUuid(currentUser.id);
       if (!isJugadorUuid(jugadorUuid)) {
         return { ok: false, error: "Tu perfil no tiene un id de jugador válido para Supabase." };
       }

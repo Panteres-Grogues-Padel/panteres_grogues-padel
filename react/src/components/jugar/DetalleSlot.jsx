@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { jugadoresCoinciden } from "../../utils/jugador";
 
 function dayOpenLabel(slot) {
   const ds = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
@@ -29,6 +30,12 @@ function initials(nombre = "") {
 
 function avatarClass(nombre = "") {
   return AVATAR_CLASSES[(nombre.charCodeAt(0) || 0) % AVATAR_CLASSES.length];
+}
+
+function filaEsUsuarioActual(p, currentUser) {
+  if (!currentUser) return false;
+  if (p.jugadorId && jugadoresCoinciden(p.jugadorId, currentUser.id)) return true;
+  return currentUser.nombre === p.nombre;
 }
 
 export default function DetalleSlot({
@@ -156,7 +163,7 @@ export default function DetalleSlot({
               <div className={`avatar ${avatarClass(p.nombre)}`}>{initials(p.nombre)}</div>
               <span className="pname">
                 {p.nombre}
-                {currentUser?.nombre === p.nombre ? " ✓" : ""}
+                {filaEsUsuarioActual(p, currentUser) ? " ✓" : ""}
               </span>
               {p.socio ? <span className="badge badge-socio">Up</span> : null}
               <span className="player-time">{p.tsStr || ""}</span>
@@ -178,7 +185,7 @@ export default function DetalleSlot({
                 <div className={`avatar ${avatarClass(p.nombre)}`}>{initials(p.nombre)}</div>
                 <span className="pname">
                   {p.nombre}
-                  {currentUser?.nombre === p.nombre ? " ✓" : ""}
+                  {filaEsUsuarioActual(p, currentUser) ? " ✓" : ""}
                 </span>
                 {p.socio ? <span className="badge badge-socio">Up</span> : null}
                 <span className="player-time">{p.tsStr || ""}</span>
@@ -193,7 +200,7 @@ export default function DetalleSlot({
                     <div className={`avatar ${avatarClass(p.nombre)}`}>{initials(p.nombre)}</div>
                     <span className="pname">
                       {p.nombre}
-                      {currentUser?.nombre === p.nombre ? " ✓" : ""}
+                      {filaEsUsuarioActual(p, currentUser) ? " ✓" : ""}
                     </span>
                     {p.socio ? <span className="badge badge-socio">Up</span> : null}
                     <span className="player-time">{p.tsStr || ""}</span>
