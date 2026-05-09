@@ -297,13 +297,26 @@ export function useSlots(currentUser) {
       return { ok: true };
     }
 
+    const jugadorId = String(currentUser.id).trim();
+    const semana = slot.semanaObjetivo;
+    console.log("APUNTAR - jugador_id:", jugadorId, "slot_id:", slotId, "semana:", semana);
+    console.log("APUNTAR - detalle tipos:", {
+      jugadorIdType: typeof jugadorId,
+      semanaType: typeof semana,
+      semanaRaw: semana,
+      currentUserIdRaw: currentUser.id
+    });
+
     const { error } = await supabase.from("inscripciones").insert({
-      jugador_id: String(currentUser.id).trim(),
+      jugador_id: jugadorId,
       slot_id: slotId,
-      semana: slot.semanaObjetivo,
+      semana,
       es_socio: Boolean(options.socio)
     });
-    if (error) return { ok: false, error: error.message };
+    if (error) {
+      console.log("APUNTAR - error Supabase:", error.message, error);
+      return { ok: false, error: error.message };
+    }
     await createActivityLog({
       jugadorId: currentUser.id,
       tipo: "jugar",
@@ -341,8 +354,16 @@ export function useSlots(currentUser) {
         .eq("jugador_id", jugadorUuid)
         .eq("slot_id", slotId);
 
+      console.log("BAJA - tras SELECT inscripciones:", {
+        jugador_id: jugadorUuid,
+        slot_id: slotId,
+        filasInsc,
+        selErr: selErr?.message
+      });
+
       if (selErr) return { ok: false, error: selErr.message };
       if (!filasInsc?.length) {
+        console.log("BAJA - sin filas para jugador/slot; no se hace DELETE");
         return { ok: false, error: "No hay inscripción en este slot para tu usuario." };
       }
 
@@ -356,6 +377,9 @@ export function useSlots(currentUser) {
         semanasEnBd.find((s) => relSet.has(s)) ??
         semanasEnBd[0];
 
+      console.log("BAJA - jugador_id:", jugadorUuid, "slot_id:", slotId, "semana:", semanaPrioritaria);
+      console.log("BAJA - elección semana:", { objNorm, semanasEnBd, relSet: [...relSet] });
+
       const { data: deleted, error: delErr } = await supabase
         .from("inscripciones")
         .delete()
@@ -364,8 +388,13 @@ export function useSlots(currentUser) {
         .eq("semana", semanaPrioritaria)
         .select("id");
 
-      if (delErr) return { ok: false, error: delErr.message };
+      if (delErr) {
+        console.log("BAJA - error DELETE:", delErr.message, delErr);
+        return { ok: false, error: delErr.message };
+      }
+      console.log("BAJA - filas eliminadas:", deleted);
       if (!deleted?.length) {
+        console.log("BAJA - DELETE devolvió 0 filas (RLS o semana no coincide en servidor)");
         return { ok: false, error: "No se eliminó la inscripción (semana o permisos)." };
       }
 
