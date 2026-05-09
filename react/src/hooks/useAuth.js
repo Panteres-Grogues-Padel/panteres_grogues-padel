@@ -117,25 +117,40 @@ export function useAuth() {
     if (!supabase) return setError("Faltan variables de entorno de Supabase.");
 
     setLoading(true);
+    let userToHydrate = null;
+    const timeoutMs = 25000;
+    let timeoutId;
+    const timeoutPromise = new Promise((_, reject) => {
+      timeoutId = setTimeout(
+        () => reject(new Error("Tiempo de espera agotado. Revisa la conexion.")),
+        timeoutMs
+      );
+    });
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+      const { data, error: authError } = await Promise.race([
+        supabase.auth.signInWithPassword({ email, password }),
+        timeoutPromise
+      ]);
+      if (timeoutId) clearTimeout(timeoutId);
       if (authError) {
         setError(authError.message);
         return;
       }
-      const user = data?.user ?? data?.session?.user ?? null;
-      if (!user) {
+      userToHydrate = data?.user ?? data?.session?.user ?? null;
+      if (!userToHydrate) {
         setError("No se pudo obtener la sesion. Vuelve a intentarlo.");
-        return;
       }
-      await hydrateCurrentUser(user);
     } catch (e) {
+      if (timeoutId) clearTimeout(timeoutId);
       setError(e?.message ?? "Error de conexion al iniciar sesion.");
     } finally {
+      if (timeoutId) clearTimeout(timeoutId);
       setLoading(false);
+    }
+
+    // No await: si la query a `jugadores` cuelga, el botón ya no queda en "Entrando..." para siempre.
+    if (userToHydrate) {
+      void hydrateCurrentUser(userToHydrate);
     }
   }
 
