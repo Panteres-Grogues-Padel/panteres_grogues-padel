@@ -3,6 +3,7 @@ import { PARTIDOS_INICIALES } from "../utils/mockData";
 import { supabase } from "../lib/supabase";
 import { createActivityLog, createNotifications } from "../lib/engagement";
 import { formatHoraInput, normalizeSemanaDate } from "../utils/dates";
+import { isJugadorUuid } from "../utils/jugador";
 
 function strId(id) {
   return id == null ? id : String(id);
@@ -76,7 +77,11 @@ export function usePartidos(currentUser) {
   const [partidos, setPartidos] = useState(PARTIDOS_INICIALES);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const useFallback = !supabase || !currentUser?.id || currentUser.fromFallback === true;
+  const useFallback =
+    !supabase ||
+    !currentUser?.id ||
+    currentUser.fromFallback === true ||
+    !isJugadorUuid(currentUser.id);
   const remindersSentRef = useRef(new Set());
 
   async function loadPartidos() {
@@ -197,6 +202,10 @@ export function usePartidos(currentUser) {
     }
 
     const semanaNorm = normalizeSemanaDate(semana);
+
+    if (!isJugadorUuid(currentUserId)) {
+      return { ok: false, error: "Tu perfil no tiene un id de jugador válido para Supabase." };
+    }
 
     const { data: inscripciones, error: insError } = await supabase
       .from("inscripciones")

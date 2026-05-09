@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { EVENTOS_INICIALES } from "../utils/mockData";
 import { supabase } from "../lib/supabase";
+import { isJugadorUuid } from "../utils/jugador";
 
 export function useEventos(currentUser, isCoord) {
   const [eventos, setEventos] = useState(EVENTOS_INICIALES);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const useFallback = !supabase || !currentUser?.id || currentUser.fromFallback === true;
+  const useFallback =
+    !supabase ||
+    !currentUser?.id ||
+    currentUser.fromFallback === true ||
+    !isJugadorUuid(currentUser.id);
 
   async function loadEventos() {
     if (useFallback) return;

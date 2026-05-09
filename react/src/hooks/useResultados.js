@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { createActivityLog, createNotifications } from "../lib/engagement";
+import { isJugadorUuid } from "../utils/jugador";
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
@@ -10,7 +11,11 @@ export function useResultados(partidos, currentUser, isCoord) {
   const [resultados, setResultados] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const useFallback = !supabase || !currentUser?.id || currentUser.fromFallback === true;
+  const useFallback =
+    !supabase ||
+    !currentUser?.id ||
+    currentUser.fromFallback === true ||
+    !isJugadorUuid(currentUser.id);
   const pistaIdsKey = partidos.map((p) => p.id).sort().join("|");
 
   async function loadResultados() {

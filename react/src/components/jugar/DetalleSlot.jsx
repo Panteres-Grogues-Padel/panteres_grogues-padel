@@ -68,7 +68,7 @@ export default function DetalleSlot({
 
   return (
     <article className="card">
-      <button className="btn btn-sm" style={{ marginBottom: "1rem" }} onClick={onBack}>
+      <button type="button" className="btn btn-sm" style={{ marginBottom: "1rem" }} onClick={onBack}>
         ← Volver
       </button>
 
@@ -129,7 +129,11 @@ export default function DetalleSlot({
               ⚠️ Si te das de baja hoy, por favor busca un@sustitut@ para el partido antes de confirmar la baja.
             </div>
           ) : null}
-          <button className="btn btn-danger btn-sm btn-block mt-8" onClick={() => onBaja(slot.id)}>
+          <button
+            type="button"
+            className="btn btn-danger btn-sm btn-block mt-8"
+            onClick={() => onBaja(slot.id)}
+          >
             Darme de baja
           </button>
         </>

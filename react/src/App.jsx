@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import LoginScreen from "./components/auth/LoginScreen";
 import Bienvenida from "./components/bienvenida/Bienvenida";
 import Ranking from "./components/ranking/Ranking";
@@ -13,9 +13,11 @@ import { useRanking } from "./hooks/useRanking";
 import { usePartidos } from "./hooks/usePartidos";
 import { useEventos } from "./hooks/useEventos";
 import { useResultados } from "./hooks/useResultados";
+import { isJugadorUuid } from "./utils/jugador";
 
 export default function App() {
   const auth = useAuth();
+  const apuntarInFlightRef = useRef(false);
   const [activeTab, setActiveTab] = useState("bienvenida");
   const [flashMessage, setFlashMessage] = useState("");
   const [jugadorSeleccionado, setJugadorSeleccionado] = useState(null);
@@ -47,8 +49,14 @@ export default function App() {
   }
 
   async function handleApuntar(slotId, options = {}) {
-    const res = await apuntarEnSlot(slotId, options);
-    if (!res.ok) showMessage(res.error);
+    if (apuntarInFlightRef.current) return;
+    apuntarInFlightRef.current = true;
+    try {
+      const res = await apuntarEnSlot(slotId, options);
+      if (!res.ok) showMessage(res.error);
+    } finally {
+      apuntarInFlightRef.current = false;
+    }
   }
 
   async function handleBaja(slotId) {
@@ -60,6 +68,9 @@ export default function App() {
   async function handleGenerar(slotId, semana, options = {}) {
     const slot = slots.find((s) => s.id === slotId);
     if (!slot) return showMessage("Slot no encontrado");
+    if (!isJugadorUuid(auth.currentUser?.id)) {
+      return showMessage("Tu perfil no tiene un id de jugador válido para generar partidos en Supabase.");
+    }
     const res = await generarPartidos({
       jugadoresRanking: ranking,
       slotId,

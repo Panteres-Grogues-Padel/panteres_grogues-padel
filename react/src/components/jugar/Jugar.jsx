@@ -4,10 +4,6 @@ import { sameDiaSemanaSlot } from "../../utils/slots";
 
 /** Recibe `slots` desde App (hook useSlots); no importa useSlots aquí. */
 export default function Jugar({ slots, currentUser, onApuntar, onBaja, backendNotice, message }) {
-  useEffect(() => {
-    console.log("Jugar mounted");
-  }, []);
-
   const [selectedSlotId, setSelectedSlotId] = useState(slots[0]?.id ?? "");
   const [showLista, setShowLista] = useState(false);
 
@@ -85,6 +81,7 @@ export default function Jugar({ slots, currentUser, onApuntar, onBaja, backendNo
             );
           })}
           <button
+            type="button"
             className="btn btn-primary btn-block mt-8"
             onClick={() => setShowLista(true)}
             disabled={!selectedSlot}
