@@ -7,6 +7,7 @@ import Partidos from "./components/partidos/Partidos";
 import Resultados from "./components/resultados/Resultados";
 import Agenda from "./components/agenda/Agenda";
 import BottomNav from "./components/layout/BottomNav";
+import Topbar from "./components/layout/Topbar";
 import { useAuth } from "./hooks/useAuth";
 import { useSlots } from "./hooks/useSlots";
 import { useRanking } from "./hooks/useRanking";
@@ -87,22 +88,13 @@ export default function App() {
   return (
     <div className="app-root">
       <div className="app-shell">
-        <header className="topbar">
-          <strong>Panteres Grogues</strong>
-          <div className="row-gap">
-            <span>{auth.currentUser.nombre}</span>
-            <button
-              type="button"
-              className="logout-btn"
-              onClick={(e) => {
-                e.preventDefault();
-                void auth.logout();
-              }}
-            >
-              Salir
-            </button>
-          </div>
-        </header>
+        <Topbar
+          currentUser={auth.currentUser}
+          setActiveTab={setActiveTab}
+          onLogout={() => {
+            void auth.logout();
+          }}
+        />
 
         <main className="content">
           {activeTab === "bienvenida" ? (

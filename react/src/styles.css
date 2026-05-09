@@ -130,7 +130,79 @@ select {
   align-items: center;
   justify-content: space-between;
   padding: 0 1rem;
+  background: var(--bg3);
   border-bottom: 0.5px solid var(--border);
+  flex-shrink: 0;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.topbar-logo {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 7px;
+  flex-shrink: 0;
+  cursor: pointer;
+  background: linear-gradient(
+    135deg,
+    #000 0%,
+    #784f17 10%,
+    #55cdfc 20%,
+    #f7a8b8 30%,
+    #fff 38%,
+    #f7a8b8 46%,
+    #55cdfc 54%,
+    #e40303 62%,
+    #ff8c00 70%,
+    #ffed00 78%,
+    #008026 86%,
+    #004dff 93%,
+    #750787 100%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.topbar-logo img {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  object-fit: cover;
+  display: block;
+}
+
+.app-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.topbar-brand-btn {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+
+.topbar-name-sub {
+  font-size: 10px;
+  color: var(--text2);
 }
 
 .content {
