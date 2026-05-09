@@ -103,6 +103,40 @@ function inscripcionExclusividadDia(slotTarget, semanaNorm, jugadorId, rows, slo
   return null;
 }
 
+/** Nombres aparte: el select embebido `jugadores(...)` puede reducir filas con RLS en `jugadores`. */
+async function enrichInscripcionesJugadoresNombres(client, rows) {
+  const ids = [
+    ...new Set(
+      rows
+        .map((r) => normalizeJugadorUuid(r.jugador_id))
+        .filter((id) => isJugadorUuid(id))
+    )
+  ];
+  const byId = {};
+  const chunkSize = 200;
+  for (let i = 0; i < ids.length; i += chunkSize) {
+    const chunk = ids.slice(i, i + chunkSize);
+    const { data, error } = await client.from("jugadores").select("id,nombre").in("id", chunk);
+    if (error) {
+      console.warn("[enrichInscripcionesJugadoresNombres]", error.message);
+      break;
+    }
+    for (const j of data ?? []) {
+      byId[normalizeJugadorUuid(j.id)] = j.nombre ?? "";
+    }
+  }
+  return rows.map((row) => {
+    const jid = normalizeJugadorUuid(row.jugador_id);
+    const nombre = isJugadorUuid(jid) ? byId[jid] : undefined;
+    return {
+      ...row,
+      jugadores: {
+        nombre: nombre != null && nombre !== "" ? nombre : row.jugador_id
+      }
+    };
+  });
+}
+
 export function useSlots(currentUser) {
   const [slots, setSlots] = useState(SLOTS_INICIALES);
   const [inscripciones, setInscripciones] = useState([]);
@@ -178,7 +212,9 @@ export function useSlots(currentUser) {
       if (n < semanaDesde) semanaDesde = n;
       if (n > semanaHasta) semanaHasta = n;
     }
-    const selectCols = "id,jugador_id,slot_id,semana,es_socio,inscrito_at,jugadores(nombre)";
+    // Sin embed: solo columnas de `inscripciones` (rango semana). Los nombres se unen después;
+    // `jugadores(nombre)` en el mismo select puede hacer que no lleguen todas las filas según RLS del join.
+    const selectCols = "id,jugador_id,slot_id,semana,es_socio,inscrito_at";
     const pageSize = 500;
     const allRows = [];
     let from = 0;
@@ -220,7 +256,11 @@ export function useSlots(currentUser) {
     if (reloadToken !== undefined && reloadToken !== inscripcionesReloadGenRef.current) {
       return;
     }
-    setInscripciones(allRows);
+    const withNombres = await enrichInscripcionesJugadoresNombres(supabase, allRows);
+    if (reloadToken !== undefined && reloadToken !== inscripcionesReloadGenRef.current) {
+      return;
+    }
+    setInscripciones(withNombres);
   }
 
   useEffect(() => {
