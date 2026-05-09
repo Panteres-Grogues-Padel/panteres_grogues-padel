@@ -1,26 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { COORDS, JUGADORES_INICIALES } from "../utils/mockData";
 import { supabase } from "../lib/supabase";
 
-function buildFallbackUser(authUser) {
-  if (!authUser) return null;
-  const email = authUser.email || "";
-  const baseName = email.includes("@") ? email.split("@")[0] : "usuario";
-  const nombre = authUser.user_metadata?.nombre || authUser.user_metadata?.handle || baseName;
-  const nombreCompleto = authUser.user_metadata?.full_name || nombre;
+const JUGADORES_SELECT =
+  "id, auth_id, nombre, nombre_completo, email, telefono, instagram, mostrar_telefono, autoriza_instagram, es_coordinador, activo";
 
+function jugadorToState(jugador) {
   return {
-    id: null,
-    auth_id: authUser.id,
-    nombre,
-    nombreCompleto,
-    email,
-    telefono: null,
-    instagram: null,
-    mostrar_telefono: false,
-    autoriza_instagram: false,
-    es_coordinador: false,
-    fromFallback: true
+    ...jugador,
+    id: jugador.id != null ? String(jugador.id) : jugador.id,
+    nombreCompleto: jugador.nombre_completo,
+    fromFallback: false
   };
 }
 
@@ -32,6 +22,7 @@ export function useAuth() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [demoId, setDemoId] = useState("");
+  const ultimoAuthIdCargadoRef = useRef(null);
 
   const demoUsers = useMemo(
     () =>
@@ -42,68 +33,74 @@ export function useAuth() {
     []
   );
 
-  async function hydrateCurrentUser(authUser) {
+  async function fetchJugadorPorAuthId(authUserId) {
+    const { data: jugador, error: jugadorError } = await supabase
+      .from("jugadores")
+      .select(JUGADORES_SELECT)
+      .eq("auth_id", authUserId)
+      .maybeSingle();
+    if (jugadorError) return { ok: false, message: jugadorError.message };
+    if (!jugador) return { ok: false, message: "Usuario no encontrado" };
+    return { ok: true, jugador };
+  }
+
+  async function aplicarSesionSupabase(authUser) {
     if (!authUser) {
+      ultimoAuthIdCargadoRef.current = null;
       setCurrentUser(null);
-      return;
-    }
-
-    if (!supabase) {
-      setCurrentUser(buildFallbackUser(authUser));
-      return;
-    }
-
-    try {
-      const { data: jugador, error: jugadorError } = await supabase
-        .from("jugadores")
-        .select(
-          "id, auth_id, nombre, nombre_completo, email, telefono, instagram, mostrar_telefono, autoriza_instagram, es_coordinador, activo"
-        )
-        .eq("auth_id", authUser.id)
-        .maybeSingle();
-
-      if (jugadorError) {
-        setError("No se pudo cargar el perfil del jugador.");
-        setCurrentUser(buildFallbackUser(authUser));
-        return;
-      }
-
-      if (!jugador) {
-        setError(
-          "Tu usuario existe en Auth, pero no tiene perfil en jugadores. Contacta con coordinacion."
-        );
-        setCurrentUser(buildFallbackUser(authUser));
-        return;
-      }
-
       setError("");
-      setCurrentUser({
-        ...jugador,
-        id: jugador.id != null ? String(jugador.id) : jugador.id,
-        nombreCompleto: jugador.nombre_completo,
-        fromFallback: false
-      });
-    } catch {
-      setError("No se pudo cargar el perfil del jugador.");
-      setCurrentUser(buildFallbackUser(authUser));
+      return;
+    }
+
+    if (ultimoAuthIdCargadoRef.current === authUser.id) return;
+
+    setLoading(true);
+    try {
+      const result = await fetchJugadorPorAuthId(authUser.id);
+      if (!result.ok) {
+        setError(result.message);
+        setCurrentUser(null);
+        ultimoAuthIdCargadoRef.current = null;
+        await supabase.auth.signOut({ scope: "local" });
+        return;
+      }
+      setError("");
+      setCurrentUser(jugadorToState(result.jugador));
+      ultimoAuthIdCargadoRef.current = authUser.id;
+    } catch (e) {
+      setError(e?.message ?? "Error de conexion.");
+      setCurrentUser(null);
+      ultimoAuthIdCargadoRef.current = null;
+      try {
+        await supabase.auth.signOut({ scope: "local" });
+      } catch {
+        /* ignore */
+      }
+    } finally {
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    if (!supabase) return;
-    let mounted = true;
+    if (!supabase) return undefined;
 
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (!mounted) return;
-      await hydrateCurrentUser(data.session?.user ?? null);
-    });
+    let cancelled = false;
 
-    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      await hydrateCurrentUser(session?.user ?? null);
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (cancelled) return;
+      const user = session?.user ?? null;
+      if (user) {
+        aplicarSesionSupabase(user);
+      } else {
+        ultimoAuthIdCargadoRef.current = null;
+        setCurrentUser(null);
+        setError("");
+        setLoading(false);
+      }
     });
 
     return () => {
-      mounted = false;
+      cancelled = true;
       listener.subscription.unsubscribe();
     };
   }, []);
@@ -117,40 +114,59 @@ export function useAuth() {
     if (!supabase) return setError("Faltan variables de entorno de Supabase.");
 
     setLoading(true);
-    let userToHydrate = null;
-    const timeoutMs = 25000;
-    let timeoutId;
-    const timeoutPromise = new Promise((_, reject) => {
-      timeoutId = setTimeout(
-        () => reject(new Error("Tiempo de espera agotado. Revisa la conexion.")),
-        timeoutMs
-      );
-    });
     try {
-      const { data, error: authError } = await Promise.race([
-        supabase.auth.signInWithPassword({ email, password }),
-        timeoutPromise
-      ]);
-      if (timeoutId) clearTimeout(timeoutId);
+      let loginTimeoutId;
+      const timeoutPromise = new Promise((_, reject) => {
+        loginTimeoutId = setTimeout(
+          () => reject(new Error("Tiempo de espera agotado. Revisa la conexion.")),
+          15000
+        );
+      });
+
+      let data;
+      let authError;
+      try {
+        const raceResult = await Promise.race([
+          supabase.auth.signInWithPassword({ email, password }),
+          timeoutPromise
+        ]);
+        ({ data, error: authError } = raceResult);
+      } finally {
+        clearTimeout(loginTimeoutId);
+      }
+
       if (authError) {
         setError(authError.message);
         return;
       }
-      userToHydrate = data?.user ?? data?.session?.user ?? null;
-      if (!userToHydrate) {
-        setError("No se pudo obtener la sesion. Vuelve a intentarlo.");
-      }
-    } catch (e) {
-      if (timeoutId) clearTimeout(timeoutId);
-      setError(e?.message ?? "Error de conexion al iniciar sesion.");
-    } finally {
-      if (timeoutId) clearTimeout(timeoutId);
-      setLoading(false);
-    }
 
-    // No await: si la query a `jugadores` cuelga, el botón ya no queda en "Entrando..." para siempre.
-    if (userToHydrate) {
-      void hydrateCurrentUser(userToHydrate);
+      const authUser = data?.user ?? data?.session?.user ?? null;
+      if (!authUser) {
+        setError("No se pudo obtener la sesion. Vuelve a intentarlo.");
+        return;
+      }
+
+      const result = await fetchJugadorPorAuthId(authUser.id);
+      if (!result.ok) {
+        setError(result.message);
+        ultimoAuthIdCargadoRef.current = null;
+        await supabase.auth.signOut({ scope: "local" });
+        return;
+      }
+
+      setError("");
+      setCurrentUser(jugadorToState(result.jugador));
+      ultimoAuthIdCargadoRef.current = authUser.id;
+    } catch (e) {
+      setError(e?.message ?? "Error de conexion al iniciar sesion.");
+      ultimoAuthIdCargadoRef.current = null;
+      try {
+        await supabase.auth.signOut({ scope: "local" });
+      } catch {
+        /* ignore */
+      }
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -184,6 +200,7 @@ export function useAuth() {
   }
 
   async function logout() {
+    ultimoAuthIdCargadoRef.current = null;
     setLoading(false);
     setCurrentUser(null);
     setPassword("");

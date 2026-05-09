@@ -60,8 +60,10 @@ export default function Partidos({
   );
 
   function handleGenerarClick() {
-    if (!slotId) return;
-    if (!semana) return;
+    if (!slotId || !semana) {
+      console.warn("[Partidos] Generar cancelado: falta slotId o semana", { slotId, semana });
+      return;
+    }
     if (yaGenerado) {
       const ok = window.confirm("Ya existen partidos para ese slot y semana. ¿Regenerar?");
       if (!ok) return;

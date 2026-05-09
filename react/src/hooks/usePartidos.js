@@ -149,6 +149,7 @@ export function usePartidos(currentUser) {
   }, [partidos]);
 
   async function generarPartidos({ jugadoresRanking, slotId, semana, currentUserId, numPistas, numIndoor }) {
+    console.log("Generando partidos...");
     if (useFallback) {
       const maxTit = Math.max(0, Number(numPistas || 0)) * 4;
       const titulares = maxTit > 0 ? jugadoresRanking.slice(0, maxTit) : jugadoresRanking;
