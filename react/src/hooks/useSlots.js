@@ -75,12 +75,15 @@ function getSemanaObjetivo(slot, now = new Date()) {
 }
 
 /**
- * Semanas a mostrar / comprobar para un slot: lunes UTC actual y lunes de alta.
+ * Semanas para filtrar inscripciones en UI: lunes ISO actual, el siguiente (p. ej. datos con semana 2026-05-11 un sábado)
+ * y el lunes de alta (getSemanaObjetivo).
  */
 function semanasRelevantesParaSlot(slot, now = new Date()) {
-  const lunesEsta = formatDateUTC(getMondayUtc(now));
+  const m0 = getMondayUtc(now);
+  const lunesEsta = formatDateUTC(m0);
+  const lunesProx = formatDateUTC(addDaysUtc(m0, 7));
   const objetivo = getSemanaObjetivo(slot, now);
-  return lunesEsta === objetivo ? [lunesEsta] : [lunesEsta, objetivo];
+  return [...new Set([lunesEsta, lunesProx, objetivo])];
 }
 
 function inscripcionEnSemanasRelevantes(ins, slot, now = new Date()) {
@@ -139,11 +142,15 @@ export function useSlots(currentUser) {
     if (!currentUser?.id) return;
     const now = new Date();
     const m0 = getMondayUtc(now);
-    const semanaActual = normalizeSemanaValue(formatDateUTC(m0));
+    // Lunes ISO semana calendario UTC (p. ej. 2026-05-04 si hoy es sáb 9 may 2026)
+    const semanaLunesEsta = normalizeSemanaValue(formatDateUTC(m0));
+    // Lunes de la semana siguiente (p. ej. 2026-05-11) — muchas inscripciones van aquí cuando la lista ya es “de la próxima semana”
+    const semanaLunesProxima = normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, 7)));
     const semanas = [
       normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, -7))),
-      semanaActual,
-      normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, 7)))
+      semanaLunesEsta,
+      semanaLunesProxima,
+      normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, 14)))
     ];
     // jugadores(nombre): FK jugadores. slots(label): FK slot_id → slots.
     const { data, error } = await supabase

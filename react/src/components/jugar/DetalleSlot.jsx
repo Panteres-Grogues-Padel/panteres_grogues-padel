@@ -4,6 +4,8 @@ function dayOpenLabel(slot) {
   if (dow === undefined) return "Abierta";
   const ahora = new Date();
   const jsNow = ahora.getDay() === 0 ? 6 : ahora.getDay() - 1;
+  // Dom (6): jsNow > dow nunca ocurre; entre lun–sáb la lista ya abrió el domingo anterior.
+  if (dow === 6 && jsNow !== 6) return "Abierta · semana próxima";
   const diff = (dow - jsNow + 7) % 7;
   if (diff === 0) return "Abierta · semana actual";
   if (jsNow > dow) return "Abierta · semana siguiente";
