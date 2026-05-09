@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { jugadoresCoinciden } from "../../utils/jugador";
+import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
 
 function dayOpenLabel(slot) {
   const ds = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
@@ -15,21 +16,6 @@ function dayOpenLabel(slot) {
   if (jsNow === dow && ahora.getHours() >= 19) return "Abierta desde las 19:00";
   if (jsNow === dow && ahora.getHours() < 19) return "Abre hoy a las 19:00";
   return `Abre el ${ds[dow]} a las 19:00`;
-}
-
-const AVATAR_CLASSES = ["av-teal", "av-purple", "av-coral", "av-blue", "av-amber", "av-pink", "av-green", "av-gray"];
-
-function initials(nombre = "") {
-  return nombre
-    .split(/[\s_]/)
-    .map((w) => w?.[0] ?? "")
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
-function avatarClass(nombre = "") {
-  return AVATAR_CLASSES[(nombre.charCodeAt(0) || 0) % AVATAR_CLASSES.length];
 }
 
 function filaEsUsuarioActual(p, currentUser) {
@@ -160,7 +146,7 @@ export default function DetalleSlot({
           sorted.map((p, idx) => (
             <div className="player-row" key={`${slot.id}-all-${idx}-${p.nombre}`}>
               <span className="ppos">{idx + 1}</span>
-              <div className={`avatar ${avatarClass(p.nombre)}`}>{initials(p.nombre)}</div>
+              <div className={`avatar ${avatarClassFromNombre(p.nombre)}`}>{initialsFromNombre(p.nombre)}</div>
               <span className="pname">
                 {p.nombre}
                 {filaEsUsuarioActual(p, currentUser) ? " ✓" : ""}
@@ -182,7 +168,7 @@ export default function DetalleSlot({
             {titulares.map((p, idx) => (
               <div className="player-row" key={`${slot.id}-t-${idx}-${p.nombre}`}>
                 <span className="ppos">{idx + 1}</span>
-                <div className={`avatar ${avatarClass(p.nombre)}`}>{initials(p.nombre)}</div>
+                <div className={`avatar ${avatarClassFromNombre(p.nombre)}`}>{initialsFromNombre(p.nombre)}</div>
                 <span className="pname">
                   {p.nombre}
                   {filaEsUsuarioActual(p, currentUser) ? " ✓" : ""}
@@ -197,7 +183,7 @@ export default function DetalleSlot({
                 {reserva.map((p, idx) => (
                   <div className="player-row" key={`${slot.id}-r-${idx}-${p.nombre}`}>
                     <span className="ppos">R{idx + 1}</span>
-                    <div className={`avatar ${avatarClass(p.nombre)}`}>{initials(p.nombre)}</div>
+                    <div className={`avatar ${avatarClassFromNombre(p.nombre)}`}>{initialsFromNombre(p.nombre)}</div>
                     <span className="pname">
                       {p.nombre}
                       {filaEsUsuarioActual(p, currentUser) ? " ✓" : ""}

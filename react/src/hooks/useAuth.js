@@ -3,7 +3,7 @@ import { COORDS, JUGADORES_INICIALES } from "../utils/mockData";
 import { supabase } from "../lib/supabase";
 
 const JUGADORES_SELECT =
-  "id, auth_id, nombre, nombre_completo, email, telefono, instagram, mostrar_telefono, autoriza_instagram, es_coordinador, activo";
+  "id, auth_id, nombre, nombre_completo, email, telefono, instagram, foto_url, mostrar_telefono, autoriza_instagram, es_coordinador, activo";
 
 function jugadorToState(jugador) {
   return {
@@ -199,6 +199,10 @@ export function useAuth() {
     }
   }
 
+  function patchCurrentUser(partial) {
+    setCurrentUser((u) => (u && partial ? { ...u, ...partial } : u));
+  }
+
   async function logout() {
     ultimoAuthIdCargadoRef.current = null;
     setLoading(false);
@@ -231,6 +235,7 @@ export function useAuth() {
     loginEmail,
     loginDemo,
     loginGoogle,
-    logout
+    logout,
+    patchCurrentUser
   };
 }

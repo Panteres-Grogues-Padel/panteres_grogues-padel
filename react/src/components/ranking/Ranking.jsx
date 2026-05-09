@@ -1,4 +1,5 @@
 import { nombreCorto } from "../../utils/nombres";
+import { jugadoresCoinciden } from "../../utils/jugador";
 
 export default function Ranking({ ranking, currentUser, onSelect }) {
   return (
@@ -22,7 +23,7 @@ export default function Ranking({ ranking, currentUser, onSelect }) {
             {ranking.map((jugador, index) => (
               <tr
                 key={jugador.id}
-                className={currentUser?.nombre === jugador.nombre ? "me" : ""}
+                className={currentUser && jugadoresCoinciden(currentUser.id, jugador.id) ? "me" : ""}
                 onClick={() => onSelect(jugador)}
               >
                 <td>{index + 1}</td>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
 
 function saludoPorHora() {
   const h = new Date().getHours();
@@ -10,6 +11,7 @@ function saludoPorHora() {
 export default function Bienvenida({
   currentUser,
   ranking,
+  onOpenPerfil,
   onGoToJugar,
   onGoToPartidos,
   onGoToAgenda,
@@ -26,7 +28,25 @@ export default function Bienvenida({
   return (
     <div>
       <div className="hero-pride">
-        <img src="/icons/landing-logo.png" alt="Panteres Grogues Padel" className="hero-avatar" />
+        <button
+          type="button"
+          className="hero-avatar-btn"
+          onClick={() => onOpenPerfil?.()}
+          aria-label="Abrir mi perfil"
+        >
+          {currentUser?.foto_url ? (
+            <img
+              src={currentUser.foto_url}
+              alt=""
+              className="hero-player-avatar"
+              style={{ objectFit: "cover", display: "block" }}
+            />
+          ) : (
+            <div className={`hero-player-avatar ${avatarClassFromNombre(currentUser?.nombre ?? "")}`}>
+              {initialsFromNombre(currentUser?.nombre ?? "")}
+            </div>
+          )}
+        </button>
         <div className="hero-title">
           {saludoPorHora()}, {nombre}!
         </div>

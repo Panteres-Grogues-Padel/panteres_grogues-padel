@@ -15,14 +15,15 @@ import { useRanking } from "./hooks/useRanking";
 import { usePartidos } from "./hooks/usePartidos";
 import { useEventos } from "./hooks/useEventos";
 import { useResultados } from "./hooks/useResultados";
-import { isJugadorUuid } from "./utils/jugador";
+import { isJugadorUuid, jugadoresCoinciden } from "./utils/jugador";
+import PerfilJugador from "./components/ranking/PerfilJugador";
 
 export default function App() {
   const auth = useAuth();
   const apuntarInFlightRef = useRef(false);
   const [activeTab, setActiveTab] = useState("bienvenida");
   const [flashMessage, setFlashMessage] = useState("");
-  const [jugadorSeleccionado, setJugadorSeleccionado] = useState(null);
+  const [perfilJugador, setPerfilJugador] = useState(null);
   // useSlots corre al montar App (tras login), no al entrar en la pestaña Jugar; Jugar solo recibe props.
   const { slots, slotsNotice, apuntarEnSlot, bajaEnSlot } = useSlots(auth.currentUser);
   const { ranking, loading: rankingLoading, error: rankingError } = useRanking();
@@ -67,6 +68,27 @@ export default function App() {
     if (res.warning) showMessage(res.warning);
   }
 
+  function perfilDesdeUsuarioSesion(u) {
+    const rk = ranking.find((j) => jugadoresCoinciden(j.id, u.id));
+    return {
+      id: u.id,
+      nombre: u.nombre,
+      nombreCompleto: u.nombreCompleto ?? u.nombre,
+      telefono: u.telefono ?? u.tel ?? "",
+      instagram: u.instagram ?? u.ig ?? "",
+      foto_url: u.foto_url ?? u.foto ?? null,
+      mostrar_telefono: Boolean(u.mostrar_telefono ?? u.mostrarTel),
+      autoriza_instagram: Boolean(u.autoriza_instagram ?? u.autorizaIG),
+      pj: rk?.pj ?? 0,
+      pg: rk?.pg ?? 0,
+      jj: rk?.jj ?? 0,
+      jg: rk?.jg ?? 0,
+      eficacia: rk?.eficacia ?? 0,
+      penalizacion: rk?.penalizacion ?? 0,
+      score: rk?.score ?? 0
+    };
+  }
+
   async function handleGenerar(slotId, semana, options = {}) {
     const slot = slots.find((s) => s.id === slotId);
     if (!slot) return showMessage("Slot no encontrado");
@@ -102,6 +124,7 @@ export default function App() {
             <Bienvenida
               currentUser={auth.currentUser}
               ranking={ranking}
+              onOpenPerfil={() => setPerfilJugador(perfilDesdeUsuarioSesion(auth.currentUser))}
               onGoToJugar={() => setActiveTab("jugar")}
               onGoToPartidos={() => setActiveTab("partidos")}
               onGoToAgenda={() => setActiveTab("agenda")}
@@ -113,7 +136,7 @@ export default function App() {
             <>
               {rankingLoading ? <p className="info-box">Cargando ranking...</p> : null}
               {rankingError ? <p className="error-box">Error ranking: {rankingError}</p> : null}
-              <Ranking ranking={ranking} currentUser={auth.currentUser} onSelect={setJugadorSeleccionado} />
+              <Ranking ranking={ranking} currentUser={auth.currentUser} onSelect={(j) => setPerfilJugador(j)} />
             </>
           ) : null}
           {activeTab === "jugar" ? (
@@ -208,11 +231,19 @@ export default function App() {
         <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
       </div>
       {flashMessage ? <div className="toast">{flashMessage}</div> : null}
-      {jugadorSeleccionado ? (
-        <div className="toast" onClick={() => setJugadorSeleccionado(null)}>
-          {jugadorSeleccionado.nombreCompleto}
-        </div>
-      ) : null}
+      <PerfilJugador
+        jugador={perfilJugador}
+        currentUser={auth.currentUser}
+        open={Boolean(perfilJugador)}
+        onClose={() => setPerfilJugador(null)}
+        onJugadorUpdated={(patch) => {
+          setPerfilJugador((prev) => (prev && jugadoresCoinciden(prev.id, patch.id) ? { ...prev, ...patch } : prev));
+          if (auth.currentUser && jugadoresCoinciden(auth.currentUser.id, patch.id)) {
+            auth.patchCurrentUser(patch);
+          }
+        }}
+      />
+
     </div>
   );
 }

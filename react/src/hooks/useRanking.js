@@ -9,6 +9,11 @@ function mapRankingRow(row) {
     id: j.id,
     nombre: j.nombre,
     nombreCompleto: j.nombre_completo,
+    telefono: j.telefono ?? "",
+    instagram: j.instagram ?? "",
+    foto_url: j.foto_url ?? null,
+    mostrar_telefono: Boolean(j.mostrar_telefono),
+    autoriza_instagram: Boolean(j.autoriza_instagram),
     pj: row.partidos_jugados ?? 0,
     pg: row.partidos_ganados ?? 0,
     jj: row.juegos_jugados ?? 0,
@@ -41,7 +46,7 @@ export function useRanking() {
       const { data, error: fetchError } = await supabase
         .from("ranking")
         .select(
-          "partidos_jugados,partidos_ganados,juegos_jugados,juegos_ganados,eficacia,penalizacion,score,jugadores!inner(id,nombre,nombre_completo)"
+          "partidos_jugados,partidos_ganados,juegos_jugados,juegos_ganados,eficacia,penalizacion,score,jugadores!inner(id,nombre,nombre_completo,telefono,instagram,foto_url,mostrar_telefono,autoriza_instagram)"
         )
         .order("score", { ascending: false });
 

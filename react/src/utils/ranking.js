@@ -13,6 +13,16 @@ export function calcularRanking(jugador) {
 
 export function rankearJugadores(jugadores) {
   return [...jugadores]
-    .map((jugador) => ({ ...jugador, ...calcularRanking(jugador) }))
+    .map((jugador) => {
+      const normalized = {
+        ...jugador,
+        telefono: jugador.telefono ?? jugador.tel ?? "",
+        instagram: jugador.instagram ?? jugador.ig ?? "",
+        mostrar_telefono: jugador.mostrar_telefono ?? jugador.mostrarTel ?? false,
+        autoriza_instagram: jugador.autoriza_instagram ?? jugador.autorizaIG ?? false,
+        foto_url: jugador.foto_url ?? jugador.foto ?? null
+      };
+      return { ...normalized, ...calcularRanking(normalized) };
+    })
     .sort((a, b) => b.score - a.score);
 }
