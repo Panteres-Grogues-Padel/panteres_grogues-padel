@@ -1,11 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import PartidoCard from "./PartidoCard";
 import MoverJugador from "./MoverJugador";
+import { copyTextToClipboard } from "../../utils/clipboard";
 import { formatHoraInput, normalizeSemanaDate } from "../../utils/dates";
+
+function jugadoresOrdenRanking(jugadores, rankingPosByJugador) {
+  const copy = [...jugadores];
+  copy.sort((a, b) => {
+    const ra = rankingPosByJugador[String(a.jugadorId)] ?? 9999;
+    const rb = rankingPosByJugador[String(b.jugadorId)] ?? 9999;
+    if (ra !== rb) return ra - rb;
+    return (a.posicion ?? 0) - (b.posicion ?? 0);
+  });
+  return copy;
+}
 
 export default function Partidos({
   partidos,
-  rotaciones,
   slots,
   ranking,
   currentUser,
@@ -97,21 +108,33 @@ export default function Partidos({
     return candidates;
   }, [slotActual, partidosFiltrados, ranking]);
 
+  /** Misma estructura que `buildWA` en index.html; hora solo si existe; indoor solo la palabra "Indoor" (sin iconos). */
   function buildWaText() {
     if (!slotActual || !partidosFiltrados.length) return "";
+    const ordenados = [...partidosFiltrados].sort((a, b) => (a.numeroPista ?? 0) - (b.numeroPista ?? 0));
+    const n = ordenados.length;
     let wa = `🎾 *${slotActual.label} — ${slotActual.club}*\n`;
-    wa += `Partidos: ${partidosFiltrados.length} · Jugadores: ${partidosFiltrados.reduce((acc, p) => acc + p.jugadores.length, 0)}\n`;
-    const indoorCount = partidosFiltrados.filter((p) => p.indoor).length;
-    if (indoorCount > 0) wa += `🏠 ${indoorCount} partido${indoorCount !== 1 ? "s" : ""} indoor\n`;
+    wa += `Partidos: ${n} · Jugadores: ${n * 4}\n`;
+    const indoorCount = ordenados.filter((p) => p.indoor).length;
+    if (indoorCount > 0) {
+      wa += `${indoorCount} partido${indoorCount !== 1 ? "s" : ""} Indoor\n`;
+    }
     wa += "\n";
-    partidosFiltrados.forEach((p, i) => {
-      const hora = p.hora ? ` · 🕐 ${formatHoraInput(p.hora)}` : "";
-      const indoor = p.indoor ? " 🏠" : "";
+    ordenados.forEach((p, i) => {
+      const horaRaw = formatHoraInput(p.hora);
+      const hora = horaRaw ? ` · 🕐 ${horaRaw}` : "";
+      const indoor = p.indoor ? " Indoor" : "";
       wa += `*Partido ${i + 1}*${hora}${indoor}\n`;
-      wa += `${p.jugadores.map((j) => j.nombre).join(" · ")}\n\n`;
+      const jugOrd = jugadoresOrdenRanking(p.jugadores, rankingPosByJugador);
+      wa += `${jugOrd.map((j) => j.nombre).join(" · ")}\n\n`;
     });
     if (reservas.length) wa += `*Reserva:* ${reservas.map((r) => r.nombre).join(", ")}`;
     return wa;
+  }
+
+  async function handleCopyWa() {
+    const texto = buildWaText();
+    await copyTextToClipboard(texto);
   }
 
   function onOpenMover(origenPartido, jugador) {
@@ -122,8 +145,6 @@ export default function Partidos({
     const ok = await onMover(moverState.origen.id, destinoId, moverState.jugador.jugadorId);
     if (ok) setMoverState({ open: false, origen: null, jugador: null });
   }
-
-  console.log('Partidos en estado:', partidos);
 
   return (
     <div>
@@ -198,7 +219,6 @@ export default function Partidos({
                 index={i}
                 isCoord={isCoord}
                 currentUser={currentUser}
-                rotaciones={rotaciones}
                 onConfirmar={onConfirmar}
                 onHora={onHora}
                 onIndoor={onIndoor}
@@ -219,7 +239,9 @@ export default function Partidos({
           <div className="wa-box">
             <div className="wa-header">
               <span>WhatsApp</span>
-              <button className="btn btn-sm" onClick={() => navigator.clipboard?.writeText(buildWaText())}>Copiar</button>
+              <button type="button" className="btn btn-sm" onClick={() => void handleCopyWa()}>
+                Copiar
+              </button>
             </div>
             <div className="wa-text">{buildWaText()}</div>
           </div>

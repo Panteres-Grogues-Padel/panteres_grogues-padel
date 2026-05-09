@@ -22,15 +22,8 @@ export default function App() {
   // useSlots corre al montar App (tras login), no al entrar en la pestaña Jugar; Jugar solo recibe props.
   const { slots, slotsNotice, apuntarEnSlot, bajaEnSlot } = useSlots(auth.currentUser);
   const { ranking, loading: rankingLoading, error: rankingError } = useRanking();
-  const {
-    partidos,
-    generarPartidos,
-    asignarHora,
-    toggleIndoor,
-    moverJugador,
-    confirmarAsistencia,
-    rotaciones
-  } = usePartidos(auth.currentUser);
+  const { partidos, generarPartidos, asignarHora, toggleIndoor, moverJugador, confirmarAsistencia } =
+    usePartidos(auth.currentUser);
   const isCoord = useMemo(
     () => Boolean(auth.currentUser?.es_coordinador),
     [auth.currentUser]
@@ -132,7 +125,6 @@ export default function App() {
           {activeTab === "partidos" ? (
             <Partidos
               partidos={partidos}
-              rotaciones={rotaciones}
               onGenerar={handleGenerar}
               onHora={async (id, hora) => {
                 const res = await asignarHora(id, hora);

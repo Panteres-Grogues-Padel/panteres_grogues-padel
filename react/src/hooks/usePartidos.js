@@ -4,12 +4,6 @@ import { supabase } from "../lib/supabase";
 import { createActivityLog, createNotifications } from "../lib/engagement";
 import { formatHoraInput, normalizeSemanaDate } from "../utils/dates";
 
-const ROTACIONES = [
-  { izq: [0, 3], der: [1, 2] },
-  { izq: [0, 2], der: [1, 3] },
-  { izq: [0, 1], der: [2, 3] }
-];
-
 function strId(id) {
   return id == null ? id : String(id);
 }
@@ -492,7 +486,6 @@ export function usePartidos(currentUser) {
     asignarHora,
     toggleIndoor,
     moverJugador,
-    confirmarAsistencia,
-    rotaciones: ROTACIONES
+    confirmarAsistencia
   };
 }

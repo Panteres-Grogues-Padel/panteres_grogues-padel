@@ -21,7 +21,6 @@ export default function PartidoCard({
   index,
   isCoord,
   currentUser,
-  rotaciones,
   onConfirmar,
   onHora,
   onIndoor,
@@ -29,17 +28,21 @@ export default function PartidoCard({
   rankingPosByJugador
 }) {
   const [expanded, setExpanded] = useState(false);
+  const jugadoresPorRanking = useMemo(() => {
+    const copy = [...partido.jugadores];
+    copy.sort((a, b) => {
+      const ra = rankingPosByJugador[String(a.jugadorId)];
+      const rb = rankingPosByJugador[String(b.jugadorId)];
+      const na = ra ?? 9999;
+      const nb = rb ?? 9999;
+      if (na !== nb) return na - nb;
+      return (a.posicion ?? 0) - (b.posicion ?? 0);
+    });
+    return copy;
+  }, [partido.jugadores, rankingPosByJugador]);
   const allConfirmed = useMemo(() => partido.jugadores.every((j) => j.confirmado), [partido.jugadores]);
-  const names = useMemo(() => partido.jugadores.map((j) => j.nombre).join(", "), [partido.jugadores]);
+  const names = useMemo(() => jugadoresPorRanking.map((j) => j.nombre).join(", "), [jugadoresPorRanking]);
   const horaUi = formatHoraInput(partido.hora);
-  const rotacionParejas = rotaciones?.[0];
-  const textoParejas = useMemo(() => {
-    const j = partido.jugadores;
-    if (!rotacionParejas || j.length !== 4) return null;
-    const nom = (i) => j[i]?.nombre ?? "—";
-    const lado = (idxs) => idxs.map(nom).join(" · ");
-    return `${lado(rotacionParejas.izq)} vs ${lado(rotacionParejas.der)}`;
-  }, [partido.jugadores, rotacionParejas]);
 
   return (
     <div style={{ border: "0.5px solid var(--border)", borderRadius: "var(--radius)", marginBottom: "6px", overflow: "hidden" }}>
@@ -67,9 +70,8 @@ export default function PartidoCard({
 
       {expanded ? (
         <div style={{ padding: "10px 12px", background: "var(--bg)" }}>
-          {partido.jugadores.map((j) => {
+          {jugadoresPorRanking.map((j, ordIdx) => {
             const isSelf = currentUser && j.nombre === currentUser.nombre;
-            const rkPos = rankingPosByJugador[String(j.jugadorId)];
             return (
               <div key={j.jugadorId} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "5px 0", borderBottom: "0.5px solid var(--border)" }}>
                 <div className={`avatar ${avatarClass(j.nombre)}`} style={{ width: "22px", height: "22px", fontSize: "9px" }}>
@@ -77,7 +79,7 @@ export default function PartidoCard({
                 </div>
                 <span style={{ fontSize: "13px", flex: 1 }}>
                   {j.nombre}
-                  <span style={{ fontSize: "10px", color: "var(--text2)", marginLeft: "4px" }}>#{rkPos || "-"}</span>
+                  <span style={{ fontSize: "10px", color: "var(--text2)", marginLeft: "4px" }}>#{ordIdx + 1}</span>
                 </span>
                 {j.confirmado ? (
                   <span style={{ fontSize: "11px", color: "#27500A", fontWeight: 600 }}>✓</span>
@@ -100,24 +102,6 @@ export default function PartidoCard({
               </div>
             );
           })}
-
-          {textoParejas ? (
-            <div
-              style={{
-                fontSize: "11px",
-                color: "var(--text2)",
-                marginTop: "8px",
-                paddingTop: "8px",
-                borderTop: "0.5px dashed var(--border2)",
-                lineHeight: 1.45
-              }}
-            >
-              <span style={{ fontWeight: 600, color: "var(--text3)", textTransform: "uppercase", fontSize: "10px", letterSpacing: "0.04em" }}>
-                Parejas (pista)
-              </span>
-              <div style={{ marginTop: "4px" }}>{textoParejas}</div>
-            </div>
-          ) : null}
 
           {isCoord ? (
             <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "8px", flexWrap: "wrap" }}>
