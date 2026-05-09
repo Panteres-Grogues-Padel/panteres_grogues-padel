@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 // Fallback offline: todos los slots del prototipo (index.html) en `utils/mockData.js` → SLOTS_INICIALES
 import { SLOTS_INICIALES } from "../utils/mockData";
 import { isBajaWarning, isSlotOpen, sameDiaSemanaSlot } from "../utils/slots";
@@ -103,6 +103,8 @@ export function useSlots(currentUser) {
   const [slots, setSlots] = useState(SLOTS_INICIALES);
   const [inscripciones, setInscripciones] = useState([]);
   const [slotsNotice, setSlotsNotice] = useState("");
+  /** Invalida `loadInscripcionesSupabase` en vuelo al cambiar usuario o al desmontar. */
+  const inscripcionesReloadGenRef = useRef(0);
 
   const useFallback =
     !supabase ||
@@ -160,7 +162,7 @@ export function useSlots(currentUser) {
     setSlots(SLOTS_INICIALES);
   }
 
-  async function loadInscripcionesSupabase(extraSemanasRaw = []) {
+  async function loadInscripcionesSupabase(extraSemanasRaw = [], reloadToken) {
     if (!currentUser?.id) return;
     const now = new Date();
     const m0 = getMondayUtc(now);
@@ -202,13 +204,32 @@ export function useSlots(currentUser) {
       from += pageSize;
     }
 
+    if (reloadToken !== undefined && reloadToken !== inscripcionesReloadGenRef.current) {
+      return;
+    }
     setInscripciones(allRows);
   }
 
   useEffect(() => {
-    if (useFallback) return;
-    loadSlotsSupabase();
-    loadInscripcionesSupabase();
+    if (useFallback) {
+      setInscripciones([]);
+      return undefined;
+    }
+
+    const reloadToken = ++inscripcionesReloadGenRef.current;
+    setInscripciones([]);
+
+    let cancelled = false;
+    (async () => {
+      await loadSlotsSupabase();
+      if (cancelled) return;
+      await loadInscripcionesSupabase([], reloadToken);
+    })();
+
+    return () => {
+      cancelled = true;
+      inscripcionesReloadGenRef.current += 1;
+    };
   }, [useFallback, currentUser?.id]);
 
   const slotsConEstado = useMemo(() => {
