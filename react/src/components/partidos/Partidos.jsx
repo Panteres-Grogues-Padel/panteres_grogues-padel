@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import PartidoCard from "./PartidoCard";
 import MoverJugador from "./MoverJugador";
 
@@ -19,6 +19,7 @@ export default function Partidos({
   const [numPistas, setNumPistas] = useState(0);
   const [numIndoor, setNumIndoor] = useState(0);
   const [moverState, setMoverState] = useState({ open: false, origen: null, jugador: null });
+  const slotIdAnteriorRef = useRef(null);
 
   const semanasDisponibles = useMemo(() => {
     const set = new Set([
@@ -30,6 +31,15 @@ export default function Partidos({
 
   useEffect(() => {
     if (!slotId && slots.length) setSlotId(slots[0].id);
+  }, [slotId, slots]);
+
+  /** Misma semana que alta en Jugar: `getSemanaObjetivo` en useSlots (no dejar la semana del slot anterior en el desplegable). */
+  useEffect(() => {
+    if (!slotId) return;
+    if (slotIdAnteriorRef.current === slotId) return;
+    slotIdAnteriorRef.current = slotId;
+    const slot = slots.find((s) => s.id === slotId);
+    if (slot?.semanaObjetivo) setSemana(slot.semanaObjetivo);
   }, [slotId, slots]);
 
   useEffect(() => {

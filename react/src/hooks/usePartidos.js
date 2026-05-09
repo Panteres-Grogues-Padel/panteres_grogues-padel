@@ -9,6 +9,17 @@ const ROTACIONES = [
   { izq: [0, 1], der: [2, 3] }
 ];
 
+/** Alineado con useSlots: columna `semana` es date en Postgres; forzar YYYY-MM-DD. */
+function normalizeSemanaDate(s) {
+  if (s == null || s === "") return s;
+  const m = String(s).match(/^(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1] : String(s).slice(0, 10);
+}
+
+function strId(id) {
+  return id == null ? id : String(id);
+}
+
 function flattenPartidos(data) {
   const items = [];
   (data ?? []).forEach((pg) => {
@@ -176,15 +187,48 @@ export function usePartidos(currentUser) {
       return { ok: true, cantidad: generados.length };
     }
 
+    const semanaNorm = normalizeSemanaDate(semana);
+
     const { data: inscripciones, error: insError } = await supabase
       .from("inscripciones")
-      .select("jugador_id")
+      .select("jugador_id, inscrito_at, jugadores(id, nombre, nombre_completo)")
       .eq("slot_id", slotId)
-      .eq("semana", semana);
+      .eq("semana", semanaNorm);
     if (insError) return { ok: false, error: insError.message };
 
-    const inscritosIds = new Set((inscripciones ?? []).map((i) => i.jugador_id));
-    const candidatos = jugadoresRanking.filter((j) => inscritosIds.has(j.id));
+    const rankIndexById = new Map();
+    (jugadoresRanking ?? []).forEach((j, idx) => {
+      rankIndexById.set(strId(j.id), idx);
+    });
+
+    const filas = (inscripciones ?? []).map((ins) => {
+      const jid = strId(ins.jugador_id);
+      const j = ins.jugadores;
+      return {
+        id: jid,
+        nombre: j?.nombre ?? "Jugador",
+        nombreCompleto: j?.nombre_completo ?? j?.nombre ?? "Jugador",
+        rankIdx: rankIndexById.has(jid) ? rankIndexById.get(jid) : Number.MAX_SAFE_INTEGER,
+        inscritoTs: ins.inscrito_at ? new Date(ins.inscrito_at).getTime() : 0
+      };
+    });
+    filas.sort((a, b) => {
+      if (a.rankIdx !== b.rankIdx) return a.rankIdx - b.rankIdx;
+      return a.inscritoTs - b.inscritoTs;
+    });
+    const candidatos = filas.map(({ id, nombre, nombreCompleto }) => ({ id, nombre, nombreCompleto }));
+
+    console.log("[generarPartidos] inscritos y candidatos", {
+      slotId,
+      semanaUi: semana,
+      semanaQuery: semanaNorm,
+      filasInscripciones: inscripciones?.length ?? 0,
+      candidatos: candidatos.length,
+      enRankingDe: (jugadoresRanking ?? []).length,
+      conFilaRanking: filas.filter((f) => f.rankIdx < Number.MAX_SAFE_INTEGER).length,
+      muestraNombres: candidatos.slice(0, 12).map((c) => c.nombre)
+    });
+
     const maxTit = Math.max(0, Number(numPistas || 0)) * 4;
     const titulares = maxTit > 0 ? candidatos.slice(0, maxTit) : candidatos;
     const grupos = groupsOf4(titulares);
@@ -194,7 +238,7 @@ export function usePartidos(currentUser) {
       .from("partidos_generados")
       .select("id")
       .eq("slot_id", slotId)
-      .eq("semana", semana)
+      .eq("semana", semanaNorm)
       .maybeSingle();
 
     const { data: upserted, error: pgError } = await supabase
@@ -202,7 +246,7 @@ export function usePartidos(currentUser) {
       .upsert(
         {
           slot_id: slotId,
-          semana,
+          semana: semanaNorm,
           num_pistas: grupos.length,
           num_indoor: Math.max(0, Math.min(Number(numIndoor || 0), grupos.length)),
           generado_por: currentUserId
@@ -257,7 +301,7 @@ export function usePartidos(currentUser) {
     await createActivityLog({
       jugadorId: currentUserId,
       tipo: "partidos",
-      texto: `${generatedType} para ${slotId} (${semana}) · ${grupos.length} pistas`
+      texto: `${generatedType} para ${slotId} (${semanaNorm}) · ${grupos.length} pistas`
     });
     const notifications = grupos
       .flatMap((g) => g)
@@ -265,7 +309,7 @@ export function usePartidos(currentUser) {
         jugadorId: j.id,
         tipo: "partidos",
         titulo: generatedType,
-        texto: `${slotId} · Semana ${semana}`
+        texto: `${slotId} · Semana ${semanaNorm}`
       }));
     await createNotifications(notifications);
     return { ok: true, cantidad: grupos.length };
