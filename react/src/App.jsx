@@ -41,8 +41,15 @@ export default function App() {
     loading: resultadosLoading,
     error: resultadosError
   } = useResultados(partidos, auth.currentUser, isCoord);
-  const { eventos, apuntarseEvento, bajaEvento, validarPago, loading: eventosLoading, error: eventosError } =
-    useEventos(auth.currentUser, isCoord);
+  const {
+    eventos,
+    apuntarseEvento,
+    setParejaTorneo,
+    bajaEvento,
+    validarPago,
+    loading: eventosLoading,
+    error: eventosError
+  } = useEventos(auth.currentUser, isCoord);
 
   if (!auth.currentUser) return <LoginScreen auth={auth} />;
 
@@ -205,10 +212,17 @@ export default function App() {
               {eventosError ? <p className="error-box">Error agenda: {eventosError}</p> : null}
               <Agenda
                 eventos={eventos}
-                onApuntarse={async (id, pareja) => {
-                  const res = await apuntarseEvento(id, pareja);
+                currentUser={auth.currentUser}
+                isCoord={isCoord}
+                onApuntarse={async (id) => {
+                  const res = await apuntarseEvento(id);
                   if (!res.ok) return showMessage(res.error);
                   showMessage("Inscripcion realizada");
+                }}
+                onSeleccionarPareja={async (eventoId, parejaJugadorId) => {
+                  const res = await setParejaTorneo(eventoId, parejaJugadorId);
+                  if (!res.ok) return showMessage(res.error);
+                  showMessage("Pareja guardada");
                 }}
                 onBaja={async (id) => {
                   const res = await bajaEvento(id);
@@ -220,8 +234,6 @@ export default function App() {
                   if (!res.ok) return showMessage(res.error);
                   showMessage("Pago validado");
                 }}
-                isCoord={isCoord}
-                currentUser={auth.currentUser}
               />
             </>
           ) : null}

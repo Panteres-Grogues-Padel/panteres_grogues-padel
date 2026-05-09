@@ -14,6 +14,14 @@
   --danger: #c0392b;
   --info-bg: #eef2fb;
   --info-t: #0d1b3e;
+  --blue-bg: #e8edf7;
+  --blue-t: #0d1b3e;
+  --green-bg: #eaf3de;
+  --green-t: #27500a;
+  --warn-bg: #fef3cd;
+  --warn-t: #7a5000;
+  --success-bg: #eaf3de;
+  --success-t: #27500a;
 }
 
 * {
@@ -1250,4 +1258,221 @@ select {
   color: var(--bg3);
   padding: 8px 14px;
   border-radius: 20px;
+}
+
+.empty-state {
+  font-size: 14px;
+  color: var(--text2);
+  text-align: center;
+  padding: 2.5rem 0;
+}
+
+/* Agenda (alineado con index.html) */
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.cal-month {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  margin-bottom: 0.75rem;
+}
+
+.cal-dow {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text2);
+  text-align: center;
+  padding: 3px 0;
+}
+
+.cal-day {
+  min-height: 28px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2px 1px;
+}
+
+.cal-day.has-ev {
+  cursor: pointer;
+  background: var(--bg2);
+}
+
+.cal-day.sel-date {
+  background: var(--info-bg);
+}
+
+.cal-day.today .cal-num {
+  background: var(--navy);
+  color: var(--bg3);
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+
+.cal-num {
+  font-size: 11px;
+  color: var(--text);
+  line-height: 18px;
+}
+
+.cal-day.other-m .cal-num {
+  color: var(--text3);
+}
+
+.ev-dots {
+  display: flex;
+  gap: 1px;
+  margin-top: 1px;
+  justify-content: center;
+}
+
+.ev-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+}
+
+.dot-torneo {
+  background: #534ab7;
+}
+
+.dot-social {
+  background: #d85a30;
+}
+
+.dot-otro {
+  background: #1d9e75;
+}
+
+.ev-card {
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  gap: 12px;
+}
+
+.ev-card.hl {
+  border-color: #378add;
+  background: var(--info-bg);
+}
+
+.ev-date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 36px;
+}
+
+.ev-day-n {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1;
+}
+
+.ev-day-s {
+  font-size: 9px;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ev-div {
+  width: 0.5px;
+  background: var(--border);
+  align-self: stretch;
+  margin: 0 4px;
+}
+
+.ev-body {
+  flex: 1;
+}
+
+.ev-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.ev-desc {
+  font-size: 12px;
+  color: var(--text2);
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+.ev-type {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin-top: 5px;
+}
+
+.et-torneo {
+  background: #eeedfe;
+  color: #3c3489;
+}
+
+.et-social {
+  background: #faece7;
+  color: #993c1d;
+}
+
+.et-otro {
+  background: #e1f5ee;
+  color: #0f6e56;
+}
+
+.legend {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.leg-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.ev-month-title {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+}
+
+.agenda-btn-pago {
+  font-size: 11px;
+  padding: 4px 10px;
+  background: var(--green-bg);
+  color: var(--green-t);
+  border-color: #c0dd97;
 }

@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { EVENTOS_INICIALES } from "../utils/mockData";
 import { supabase } from "../lib/supabase";
-import { isJugadorUuid } from "../utils/jugador";
+import { isJugadorUuid, jugadoresCoinciden, normalizeJugadorUuid } from "../utils/jugador";
 
 export function useEventos(currentUser, isCoord) {
   const [eventos, setEventos] = useState(EVENTOS_INICIALES);
@@ -13,7 +13,7 @@ export function useEventos(currentUser, isCoord) {
     currentUser.fromFallback === true ||
     !isJugadorUuid(currentUser.id);
 
-  async function loadEventos() {
+  const loadEventos = useCallback(async () => {
     if (useFallback) return;
     setLoading(true);
     setError("");
@@ -54,7 +54,7 @@ export function useEventos(currentUser, isCoord) {
     setEventos(
       (eventosData ?? []).map((e) => {
         const inscritos = byEvento.get(e.id) ?? [];
-        const miInscripcion = inscritos.find((i) => i.jugadorId === currentUser.id) ?? null;
+        const miInscripcion = inscritos.find((i) => jugadoresCoinciden(i.jugadorId, currentUser.id)) ?? null;
         return {
           id: e.id,
           titulo: e.titulo,
@@ -69,30 +69,40 @@ export function useEventos(currentUser, isCoord) {
         };
       })
     );
-  }
+  }, [useFallback, currentUser?.id]);
 
   useEffect(() => {
     loadEventos();
-  }, [useFallback, currentUser?.id]);
+  }, [loadEventos]);
 
-  const eventosOrdenados = useMemo(
-    () => [...eventos].sort((a, b) => a.fecha.localeCompare(b.fecha)),
-    [eventos]
-  );
+  const eventosOrdenados = useMemo(() => {
+    const sorted = [...eventos].sort((a, b) => a.fecha.localeCompare(b.fecha));
+    return sorted.map((e) => {
+      const inscritos = e.inscritos ?? [];
+      const miInscripcion = currentUser
+        ? inscritos.find((i) => jugadoresCoinciden(i.jugadorId, currentUser.id)) ?? null
+        : null;
+      return {
+        ...e,
+        inscritos,
+        miInscripcion,
+        totalInscritos: inscritos.length,
+        totalPagados: inscritos.filter((i) => i.pagoConfirmado).length
+      };
+    });
+  }, [eventos, currentUser]);
 
-  async function apuntarseEvento(eventoId, pareja = "") {
+  /** Inscripción individual: sin pareja en el alta (torneos y resto). */
+  async function apuntarseEvento(eventoId) {
     if (!currentUser) return { ok: false, error: "Debes iniciar sesion." };
     const evento = eventos.find((e) => e.id === eventoId);
     if (!evento) return { ok: false, error: "Evento no encontrado." };
-    if (evento.tipo === "torneo" && !pareja.trim()) {
-      return { ok: false, error: "En torneos debes indicar pareja." };
-    }
 
     if (useFallback) {
       setEventos((prev) =>
         prev.map((e) => {
           if (e.id !== eventoId) return e;
-          if (e.inscritos.some((i) => i.jugadorId === currentUser.id)) return e;
+          if (e.inscritos.some((i) => jugadoresCoinciden(i.jugadorId, currentUser.id))) return e;
           return {
             ...e,
             inscritos: [
@@ -102,7 +112,7 @@ export function useEventos(currentUser, isCoord) {
                 jugadorId: currentUser.id,
                 nombre: currentUser.nombre,
                 nombreCompleto: currentUser.nombreCompleto,
-                pareja,
+                pareja: "",
                 pagoConfirmado: false
               }
             ]
@@ -114,36 +124,91 @@ export function useEventos(currentUser, isCoord) {
 
     const { error: insError } = await supabase.from("inscripciones_eventos").insert({
       evento_id: eventoId,
-      jugador_id: currentUser.id,
-      pareja: pareja || null
+      jugador_id: normalizeJugadorUuid(currentUser.id),
+      pareja: null
     });
     if (insError) return { ok: false, error: insError.message };
     await loadEventos();
     return { ok: true };
   }
 
-  async function bajaEvento(eventoId) {
+  /** Pareja = `jugador_id` del compañer@ (debe estar ya inscrito en el mismo torneo). */
+  async function setParejaTorneo(eventoId, parejaJugadorId) {
     if (!currentUser) return { ok: false, error: "Debes iniciar sesion." };
+    const pid = normalizeJugadorUuid(parejaJugadorId);
+    if (!isJugadorUuid(pid)) return { ok: false, error: "Selecciona una pareja válida." };
+    if (jugadoresCoinciden(pid, currentUser.id)) {
+      return { ok: false, error: "No puedes emparejarte contigo mism@." };
+    }
+
+    const evento = eventos.find((e) => e.id === eventoId);
+    if (!evento || evento.tipo !== "torneo") return { ok: false, error: "Solo aplica a torneos." };
+    const inscritos = evento.inscritos ?? [];
+    const parejaInscrita = inscritos.some((i) => jugadoresCoinciden(i.jugadorId, pid));
+    if (!parejaInscrita) return { ok: false, error: "Esa persona no está inscrita en este torneo." };
+
     if (useFallback) {
       setEventos((prev) =>
-        prev.map((e) =>
-          e.id === eventoId
-            ? { ...e, inscritos: e.inscritos.filter((i) => i.jugadorId !== currentUser.id) }
-            : e
-        )
+        prev.map((e) => {
+          if (e.id !== eventoId) return e;
+          return {
+            ...e,
+            inscritos: e.inscritos.map((i) =>
+              jugadoresCoinciden(i.jugadorId, currentUser.id) ? { ...i, pareja: pid } : i
+            )
+          };
+        })
       );
       return { ok: true };
     }
+
+    const { error: upError } = await supabase
+      .from("inscripciones_eventos")
+      .update({ pareja: pid })
+      .eq("evento_id", eventoId)
+      .eq("jugador_id", normalizeJugadorUuid(currentUser.id));
+    if (upError) return { ok: false, error: upError.message };
+    await loadEventos();
+    return { ok: true };
+  }
+
+  async function bajaEvento(eventoId) {
+    if (!currentUser) return { ok: false, error: "Debes iniciar sesion." };
+    const uid = normalizeJugadorUuid(currentUser.id);
+
+    if (useFallback) {
+      setEventos((prev) =>
+        prev.map((e) => {
+          if (e.id !== eventoId) return e;
+          return {
+            ...e,
+            inscritos: e.inscritos
+              .filter((i) => !jugadoresCoinciden(i.jugadorId, currentUser.id))
+              .map((i) => (jugadoresCoinciden(i.pareja, uid) ? { ...i, pareja: "" } : i))
+          };
+        })
+      );
+      return { ok: true };
+    }
+
+    const { error: clearErr } = await supabase
+      .from("inscripciones_eventos")
+      .update({ pareja: null })
+      .eq("evento_id", eventoId)
+      .eq("pareja", uid);
+    if (clearErr) return { ok: false, error: clearErr.message };
+
     const { error: delError } = await supabase
       .from("inscripciones_eventos")
       .delete()
       .eq("evento_id", eventoId)
-      .eq("jugador_id", currentUser.id);
+      .eq("jugador_id", uid);
     if (delError) return { ok: false, error: delError.message };
     await loadEventos();
     return { ok: true };
   }
 
+  /** Igual que `validarPago` en index.html: marca pago del inscrito (coordinador). */
   async function validarPago(eventoId, inscripcionId) {
     if (!isCoord) return { ok: false, error: "Solo coordinacion." };
     if (useFallback) {
@@ -166,7 +231,7 @@ export function useEventos(currentUser, isCoord) {
       .from("inscripciones_eventos")
       .update({
         pago_confirmado: true,
-        pago_confirmado_por: currentUser.id,
+        pago_confirmado_por: normalizeJugadorUuid(currentUser.id),
         pago_confirmado_at: new Date().toISOString()
       })
       .eq("id", inscripcionId);
@@ -175,5 +240,13 @@ export function useEventos(currentUser, isCoord) {
     return { ok: true };
   }
 
-  return { eventos: eventosOrdenados, apuntarseEvento, bajaEvento, validarPago, loading, error };
+  return {
+    eventos: eventosOrdenados,
+    apuntarseEvento,
+    setParejaTorneo,
+    bajaEvento,
+    validarPago,
+    loading,
+    error
+  };
 }
