@@ -182,6 +182,7 @@ export function useSlots(currentUser) {
     const pageSize = 500;
     const allRows = [];
     let from = 0;
+    let inscError = null;
 
     for (;;) {
       const { data, error } = await supabase
@@ -195,17 +196,25 @@ export function useSlots(currentUser) {
         .range(from, from + pageSize - 1);
 
       if (error) {
-        console.warn("[loadInscripcionesSupabase]", error.message);
-        if (reloadToken !== undefined && reloadToken !== inscripcionesReloadGenRef.current) {
-          return;
-        }
-        setInscripciones([]);
-        return;
+        inscError = error;
+        break;
       }
       if (!data?.length) break;
       allRows.push(...data);
       if (data.length < pageSize) break;
       from += pageSize;
+    }
+
+    console.log("Rango semanas:", semanaDesde, semanaHasta);
+    console.log("Inscripciones recibidas:", allRows?.length, inscError);
+
+    if (inscError) {
+      console.warn("[loadInscripcionesSupabase]", inscError.message);
+      if (reloadToken !== undefined && reloadToken !== inscripcionesReloadGenRef.current) {
+        return;
+      }
+      setInscripciones([]);
+      return;
     }
 
     if (reloadToken !== undefined && reloadToken !== inscripcionesReloadGenRef.current) {
