@@ -160,14 +160,14 @@ export function useSlots(currentUser) {
     setSlots(SLOTS_INICIALES);
   }
 
-  async function loadInscripcionesSupabase() {
+  async function loadInscripcionesSupabase(extraSemanasRaw = []) {
     if (!currentUser?.id) return;
     const now = new Date();
     const m0 = getMondayUtc(now);
     const semanaLunesEsta = normalizeSemanaValue(formatDateUTC(m0));
     const semanaLunesProxima = normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, 7)));
     // Ventana amplia de lunes ISO (sin límite artificial en el cliente más allá de este filtro de fechas)
-    const semanas = [
+    const baseSemanas = [
       normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, -14))),
       normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, -7))),
       semanaLunesEsta,
@@ -175,6 +175,8 @@ export function useSlots(currentUser) {
       normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, 14))),
       normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, 21)))
     ];
+    const extra = (extraSemanasRaw ?? []).map(normalizeSemanaValue).filter(Boolean);
+    const semanas = [...new Set([...baseSemanas, ...extra])];
     const selectCols = "id,jugador_id,slot_id,semana,es_socio,inscrito_at,jugadores(nombre)";
     const pageSize = 500;
     const allRows = [];
@@ -191,7 +193,7 @@ export function useSlots(currentUser) {
         .range(from, from + pageSize - 1);
 
       if (error) {
-        setInscripciones([]);
+        console.warn("[loadInscripcionesSupabase]", error.message);
         return;
       }
       if (!data?.length) break;
@@ -306,21 +308,44 @@ export function useSlots(currentUser) {
     }
     const semana = slot.semanaObjetivo;
 
+    const semanaNorm = normalizeSemanaValue(semana);
     const { error } = await supabase.from("inscripciones").insert({
       jugador_id: jugadorId,
       slot_id: slotId,
-      semana,
+      semana: semanaNorm,
       es_socio: Boolean(options.socio)
     });
     if (error) {
       return { ok: false, error: error.message };
     }
-    await createActivityLog({
+
+    const nowIso = new Date().toISOString();
+    const optimisticIns = {
+      id: `local-${Date.now()}`,
+      jugador_id: jugadorId,
+      slot_id: slotId,
+      semana: semanaNorm,
+      es_socio: Boolean(options.socio),
+      inscrito_at: nowIso,
+      jugadores: { nombre: currentUser.nombre }
+    };
+    setInscripciones((prev) => {
+      const ya = prev.some(
+        (r) =>
+          r.slot_id === slotId &&
+          jugadoresCoinciden(r.jugador_id, jugadorId) &&
+          normalizeSemanaValue(r.semana) === semanaNorm
+      );
+      if (ya) return prev;
+      return [...prev, optimisticIns];
+    });
+
+    await loadInscripcionesSupabase([semanaNorm]);
+    void createActivityLog({
       jugadorId: currentUser.id,
       tipo: "jugar",
       texto: `Se apunta a ${slot.label} · ${slot.club} (${slot.semanaObjetivo})`
     });
-    await loadInscripcionesSupabase();
     return { ok: true };
   }
 
