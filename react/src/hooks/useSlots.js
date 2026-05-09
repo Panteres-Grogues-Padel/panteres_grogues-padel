@@ -341,7 +341,7 @@ export function useSlots(currentUser) {
     }
 
     const nowIso = new Date().toISOString();
-    const optimisticIns = {
+    const filaInsertada = {
       id: `local-${Date.now()}`,
       jugador_id: jugadorId,
       slot_id: slotId,
@@ -358,10 +358,9 @@ export function useSlots(currentUser) {
           normalizeSemanaValue(r.semana) === semanaNorm
       );
       if (ya) return prev;
-      return [...prev, optimisticIns];
+      return [...prev, filaInsertada];
     });
 
-    await loadInscripcionesSupabase([semanaNorm]);
     void createActivityLog({
       jugadorId: currentUser.id,
       tipo: "jugar",
@@ -428,12 +427,22 @@ export function useSlots(currentUser) {
         return { ok: false, error: "No se eliminó la inscripción (semana o permisos)." };
       }
 
-      await createActivityLog({
+      setInscripciones((prev) =>
+        prev.filter(
+          (i) =>
+            !(
+              i.slot_id === slotId &&
+              jugadoresCoinciden(i.jugador_id, jugadorUuid) &&
+              normalizeSemanaValue(i.semana) === semanaPrioritaria
+            )
+        )
+      );
+
+      void createActivityLog({
         jugadorId: jugadorUuid,
         tipo: "jugar",
         texto: `Se da de baja de ${slot.label} · ${slot.club} (${slot.semanaObjetivo})`
       });
-      await loadInscripcionesSupabase();
     }
 
     if (isBajaWarning({ diaSemana: slot.diaSemana })) {
