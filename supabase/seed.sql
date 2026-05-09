@@ -356,14 +356,22 @@ CREATE POLICY "Sistema inserta log" ON activity_log
   FOR INSERT WITH CHECK (true);
 
 -- ============================================================
--- DATOS: slots (4 del prototipo, 2 pistas cada uno)
+-- DATOS: slots (12 = prototipo index.html: lun–dom, dia_semana 0=Lun..6=Dom)
 -- ============================================================
 
 INSERT INTO slots (id, label, club, dia_semana, pistas_default, pistas_activo, activo) VALUES
-  ('mar-del', 'Martes',    'Club Delfos', 1, 2, 2, true),
-  ('mie-del', 'Miércoles', 'Club Delfos', 2, 2, 2, true),
-  ('jue-up',  'Jueves',    'Club Up',     3, 2, 2, true),
-  ('vie-del', 'Viernes',   'Club Delfos', 4, 2, 2, true);
+  ('lun-up',  'Lunes',     'Club Up',      0, 3, 3, true),
+  ('lun-del', 'Lunes',     'Club Delfos',  0, 2, 2, true),
+  ('mar-up',  'Martes',    'Club Up',      1, 2, 2, true),
+  ('mar-del', 'Martes',    'Club Delfos',  1, 2, 2, true),
+  ('mie-man', 'Miércoles', 'Mañana',       2, 1, 1, true),
+  ('mie-up',  'Miércoles', 'Club Up',      2, 5, 5, true),
+  ('mie-del', 'Miércoles', 'Club Delfos',  2, 0, 0, true),
+  ('jue-up',  'Jueves',    'Club Up',      3, 1, 1, true),
+  ('jue-del', 'Jueves',    'Club Delfos',  3, 2, 2, true),
+  ('vie-up',  'Viernes',   'Club Up',      4, 7, 7, true),
+  ('vie-del', 'Viernes',   'Club Delfos',  4, 1, 1, true),
+  ('dom',     'Domingo',   'Americana',    6, 0, 0, true);
 
 -- ============================================================
 -- DATOS: jugadores (1 coordinador + 32 jugadores)

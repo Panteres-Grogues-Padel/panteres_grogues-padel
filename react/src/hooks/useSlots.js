@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+// Fallback offline: todos los slots del prototipo (index.html) en `utils/mockData.js` → SLOTS_INICIALES
 import { SLOTS_INICIALES } from "../utils/mockData";
 import { isBajaWarning, isSlotOpen } from "../utils/slots";
 import { supabase } from "../lib/supabase";
@@ -152,14 +153,12 @@ export function useSlots(currentUser) {
       semanaLunesProxima,
       normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, 14)))
     ];
-    console.log("SEMANAS QUE BUSCA:", semanaLunesEsta, semanaLunesProxima);
     // jugadores(nombre): FK jugadores. slots(label): FK slot_id → slots.
-    const { data: inscData, error: inscError } = await supabase
+    const { data, error } = await supabase
       .from("inscripciones")
       .select("id,jugador_id,slot_id,semana,es_socio,inscrito_at,jugadores(nombre),slots(label)")
       .in("semana", semanas);
-    console.log("RESULTADO INSCRIPCIONES:", inscData, inscError);
-    if (!inscError && inscData) setInscripciones(inscData);
+    if (!error && data) setInscripciones(data);
   }
 
   useEffect(() => {

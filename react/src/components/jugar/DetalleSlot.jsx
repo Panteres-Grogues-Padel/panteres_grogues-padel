@@ -44,9 +44,9 @@ export default function DetalleSlot({
   const sorted = [...(slot.jugadores ?? [])].sort((a, b) => (a.ts ?? 0) - (b.ts ?? 0));
   const esDom = slot.id === "dom";
   const esSinPistas = (slot.pistas ?? 0) === 0 && !esDom;
-  const maxTit = (slot.pistas ?? 0) * 4;
-  const titulares = sorted.slice(0, maxTit);
-  const reserva = sorted.slice(maxTit);
+  const maxTit = Math.max(0, Number(slot.pistas ?? 0) * 4);
+  const titulares = maxTit > 0 ? sorted.slice(0, maxTit) : [];
+  const reserva = maxTit > 0 ? sorted.slice(maxTit) : sorted;
   const badge = enrolled ? "Apuntado" : slot.abierto ? "Abierta" : "Cerrada";
   const sociosCount = sorted.filter((p) => p.socio).length;
 
@@ -125,36 +125,60 @@ export default function DetalleSlot({
           <div style={{ fontSize: "13px", color: "var(--text2)", textAlign: "center", padding: "1.5rem 0" }}>
             Nadie apuntado todavía
           </div>
-        ) : null}
-
-        {(esDom || esSinPistas ? sorted : titulares).map((p, idx) => (
-          <div className="player-row" key={`t-${slot.id}-${p.nombre}-${idx}`}>
-            <span className="ppos">{idx + 1}</span>
-            <div className={`avatar ${avatarClass(p.nombre)}`}>{initials(p.nombre)}</div>
-            <span className="pname">
-              {p.nombre}
-              {currentUser?.nombre === p.nombre ? " ✓" : ""}
-            </span>
-            {p.socio ? <span className="badge badge-socio">Up</span> : null}
-            <span className="player-time">{p.tsStr || ""}</span>
-          </div>
-        ))}
-
-        {!esDom && !esSinPistas && reserva.length ? <div className="reserva-sep">Reserva ({reserva.length})</div> : null}
-        {!esDom &&
-          !esSinPistas &&
-          reserva.map((p, idx) => (
-          <div className="player-row" key={`r-${slot.id}-${p.nombre}-${idx}`}>
-            <span className="ppos">R{idx + 1}</span>
-            <div className={`avatar ${avatarClass(p.nombre)}`}>{initials(p.nombre)}</div>
-            <span className="pname">
-              {p.nombre}
-              {currentUser?.nombre === p.nombre ? " ✓" : ""}
-            </span>
-            {p.socio ? <span className="badge badge-socio">Up</span> : null}
-            <span className="player-time">{p.tsStr || ""}</span>
-          </div>
-          ))}
+        ) : esDom || esSinPistas ? (
+          sorted.map((p, idx) => (
+            <div className="player-row" key={`${slot.id}-all-${idx}-${p.nombre}`}>
+              <span className="ppos">{idx + 1}</span>
+              <div className={`avatar ${avatarClass(p.nombre)}`}>{initials(p.nombre)}</div>
+              <span className="pname">
+                {p.nombre}
+                {currentUser?.nombre === p.nombre ? " ✓" : ""}
+              </span>
+              {p.socio ? <span className="badge badge-socio">Up</span> : null}
+              <span className="player-time">{p.tsStr || ""}</span>
+            </div>
+          ))
+        ) : (
+          <>
+            {maxTit > 0 ? (
+              <div className="players-label" style={{ marginTop: "4px" }}>
+                <span>Titulares (máx. {maxTit})</span>
+                <span>
+                  {titulares.length} / {sorted.length}
+                </span>
+              </div>
+            ) : null}
+            {titulares.map((p, idx) => (
+              <div className="player-row" key={`${slot.id}-t-${idx}-${p.nombre}`}>
+                <span className="ppos">{idx + 1}</span>
+                <div className={`avatar ${avatarClass(p.nombre)}`}>{initials(p.nombre)}</div>
+                <span className="pname">
+                  {p.nombre}
+                  {currentUser?.nombre === p.nombre ? " ✓" : ""}
+                </span>
+                {p.socio ? <span className="badge badge-socio">Up</span> : null}
+                <span className="player-time">{p.tsStr || ""}</span>
+              </div>
+            ))}
+            {reserva.length > 0 ? (
+              <>
+                <div className="reserva-sep">Reserva ({reserva.length})</div>
+                {reserva.map((p, idx) => (
+                  <div className="player-row" key={`${slot.id}-r-${idx}-${p.nombre}`}>
+                    <span className="ppos">R{idx + 1}</span>
+                    <div className={`avatar ${avatarClass(p.nombre)}`}>{initials(p.nombre)}</div>
+                    <span className="pname">
+                      {p.nombre}
+                      {currentUser?.nombre === p.nombre ? " ✓" : ""}
+                    </span>
+                    {p.socio ? <span className="badge badge-socio">Up</span> : null}
+                    <span className="player-time">{p.tsStr || ""}</span>
+                  </div>
+                ))}
+              </>
+            ) : null}
+          </>
+        )}
       </div>
     </article>
   );
