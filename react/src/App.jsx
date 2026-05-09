@@ -73,7 +73,8 @@ export default function App() {
       semana: semana || slot.semanaObjetivo,
       currentUserId: auth.currentUser.id,
       numPistas: options.numPistas,
-      numIndoor: options.numIndoor
+      numIndoor: options.numIndoor,
+      slotMeta: { label: slot.label, club: slot.club, diaSemana: slot.diaSemana }
     });
     if (!res.ok) return showMessage(res.error);
     showMessage(`Partidos generados: ${res.cantidad}`);

@@ -86,7 +86,7 @@ export function usePartidos(currentUser) {
   const remindersSentRef = useRef(new Set());
 
   async function loadPartidos() {
-    if (useFallback) return;
+    if (useFallback) return { ok: false, skipped: true };
     setLoading(true);
     setError("");
     const { data, error: fetchError } = await supabase
@@ -99,9 +99,22 @@ export function usePartidos(currentUser) {
     setLoading(false);
     if (fetchError) {
       setError(fetchError.message);
-      return;
+      console.warn("[loadPartidos] error", fetchError.message);
+      return { ok: false, error: fetchError.message };
     }
-    setPartidos(flattenPartidos(data));
+    const flat = flattenPartidos(data);
+    setPartidos((prev) => {
+      if (flat.length > 0) return flat;
+      const hadPersisted = prev.some((p) => p.partidoGeneradoId != null);
+      if (hadPersisted) {
+        console.warn(
+          "[loadPartidos] La query devolvió partidos_generados pero 0 pistas/jugadores en el árbol; se mantiene estado local (revisa embed RLS o activo en jugadores)."
+        );
+        return prev;
+      }
+      return flat;
+    });
+    return { ok: true, count: flat.length };
   }
 
   useEffect(() => {
@@ -153,7 +166,15 @@ export function usePartidos(currentUser) {
     return map;
   }, [partidos]);
 
-  async function generarPartidos({ jugadoresRanking, slotId, semana, currentUserId, numPistas, numIndoor }) {
+  async function generarPartidos({
+    jugadoresRanking,
+    slotId,
+    semana,
+    currentUserId,
+    numPistas,
+    numIndoor,
+    slotMeta
+  }) {
     console.log("Generando partidos...");
     if (useFallback) {
       const maxTit = Math.max(0, Number(numPistas || 0)) * 4;
@@ -267,6 +288,7 @@ export function usePartidos(currentUser) {
       [indexes[i], indexes[j]] = [indexes[j], indexes[i]];
     }
     const indoorSet = new Set(indexes.slice(0, indoorCount));
+    const pistasCreadas = [];
 
     for (let i = 0; i < grupos.length; i += 1) {
       const { data: pista, error: pistaError } = await supabase
@@ -288,9 +310,48 @@ export function usePartidos(currentUser) {
       }));
       const { error: jpError } = await supabase.from("jugadores_pista").insert(jugadoresPista);
       if (jpError) return { ok: false, error: jpError.message };
+
+      pistasCreadas.push({
+        pistaId: pista.id,
+        numeroPista: i + 1,
+        esIndoor: indoorSet.has(i),
+        grupo: grupos[i]
+      });
     }
 
-    await loadPartidos();
+    const optItems = pistasCreadas.map((pc) => ({
+      id: pc.pistaId,
+      pistaId: pc.pistaId,
+      numeroPista: pc.numeroPista,
+      partidoGeneradoId,
+      slotId,
+      slotLabel: slotMeta?.label ?? slotId,
+      club: slotMeta?.club ?? "",
+      diaSemana: slotMeta?.diaSemana ?? null,
+      semana: semanaNorm,
+      indoor: pc.esIndoor,
+      hora: "",
+      jugadores: pc.grupo.map((j, idx) => ({
+        id: `${pc.pistaId}-jp-${idx}`,
+        jugadorId: j.id,
+        nombre: j.nombre,
+        nombreCompleto: j.nombreCompleto ?? j.nombre,
+        posicion: idx + 1,
+        confirmado: false
+      }))
+    }));
+
+    setPartidos((prev) => {
+      const filtered = prev.filter(
+        (p) => !(String(p.slotId) === String(slotId) && normalizeSemanaDate(p.semana) === semanaNorm)
+      );
+      return [...optItems, ...filtered];
+    });
+
+    const loadRes = await loadPartidos();
+    if (loadRes && loadRes.ok === false && loadRes.error) {
+      console.warn("[generarPartidos] loadPartidos falló tras insertar; UI usa filas optimistas.", loadRes.error);
+    }
     const generatedType = prevGenerated?.id ? "Regeneracion de partidos" : "Partidos generados";
     await createActivityLog({
       jugadorId: currentUserId,

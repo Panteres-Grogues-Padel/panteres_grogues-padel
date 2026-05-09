@@ -123,6 +123,8 @@ export default function Partidos({
     if (ok) setMoverState({ open: false, origen: null, jugador: null });
   }
 
+  console.log('Partidos en estado:', partidos);
+
   return (
     <div>
       <h2 className="section-title">Partidos</h2>
