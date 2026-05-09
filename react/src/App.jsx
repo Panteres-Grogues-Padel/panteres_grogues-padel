@@ -6,6 +6,7 @@ import Jugar from "./components/jugar/Jugar";
 import Partidos from "./components/partidos/Partidos";
 import Resultados from "./components/resultados/Resultados";
 import Agenda from "./components/agenda/Agenda";
+import Seccion from "./components/seccion/Seccion";
 import BottomNav from "./components/layout/BottomNav";
 import Topbar from "./components/layout/Topbar";
 import { useAuth } from "./hooks/useAuth";
@@ -201,6 +202,7 @@ export default function App() {
               />
             </>
           ) : null}
+          {activeTab === "seccion" ? <Seccion /> : null}
         </main>
 
         <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
