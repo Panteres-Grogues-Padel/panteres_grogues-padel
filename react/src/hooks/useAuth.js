@@ -53,35 +53,40 @@ export function useAuth() {
       return;
     }
 
-    const { data: jugador, error: jugadorError } = await supabase
-      .from("jugadores")
-      .select(
-        "id, auth_id, nombre, nombre_completo, email, telefono, instagram, mostrar_telefono, autoriza_instagram, es_coordinador, activo"
-      )
-      .eq("auth_id", authUser.id)
-      .maybeSingle();
+    try {
+      const { data: jugador, error: jugadorError } = await supabase
+        .from("jugadores")
+        .select(
+          "id, auth_id, nombre, nombre_completo, email, telefono, instagram, mostrar_telefono, autoriza_instagram, es_coordinador, activo"
+        )
+        .eq("auth_id", authUser.id)
+        .maybeSingle();
 
-    if (jugadorError) {
+      if (jugadorError) {
+        setError("No se pudo cargar el perfil del jugador.");
+        setCurrentUser(buildFallbackUser(authUser));
+        return;
+      }
+
+      if (!jugador) {
+        setError(
+          "Tu usuario existe en Auth, pero no tiene perfil en jugadores. Contacta con coordinacion."
+        );
+        setCurrentUser(buildFallbackUser(authUser));
+        return;
+      }
+
+      setError("");
+      setCurrentUser({
+        ...jugador,
+        id: jugador.id != null ? String(jugador.id) : jugador.id,
+        nombreCompleto: jugador.nombre_completo,
+        fromFallback: false
+      });
+    } catch {
       setError("No se pudo cargar el perfil del jugador.");
       setCurrentUser(buildFallbackUser(authUser));
-      return;
     }
-
-    if (!jugador) {
-      setError(
-        "Tu usuario existe en Auth, pero no tiene perfil en jugadores. Contacta con coordinacion."
-      );
-      setCurrentUser(buildFallbackUser(authUser));
-      return;
-    }
-
-    setError("");
-    setCurrentUser({
-      ...jugador,
-      id: jugador.id != null ? String(jugador.id) : jugador.id,
-      nombreCompleto: jugador.nombre_completo,
-      fromFallback: false
-    });
   }
 
   useEffect(() => {
@@ -109,19 +114,29 @@ export function useAuth() {
     if (!email || !password) return setError("Introduce tu email y contrasena.");
     if (!email.includes("@")) return setError("El email no es valido.");
     if (password.length < 6) return setError("La contrasena debe tener al menos 6 caracteres.");
-    setLoading(true);
-    if (!supabase) {
-      setLoading(false);
-      return setError("Faltan variables de entorno de Supabase.");
-    }
+    if (!supabase) return setError("Faltan variables de entorno de Supabase.");
 
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    setLoading(false);
-    if (authError) return setError(authError.message);
-    await hydrateCurrentUser(data.user);
+    setLoading(true);
+    try {
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      if (authError) {
+        setError(authError.message);
+        return;
+      }
+      const user = data?.user ?? data?.session?.user ?? null;
+      if (!user) {
+        setError("No se pudo obtener la sesion. Vuelve a intentarlo.");
+        return;
+      }
+      await hydrateCurrentUser(user);
+    } catch (e) {
+      setError(e?.message ?? "Error de conexion al iniciar sesion.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   function loginDemo() {
@@ -135,31 +150,37 @@ export function useAuth() {
   async function loginGoogle() {
     setError("");
     if (!privacyAccepted) return setError("Debes aceptar la politica de privacidad para continuar.");
+    if (!supabase) return setError("Faltan variables de entorno de Supabase.");
+
     setLoading(true);
-    if (!supabase) {
+    try {
+      const { error: authError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
+      if (authError) setError(authError.message);
+    } catch (e) {
+      setError(e?.message ?? "Error al iniciar sesion con Google.");
+    } finally {
       setLoading(false);
-      return setError("Faltan variables de entorno de Supabase.");
     }
-    const { error: authError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin
-      }
-    });
-    setLoading(false);
-    if (authError) return setError(authError.message);
   }
 
   async function logout() {
-    if (supabase) {
-      await supabase.auth.signOut();
-    }
+    setLoading(false);
     setCurrentUser(null);
     setPassword("");
     setEmail("");
     setError("");
     setDemoId("");
     setPrivacyAccepted(false);
+    try {
+      if (supabase) await supabase.auth.signOut({ scope: "local" });
+    } catch {
+      /* estado UI ya limpio */
+    }
   }
 
   return {

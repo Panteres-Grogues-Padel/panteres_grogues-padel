@@ -79,7 +79,14 @@ export default function App() {
           <strong>Panteres Grogues</strong>
           <div className="row-gap">
             <span>{auth.currentUser.nombre}</span>
-            <button className="logout-btn" onClick={auth.logout}>
+            <button
+              type="button"
+              className="logout-btn"
+              onClick={(e) => {
+                e.preventDefault();
+                void auth.logout();
+              }}
+            >
               Salir
             </button>
           </div>
