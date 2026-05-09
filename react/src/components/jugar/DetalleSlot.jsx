@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from "react";
+
 function dayOpenLabel(slot) {
   const ds = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
   const dow = slot?.diaSemana;
@@ -39,6 +41,14 @@ export default function DetalleSlot({
   onApuntar,
   onBaja
 }) {
+  const [procesando, setProcesando] = useState(false);
+  const inFlightRef = useRef(false);
+
+  useEffect(() => {
+    setProcesando(false);
+    inFlightRef.current = false;
+  }, [slot?.id]);
+
   if (!slot) return null;
 
   const sorted = [...(slot.jugadores ?? [])].sort((a, b) => (a.ts ?? 0) - (b.ts ?? 0));
@@ -91,13 +101,23 @@ export default function DetalleSlot({
           </div>
           <div className="checkbox-sub">Márcalo si eres socio del Up</div>
           <button
+            type="button"
             className="btn btn-primary btn-sm btn-block"
-            onClick={() => {
-              const socio = Boolean(document.getElementById("sc-slot")?.checked);
-              onApuntar(slot.id, { socio });
+            disabled={procesando}
+            onClick={async () => {
+              if (inFlightRef.current) return;
+              inFlightRef.current = true;
+              setProcesando(true);
+              try {
+                const socio = Boolean(document.getElementById("sc-slot")?.checked);
+                await Promise.resolve(onApuntar(slot.id, { socio }));
+              } finally {
+                inFlightRef.current = false;
+                setProcesando(false);
+              }
             }}
           >
-            Confirmar inscripción
+            {procesando ? "Enviando…" : "Confirmar inscripción"}
           </button>
         </div>
       ) : null}
