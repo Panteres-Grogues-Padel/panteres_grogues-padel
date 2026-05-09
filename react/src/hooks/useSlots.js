@@ -152,12 +152,14 @@ export function useSlots(currentUser) {
       semanaLunesProxima,
       normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, 14)))
     ];
+    console.log("SEMANAS QUE BUSCA:", semanaLunesEsta, semanaLunesProxima);
     // jugadores(nombre): FK jugadores. slots(label): FK slot_id → slots.
-    const { data, error } = await supabase
+    const { data: inscData, error: inscError } = await supabase
       .from("inscripciones")
       .select("id,jugador_id,slot_id,semana,es_socio,inscrito_at,jugadores(nombre),slots(label)")
       .in("semana", semanas);
-    if (!error && data) setInscripciones(data);
+    console.log("RESULTADO INSCRIPCIONES:", inscData, inscError);
+    if (!inscError && inscData) setInscripciones(inscData);
   }
 
   useEffect(() => {
