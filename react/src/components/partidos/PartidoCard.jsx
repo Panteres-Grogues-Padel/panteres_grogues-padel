@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatHoraInput } from "../../utils/dates";
 
 const AVATAR_CLASSES = ["av-teal", "av-purple", "av-coral", "av-blue", "av-amber", "av-pink", "av-green", "av-gray"];
 
@@ -20,6 +21,7 @@ export default function PartidoCard({
   index,
   isCoord,
   currentUser,
+  rotaciones,
   onConfirmar,
   onHora,
   onIndoor,
@@ -29,6 +31,15 @@ export default function PartidoCard({
   const [expanded, setExpanded] = useState(false);
   const allConfirmed = useMemo(() => partido.jugadores.every((j) => j.confirmado), [partido.jugadores]);
   const names = useMemo(() => partido.jugadores.map((j) => j.nombre).join(", "), [partido.jugadores]);
+  const horaUi = formatHoraInput(partido.hora);
+  const rotacionParejas = rotaciones?.[0];
+  const textoParejas = useMemo(() => {
+    const j = partido.jugadores;
+    if (!rotacionParejas || j.length !== 4) return null;
+    const nom = (i) => j[i]?.nombre ?? "—";
+    const lado = (idxs) => idxs.map(nom).join(" · ");
+    return `${lado(rotacionParejas.izq)} vs ${lado(rotacionParejas.der)}`;
+  }, [partido.jugadores, rotacionParejas]);
 
   return (
     <div style={{ border: "0.5px solid var(--border)", borderRadius: "var(--radius)", marginBottom: "6px", overflow: "hidden" }}>
@@ -42,8 +53,8 @@ export default function PartidoCard({
             🏠
           </span>
         ) : null}
-        {partido.hora ? (
-          <span style={{ fontSize: "12px", fontWeight: 500, color: "var(--navy)" }}>🕐 {partido.hora}</span>
+        {horaUi ? (
+          <span style={{ fontSize: "12px", fontWeight: 500, color: "var(--navy)" }}>🕐 {horaUi}</span>
         ) : (
           <span style={{ fontSize: "11px", color: "var(--text3)" }}>Sin hora</span>
         )}
@@ -58,7 +69,7 @@ export default function PartidoCard({
         <div style={{ padding: "10px 12px", background: "var(--bg)" }}>
           {partido.jugadores.map((j) => {
             const isSelf = currentUser && j.nombre === currentUser.nombre;
-            const rkPos = rankingPosByJugador[j.jugadorId];
+            const rkPos = rankingPosByJugador[String(j.jugadorId)];
             return (
               <div key={j.jugadorId} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "5px 0", borderBottom: "0.5px solid var(--border)" }}>
                 <div className={`avatar ${avatarClass(j.nombre)}`} style={{ width: "22px", height: "22px", fontSize: "9px" }}>
@@ -90,11 +101,29 @@ export default function PartidoCard({
             );
           })}
 
+          {textoParejas ? (
+            <div
+              style={{
+                fontSize: "11px",
+                color: "var(--text2)",
+                marginTop: "8px",
+                paddingTop: "8px",
+                borderTop: "0.5px dashed var(--border2)",
+                lineHeight: 1.45
+              }}
+            >
+              <span style={{ fontWeight: 600, color: "var(--text3)", textTransform: "uppercase", fontSize: "10px", letterSpacing: "0.04em" }}>
+                Parejas (pista)
+              </span>
+              <div style={{ marginTop: "4px" }}>{textoParejas}</div>
+            </div>
+          ) : null}
+
           {isCoord ? (
             <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "8px", flexWrap: "wrap" }}>
               <input
                 type="time"
-                value={partido.hora || ""}
+                value={horaUi}
                 onChange={(e) => onHora(partido.id, e.target.value)}
                 style={{ fontSize: "12px", height: "30px", padding: "2px 8px", border: "0.5px solid var(--border2)", borderRadius: "var(--radius)", background: "var(--bg)", width: "100px" }}
               />

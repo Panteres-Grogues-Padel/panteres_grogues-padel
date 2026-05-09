@@ -2,19 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { PARTIDOS_INICIALES } from "../utils/mockData";
 import { supabase } from "../lib/supabase";
 import { createActivityLog, createNotifications } from "../lib/engagement";
+import { formatHoraInput, normalizeSemanaDate } from "../utils/dates";
 
 const ROTACIONES = [
   { izq: [0, 3], der: [1, 2] },
   { izq: [0, 2], der: [1, 3] },
   { izq: [0, 1], der: [2, 3] }
 ];
-
-/** Alineado con useSlots: columna `semana` es date en Postgres; forzar YYYY-MM-DD. */
-function normalizeSemanaDate(s) {
-  if (s == null || s === "") return s;
-  const m = String(s).match(/^(\d{4}-\d{2}-\d{2})/);
-  return m ? m[1] : String(s).slice(0, 10);
-}
 
 function strId(id) {
   return id == null ? id : String(id);
@@ -44,9 +38,9 @@ function flattenPartidos(data) {
         slotLabel: pg.slots?.label ?? pg.slot_id,
         club: pg.slots?.club ?? "",
         diaSemana: pg.slots?.dia_semana ?? null,
-        semana: pg.semana,
+        semana: normalizeSemanaDate(pg.semana),
         indoor: Boolean(pista.es_indoor),
-        hora: pista.hora ?? "",
+        hora: formatHoraInput(pista.hora),
         jugadores: jugadoresOrdenados
       });
     });

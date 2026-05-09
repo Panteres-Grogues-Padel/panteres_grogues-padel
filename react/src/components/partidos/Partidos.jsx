@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import PartidoCard from "./PartidoCard";
 import MoverJugador from "./MoverJugador";
+import { formatHoraInput, normalizeSemanaDate } from "../../utils/dates";
 
 export default function Partidos({
   partidos,
+  rotaciones,
   slots,
   ranking,
   currentUser,
@@ -55,11 +57,18 @@ export default function Partidos({
   }, [semana, semanasDisponibles]);
 
   const slotActual = useMemo(() => slots.find((s) => s.id === slotId), [slots, slotId]);
-  const partidosFiltrados = useMemo(() => partidos.filter((p) => p.slotId === slotId && (!semana || p.semana === semana)), [partidos, slotId, semana]);
+  const partidosFiltrados = useMemo(() => {
+    const semNorm = normalizeSemanaDate(semana);
+    return partidos.filter((p) => {
+      if (p.slotId !== slotId) return false;
+      if (!semana || !semNorm) return true;
+      return normalizeSemanaDate(p.semana) === semNorm;
+    });
+  }, [partidos, slotId, semana]);
   const rankingPosByJugador = useMemo(() => {
     const map = {};
     (ranking ?? []).forEach((r, idx) => {
-      map[r.id] = idx + 1;
+      map[String(r.id)] = idx + 1;
     });
     return map;
   }, [ranking]);
@@ -96,7 +105,7 @@ export default function Partidos({
     if (indoorCount > 0) wa += `🏠 ${indoorCount} partido${indoorCount !== 1 ? "s" : ""} indoor\n`;
     wa += "\n";
     partidosFiltrados.forEach((p, i) => {
-      const hora = p.hora ? ` · 🕐 ${p.hora}` : "";
+      const hora = p.hora ? ` · 🕐 ${formatHoraInput(p.hora)}` : "";
       const indoor = p.indoor ? " 🏠" : "";
       wa += `*Partido ${i + 1}*${hora}${indoor}\n`;
       wa += `${p.jugadores.map((j) => j.nombre).join(" · ")}\n\n`;
@@ -187,6 +196,7 @@ export default function Partidos({
                 index={i}
                 isCoord={isCoord}
                 currentUser={currentUser}
+                rotaciones={rotaciones}
                 onConfirmar={onConfirmar}
                 onHora={onHora}
                 onIndoor={onIndoor}
