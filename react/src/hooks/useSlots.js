@@ -91,15 +91,6 @@ function jugadorIdCoincide(insJugadorId, currentUserId) {
   return jugadoresCoinciden(insJugadorId, currentUserId);
 }
 
-/** Lunes ISO ±N semanas desde `m0` (UTC) para no perder filas por desfase cliente/BD. */
-function semanasVentanaCarga(m0, semanasRadio = 14) {
-  const out = [];
-  for (let w = -semanasRadio; w <= semanasRadio; w += 1) {
-    out.push(normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, w * 7))));
-  }
-  return [...new Set(out)];
-}
-
 /** ¿Ya hay inscripción del jugador en otro slot el mismo día de semana y misma semana calendario? */
 function inscripcionExclusividadDia(slotTarget, semanaNorm, jugadorId, rows, slotDefs) {
   for (const ins of rows) {
@@ -178,10 +169,15 @@ export function useSlots(currentUser) {
   async function loadInscripcionesSupabase(extraSemanasRaw = [], reloadToken) {
     if (!currentUser?.id) return;
     const now = new Date();
-    const m0 = getMondayUtc(now);
-    const baseSemanas = semanasVentanaCarga(m0, 14);
-    const extra = (extraSemanasRaw ?? []).map(normalizeSemanaValue).filter(Boolean);
-    const semanas = [...new Set([...baseSemanas, ...extra])];
+    const monday = getMondayUtc(now);
+    let semanaDesde = formatDateUTC(addDaysUtc(monday, -14));
+    let semanaHasta = formatDateUTC(addDaysUtc(monday, 28));
+    for (const raw of extraSemanasRaw ?? []) {
+      const n = normalizeSemanaValue(raw);
+      if (!n) continue;
+      if (n < semanaDesde) semanaDesde = n;
+      if (n > semanaHasta) semanaHasta = n;
+    }
     const selectCols = "id,jugador_id,slot_id,semana,es_socio,inscrito_at,jugadores(nombre)";
     const pageSize = 500;
     const allRows = [];
@@ -191,7 +187,8 @@ export function useSlots(currentUser) {
       const { data, error } = await supabase
         .from("inscripciones")
         .select(selectCols)
-        .in("semana", semanas)
+        .gte("semana", semanaDesde)
+        .lte("semana", semanaHasta)
         .order("slot_id", { ascending: true })
         .order("inscrito_at", { ascending: true, nullsFirst: true })
         .order("id", { ascending: true })
