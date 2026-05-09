@@ -75,7 +75,7 @@ export default function Bienvenida({
       <div className="quick-grid">
         <a
           className="quick-card"
-          href="https://www.instagram.com/panteresgrogues"
+          href="https://www.instagram.com/padel.pg/"
           target="_blank"
           rel="noreferrer"
         >
