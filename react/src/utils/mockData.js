@@ -28,7 +28,7 @@ export const SLOTS_INICIALES = [
   { id: "jue-up", label: "Jueves", club: "Club Up", diaSemana: 3, pistas: 1, jugadores: [] },
   { id: "jue-del", label: "Jueves", club: "Club Delfos", diaSemana: 3, pistas: 2, jugadores: [] },
   { id: "vie-up", label: "Viernes", club: "Club Up", diaSemana: 4, pistas: 7, jugadores: ["Javi_C", "RobertoL", "Guille", "David_L"] },
-  { id: "vie-del", label: "Viernes", club: "Club Delfos", diaSemana: 4, pistas: 1, jugadores: [] },
+  { id: "vie-del", label: "Viernes", club: "Club Delfos", diaSemana: 4, pistas: 2, jugadores: [] },
   { id: "dom", label: "Domingo", club: "Americana", diaSemana: 6, pistas: 0, jugadores: [] }
 ];
 

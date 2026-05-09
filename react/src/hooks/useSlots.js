@@ -10,23 +10,41 @@ function isJugadorUuid(id) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id.trim());
 }
 
-/** Fecha calendario local YYYY-MM-DD (alinear con columnas `date` en Postgres; evitar desfase UTC de toISOString). */
-function formatDateLocal(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+/** Lunes ISO de la semana del calendario UTC (alineado con `CURRENT_DATE` y semana ISO en Postgres/Supabase). */
+function getMondayUtc(date = new Date()) {
+  const y = date.getUTCFullYear();
+  const m = date.getUTCMonth();
+  const day = date.getUTCDate();
+  const d = new Date(Date.UTC(y, m, day));
+  const dow = d.getUTCDay();
+  const diff = dow === 0 ? -6 : 1 - dow;
+  d.setUTCDate(d.getUTCDate() + diff);
+  return d;
 }
 
+function formatDateUTC(d) {
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+}
+
+/** Normaliza columna `date` / JSON de Supabase a YYYY-MM-DD (sin cortar mal ISO con Z). */
 function normalizeSemanaValue(v) {
   if (v == null) return "";
+  if (typeof v === "string") {
+    const m = v.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (m) return m[1];
+  }
+  if (v instanceof Date && !Number.isNaN(v.getTime())) {
+    return formatDateUTC(v);
+  }
   const s = String(v);
+  const m2 = s.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (m2) return m2[1];
   return s.length >= 10 ? s.slice(0, 10) : s;
 }
 
-function addDays(d, n) {
+function addDaysUtc(d, n) {
   const x = new Date(d.getTime());
-  x.setDate(x.getDate() + n);
+  x.setUTCDate(x.getUTCDate() + n);
   return x;
 }
 
@@ -48,30 +66,19 @@ function normalizePlayerEntry(entry, idx = 0) {
   };
 }
 
-function getMonday(date = new Date()) {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-/** Semana de alta (lunes ISO): si la lista ya pasó al siguiente ciclo, apunta al lunes siguiente. */
+/** Semana de alta en BD: lunes ISO en **UTC** (como `CURRENT_DATE` en Supabase) + regla de lista abierta (hora local). */
 function getSemanaObjetivo(slot, now = new Date()) {
-  const monday = getMonday(now);
+  const monday = getMondayUtc(now);
   const open = isSlotOpen({ diaSemana: slot.diaSemana });
-  if (open) monday.setDate(monday.getDate() + 7);
-  return formatDateLocal(monday);
+  if (open) monday.setUTCDate(monday.getUTCDate() + 7);
+  return formatDateUTC(monday);
 }
 
 /**
- * Semanas a mostrar / comprobar para un slot: la de la semana calendario actual y la de alta.
- * Si solo filtramos por getSemanaObjetivo tras el día del slot, la BD puede seguir con inscripciones
- * de la semana anterior (p. ej. semana 2026-05-04 en BD y objetivo 2026-05-11) y la lista queda vacía.
+ * Semanas a mostrar / comprobar para un slot: lunes UTC actual y lunes de alta.
  */
 function semanasRelevantesParaSlot(slot, now = new Date()) {
-  const lunesEsta = formatDateLocal(getMonday(now));
+  const lunesEsta = formatDateUTC(getMondayUtc(now));
   const objetivo = getSemanaObjetivo(slot, now);
   return lunesEsta === objetivo ? [lunesEsta] : [lunesEsta, objetivo];
 }
@@ -114,8 +121,9 @@ export function useSlots(currentUser) {
           label: s.label,
           club: s.club,
           diaSemana: s.dia_semana,
-          pistasDefault: s.pistas_default,
-          pistas: s.pistas_activo,
+          pistasDefault: Number(s.pistas_default ?? 0),
+          // UI y cupos: solo pistas_activo (no pistas_default)
+          pistas: Number(s.pistas_activo ?? 0),
           jugadores: []
         }))
       );
@@ -130,23 +138,18 @@ export function useSlots(currentUser) {
   async function loadInscripcionesSupabase() {
     if (!currentUser?.id) return;
     const now = new Date();
-    const m0 = getMonday(now);
-    const semanaActual = normalizeSemanaValue(formatDateLocal(m0));
+    const m0 = getMondayUtc(now);
+    const semanaActual = normalizeSemanaValue(formatDateUTC(m0));
     const semanas = [
-      normalizeSemanaValue(formatDateLocal(addDays(m0, -7))),
+      normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, -7))),
       semanaActual,
-      normalizeSemanaValue(formatDateLocal(addDays(m0, 7)))
+      normalizeSemanaValue(formatDateUTC(addDaysUtc(m0, 7)))
     ];
     // jugadores(nombre): FK jugadores. slots(label): FK slot_id → slots.
     const { data, error } = await supabase
       .from("inscripciones")
       .select("id,jugador_id,slot_id,semana,es_socio,inscrito_at,jugadores(nombre),slots(label)")
       .in("semana", semanas);
-    // TODO(quitar): depuración semana vs BD (esperado p. ej. 2026-05-04)
-    console.log("[useSlots] Semana que busca la app (lunes semana actual):", semanaActual);
-    console.log("[useSlots] Semanas en .in(...) para inscripciones:", semanas);
-    console.log("[useSlots] Inscripciones recibidas de Supabase:", data);
-    if (error) console.log("[useSlots] Error inscripciones:", error);
     if (!error && data) setInscripciones(data);
   }
 
