@@ -78,6 +78,7 @@ export function useAuth() {
     setError("");
     setCurrentUser({
       ...jugador,
+      id: jugador.id != null ? String(jugador.id) : jugador.id,
       nombreCompleto: jugador.nombre_completo,
       fromFallback: false
     });
@@ -128,7 +129,7 @@ export function useAuth() {
     if (!privacyAccepted) return setError("Debes aceptar la politica de privacidad para continuar.");
     const selected = demoUsers.find((u) => u.id === Number(demoId));
     if (!selected) return setError("Selecciona un usuario demo.");
-    setCurrentUser(selected);
+    setCurrentUser({ ...selected, fromFallback: true });
   }
 
   async function loginGoogle() {

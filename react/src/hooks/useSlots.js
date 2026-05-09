@@ -4,6 +4,12 @@ import { isBajaWarning, isSlotOpen } from "../utils/slots";
 import { supabase } from "../lib/supabase";
 import { createActivityLog } from "../lib/engagement";
 
+/** jugadores.id en Supabase es uuid; los usuarios demo usan números y no deben llamar a la API. */
+function isJugadorUuid(id) {
+  if (id == null || typeof id !== "string") return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id.trim());
+}
+
 function formatDate(d) {
   return d.toISOString().slice(0, 10);
 }
@@ -47,7 +53,11 @@ export function useSlots(currentUser) {
   const [inscripciones, setInscripciones] = useState([]);
   const [slotsNotice, setSlotsNotice] = useState("");
 
-  const useFallback = !supabase || !currentUser?.id || currentUser.fromFallback === true;
+  const useFallback =
+    !supabase ||
+    !currentUser?.id ||
+    currentUser.fromFallback === true ||
+    !isJugadorUuid(currentUser.id);
 
   async function loadSlotsSupabase() {
     const { data, error } = await supabase
@@ -55,7 +65,14 @@ export function useSlots(currentUser) {
       .select("id,label,club,dia_semana,pistas_activo,activo")
       .eq("activo", true)
       .order("dia_semana", { ascending: true });
-    if (!error && data?.length) {
+    if (error) {
+      setSlotsNotice(
+        `Error al leer slots (tabla slots, campo activo): ${error.message}. Se muestran slots de respaldo.`
+      );
+      setSlots(SLOTS_INICIALES);
+      return;
+    }
+    if (data?.length) {
       setSlotsNotice("");
       setSlots(
         data.map((s) => ({
@@ -69,8 +86,9 @@ export function useSlots(currentUser) {
       );
       return;
     }
-    // Si no hay slots en BD (o falla la lectura), evitamos dejar la pestaña vacía.
-    setSlotsNotice("No se han encontrado slots activos en Supabase (tabla slots). Se muestran slots de respaldo.");
+    setSlotsNotice(
+      "No hay filas en slots con activo = true (revisa el seed). Se muestran slots de respaldo."
+    );
     setSlots(SLOTS_INICIALES);
   }
 
@@ -81,7 +99,7 @@ export function useSlots(currentUser) {
     const mondayNext = formatDate(new Date(getMonday(now).getTime() + 7 * 24 * 3600 * 1000));
     const { data, error } = await supabase
       .from("inscripciones")
-      .select("id,jugador_id,slot_id,semana,es_socio,created_at,jugadores(nombre)")
+      .select("id,jugador_id,slot_id,semana,es_socio,inscrito_at,jugadores(nombre)")
       .in("semana", [mondayCurrent, mondayNext]);
     if (!error && data) setInscripciones(data);
   }
@@ -107,8 +125,8 @@ export function useSlots(currentUser) {
               .map((ins, idx) => ({
                 nombre: ins.jugadores?.nombre ?? ins.jugador_id,
                 socio: Boolean(ins.es_socio),
-                ts: ins.created_at ? new Date(ins.created_at).getTime() : idx + 1,
-                tsStr: formatTsStr(ins.created_at)
+                ts: ins.inscrito_at ? new Date(ins.inscrito_at).getTime() : idx + 1,
+                tsStr: formatTsStr(ins.inscrito_at)
               }))
         ).sort((a, b) => (a.ts ?? 0) - (b.ts ?? 0)),
         sociosCount: (
