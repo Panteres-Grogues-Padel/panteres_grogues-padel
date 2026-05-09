@@ -19,6 +19,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("bienvenida");
   const [flashMessage, setFlashMessage] = useState("");
   const [jugadorSeleccionado, setJugadorSeleccionado] = useState(null);
+  // useSlots corre al montar App (tras login), no al entrar en la pestaña Jugar; Jugar solo recibe props.
   const { slots, slotsNotice, apuntarEnSlot, bajaEnSlot } = useSlots(auth.currentUser);
   const { ranking, loading: rankingLoading, error: rankingError } = useRanking();
   const { partidos, generarPartidos, asignarHora, toggleIndoor, moverJugador, confirmarAsistencia } =

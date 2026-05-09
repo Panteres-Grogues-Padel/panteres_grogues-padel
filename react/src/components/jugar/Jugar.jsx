@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import DetalleSlot from "./DetalleSlot";
 
+/** Recibe `slots` desde App (hook useSlots); no importa useSlots aquí. */
 export default function Jugar({ slots, currentUser, onApuntar, onBaja, backendNotice, message }) {
+  useEffect(() => {
+    console.log("Jugar mounted");
+  }, []);
+
   const [selectedSlotId, setSelectedSlotId] = useState(slots[0]?.id ?? "");
   const [showLista, setShowLista] = useState(false);
 
