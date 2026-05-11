@@ -1,5 +1,5 @@
-export function getDiaSemanaActual() {
-  const today = new Date().getDay();
+export function getDiaSemanaActual(date = new Date()) {
+  const today = date.getDay();
   return today === 0 ? 6 : today - 1;
 }
 
@@ -20,28 +20,31 @@ export function sameDiaSemanaSlot(a, b) {
 }
 
 /**
- * ¿Lista abierta para apuntarse? 0=Lun … 6=Dom (getDiaSemanaActual).
- * Regla: la lista abre el mismo día de la semana 7 días antes a las 19:00.
- * Para domingo: abre el domingo anterior a las 19h; entre lunes y sábado ya ha pasado ese momento.
+ * ¿Está abierta la lista de la semana próxima?
+ * Cada slot abre exactamente 7 días antes, el mismo día de la semana a las 19:00h.
  */
-export function isSlotOpen(slot) {
-  const ahora = new Date();
-  const diaActual = getDiaSemanaActual();
-  const ds = slot.diaSemana;
+export function isNextWeekSlotOpen(slot, now = new Date()) {
+  const diaActual = getDiaSemanaActual(now);
+  const ds = normalizeDiaSemana(slot);
+  if (ds == null) return true;
 
-  // Domingo (6): diaActual > ds nunca se cumple (6 es el último día del ciclo 0–6).
-  // Lun–Sáb: ya pasó el domingo previo → lista abierta.
-  if (ds === 6 && diaActual !== 6) return true;
-
-  const diff = (ds - diaActual + 7) % 7;
-  if (diff === 0) return true;
   if (diaActual > ds) return true;
-  if (diaActual === ds && ahora.getHours() >= 19) return true;
+  if (diaActual === ds && now.getHours() >= 19) return true;
   return false;
+}
+
+/**
+ * ¿Lista abierta para apuntarse?
+ * - Semana actual: todos los días están siempre abiertos.
+ * - Semana próxima: usar `isNextWeekSlotOpen` cuando haga falta distinguirla.
+ */
+export function isSlotOpen(slot, options = {}) {
+  if (options.semana === "proxima") return isNextWeekSlotOpen(slot, options.now);
+  return true;
 }
 
 export function isBajaWarning(slot) {
   const ahora = new Date();
-  const diaActual = getDiaSemanaActual();
+  const diaActual = getDiaSemanaActual(ahora);
   return diaActual === slot.diaSemana && ahora.getHours() >= 7;
 }

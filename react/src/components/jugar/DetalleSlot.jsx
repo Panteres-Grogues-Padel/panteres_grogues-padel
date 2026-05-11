@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { isJugadorUuid, jugadoresCoinciden } from "../../utils/jugador";
+import { getDiaSemanaActual, isNextWeekSlotOpen } from "../../utils/slots";
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
 
 function dayOpenLabel(slot) {
@@ -7,15 +8,13 @@ function dayOpenLabel(slot) {
   const dow = slot?.diaSemana;
   if (dow === undefined) return "Abierta";
   const ahora = new Date();
-  const jsNow = ahora.getDay() === 0 ? 6 : ahora.getDay() - 1;
-  // Dom (6): jsNow > dow nunca ocurre; entre lun–sáb la lista ya abrió el domingo anterior.
-  if (dow === 6 && jsNow !== 6) return "Abierta · semana próxima";
-  const diff = (dow - jsNow + 7) % 7;
-  if (diff === 0) return "Abierta · semana actual";
-  if (jsNow > dow) return "Abierta · semana siguiente";
-  if (jsNow === dow && ahora.getHours() >= 19) return "Abierta desde las 19:00";
-  if (jsNow === dow && ahora.getHours() < 19) return "Abre hoy a las 19:00";
-  return `Abre el ${ds[dow]} a las 19:00`;
+  const jsNow = getDiaSemanaActual(ahora);
+  if (isNextWeekSlotOpen(slot, ahora)) {
+    if (jsNow === dow) return "Abierta desde las 19:00";
+    return "Abierta · semana siguiente";
+  }
+  if (jsNow === dow) return "Abierta · semana actual";
+  return `Abierta · semana actual · próxima semana abre el ${ds[dow]} a las 19:00`;
 }
 
 function filaEsUsuarioActual(p, currentUser) {

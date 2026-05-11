@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 // Fallback offline: todos los slots del prototipo (index.html) en `utils/mockData.js` → SLOTS_INICIALES
 import { SLOTS_INICIALES } from "../utils/mockData";
-import { isBajaWarning, isSlotOpen, sameDiaSemanaSlot } from "../utils/slots";
+import { isBajaWarning, isNextWeekSlotOpen, isSlotOpen, sameDiaSemanaSlot } from "../utils/slots";
 import { supabase } from "../lib/supabase";
 import { createActivityLog } from "../lib/engagement";
 import { isJugadorUuid, jugadoresCoinciden, normalizeJugadorUuid } from "../utils/jugador";
@@ -65,8 +65,9 @@ function normalizePlayerEntry(entry, idx = 0) {
 /** Semana de alta en BD: lunes ISO en **UTC** (como `CURRENT_DATE` en Supabase) + regla de lista abierta (hora local). */
 function getSemanaObjetivo(slot, now = new Date()) {
   const monday = getMondayUtc(now);
-  const open = isSlotOpen({ diaSemana: slot.diaSemana });
-  if (open) monday.setUTCDate(monday.getUTCDate() + 7);
+  if (isNextWeekSlotOpen({ diaSemana: slot.diaSemana }, now)) {
+    monday.setUTCDate(monday.getUTCDate() + 7);
+  }
   return formatDateUTC(monday);
 }
 
