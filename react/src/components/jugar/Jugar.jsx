@@ -26,7 +26,7 @@ export default function Jugar({ slots, currentUser, onApuntar, onBaja, backendNo
   const [showLista, setShowLista] = useState(false);
 
   const slotsActual = useMemo(() => slots.filter((s) => s.semana === "actual"), [slots]);
-  const slotsProxima = useMemo(() => slots.filter((s) => s.semana === "proxima"), [slots]);
+  const slotsProxima = useMemo(() => slots.filter((s) => s.semana === "proxima" && s.abierto), [slots]);
   const lunesActual = slotsActual[0]?.semanaObjetivo ?? "";
   const lunesProximo = slotsProxima[0]?.semanaObjetivo ?? "";
 
