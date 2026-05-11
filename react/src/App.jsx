@@ -121,8 +121,9 @@ export default function App() {
         <Topbar
           currentUser={auth.currentUser}
           setActiveTab={setActiveTab}
-          onLogout={() => {
-            void auth.logout();
+          onLogout={async () => {
+            await auth.logout();
+            window.location.reload();
           }}
         />
 
