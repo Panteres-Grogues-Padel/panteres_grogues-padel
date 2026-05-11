@@ -276,14 +276,6 @@ export function useSlots(currentUser) {
       return;
     }
 
-    const idsUnicos = [...new Set(allRows.map((r) => r.jugador_id))];
-    console.log("[loadInscripciones] rango:", semanaDesde, "→", semanaHasta);
-    console.log("[loadInscripciones] filas recibidas de Supabase:", allRows.length);
-    console.log("[loadInscripciones] jugador_ids únicos:", JSON.stringify(idsUnicos));
-    const coordId = "10000000-0000-4000-b000-000000000001";
-    const filasCoord = allRows.filter((r) => normalizeJugadorUuid(r.jugador_id) === coordId);
-    console.log("[loadInscripciones] filas del coordinador:", filasCoord.length, JSON.stringify(filasCoord));
-
     const withNombres = await enrichInscripcionesJugadoresNombres(supabase, allRows);
     if (reloadToken !== undefined && reloadToken !== inscripcionesReloadGenRef.current) {
       return;
@@ -379,28 +371,6 @@ export function useSlots(currentUser) {
     const now = new Date();
     const inscripcionesListas = !inscripcionesLoading && currentUserId !== "" && inscripcionesLoadedForUserId === currentUserId;
     const inscripcionesVisibles = (useFallback || inscripcionesListas) ? inscripciones : [];
-
-    const rawUserId = String(currentUser?.id ?? "");
-    const normUserId = normalizeJugadorUuid(rawUserId);
-    console.log("[useSlots:DIAG] currentUser.id RAW=", JSON.stringify(rawUserId), "NORM=", JSON.stringify(normUserId));
-    console.log("[useSlots:DIAG] total inscripciones:", inscripciones.length, "| visibles:", inscripcionesVisibles.length);
-    const filasCoord = inscripcionesVisibles.filter((i) => jugadorIdCoincide(i.jugador_id, rawUserId));
-    console.log("[useSlots:DIAG] filas que coinciden:", filasCoord.length);
-    for (const f of filasCoord) {
-      const rawIns = String(f.jugador_id ?? "");
-      const normIns = normalizeJugadorUuid(rawIns);
-      const iguales = normIns === normUserId;
-      console.log("[useSlots:DIAG] MATCH row:", {
-        slot_id: f.slot_id,
-        semana: f.semana,
-        jugador_id_raw: rawIns,
-        jugador_id_norm: normIns,
-        currentUser_id_norm: normUserId,
-        son_iguales: iguales,
-        jugador_id_hex: Array.from(rawIns).map((c) => c.charCodeAt(0).toString(16)).join(" "),
-        currentUser_id_hex: Array.from(rawUserId).map((c) => c.charCodeAt(0).toString(16)).join(" ")
-      });
-    }
 
     const monday = getMondayUtc(now);
     const lunesActual = formatDateUTC(monday);
@@ -628,30 +598,18 @@ export function useSlots(currentUser) {
         return { ok: false, error: "No hay inscripción en este slot para tu usuario." };
       }
 
-      const { data: deleted, error: delErr } = await supabase
+      const inscIds = filasInsc.map((r) => r.id);
+      const { error: delErr } = await supabase
         .from("inscripciones")
         .delete()
-        .eq("jugador_id", jugadorUuid)
-        .eq("slot_id", dbSlotId)
-        .eq("semana", semanaNorm)
-        .select("id");
+        .in("id", inscIds);
 
       if (delErr) {
         return { ok: false, error: delErr.message };
       }
-      if (!deleted?.length) {
-        return { ok: false, error: "No se eliminó la inscripción (semana o permisos)." };
-      }
 
       setInscripciones((prev) =>
-        prev.filter(
-          (i) =>
-            !(
-              i.slot_id === dbSlotId &&
-              jugadoresCoinciden(i.jugador_id, jugadorUuid) &&
-              normalizeSemanaValue(i.semana) === semanaNorm
-            )
-        )
+        prev.filter((i) => !inscIds.includes(i.id))
       );
 
       void createActivityLog({
