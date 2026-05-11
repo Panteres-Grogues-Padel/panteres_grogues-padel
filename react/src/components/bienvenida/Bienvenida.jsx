@@ -9,8 +9,6 @@ function saludoPorHora() {
   return "Buenas noches";
 }
 
-const ACTIVITY_ICONOS = { jugar: "📅", partidos: "🌐", resultados: "📋", agenda: "🗓️" };
-
 function formatActivityTs(value) {
   if (!value) return "";
   const date = new Date(value);
@@ -34,6 +32,18 @@ function mapActivityRow(row) {
     texto: row.texto,
     ts: formatActivityTs(row.created_at)
   };
+}
+
+function sanitizeActivityText(texto) {
+  return String(texto ?? "")
+    .replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}\uFE0F]/gu, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function activityDescription(entry, includeJugador) {
+  const texto = sanitizeActivityText(entry.texto);
+  return includeJugador ? `${entry.jugador}: ${texto}` : texto;
 }
 
 export default function Bienvenida({
@@ -245,7 +255,7 @@ export default function Bienvenida({
                 justifyContent: "space-between"
               }}
             >
-              <span>{isCoord ? "📋 Actividad reciente" : "📋 Mi actividad"}</span>
+              <span>{isCoord ? "Actividad reciente" : "Mi actividad"}</span>
               {isCoord ? (
                 <select
                   id="log-filtro"
@@ -290,20 +300,13 @@ export default function Bienvenida({
                     <div
                       key={e.id}
                       style={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: 8,
                         padding: "6px 0",
                         borderBottom: "0.5px solid var(--border)"
                       }}
                     >
-                      <span style={{ fontSize: 14, flexShrink: 0 }}>{ACTIVITY_ICONOS[e.tipo] || "📌"}</span>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        {isCoord && !logFiltro ? (
-                          <div style={{ fontSize: 10, fontWeight: 600, color: "var(--navy)" }}>{e.jugador}</div>
-                        ) : null}
-                        <div style={{ fontSize: 12, color: "var(--text)", lineHeight: 1.4 }}>{e.texto}</div>
-                        <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 1 }}>{e.ts}</div>
+                      <div style={{ fontSize: 10, color: "var(--text3)", marginBottom: 1 }}>{e.ts}</div>
+                      <div style={{ fontSize: 12, color: "var(--text)", lineHeight: 1.4 }}>
+                        {activityDescription(e, isCoord && !logFiltro)}
                       </div>
                     </div>
                   ))
