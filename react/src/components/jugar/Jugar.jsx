@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import DetalleSlot from "./DetalleSlot";
-import { sameDiaSemanaSlot } from "../../utils/slots";
+import { getDiaSemanaActual, sameDiaSemanaSlot } from "../../utils/slots";
 
 const MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
 
@@ -26,7 +26,10 @@ export default function Jugar({ slots, currentUser, onApuntar, onBaja, backendNo
   const [showLista, setShowLista] = useState(false);
 
   const slotsActual = useMemo(() => slots.filter((s) => s.semana === "actual"), [slots]);
-  const slotsProxima = useMemo(() => slots.filter((s) => s.semana === "proxima" && s.abierto), [slots]);
+  const slotsProxima = useMemo(() => {
+    const diaActual = getDiaSemanaActual(new Date());
+    return slots.filter((s) => s.semana === "proxima" && s.diaSemana <= diaActual + 1);
+  }, [slots]);
   const lunesActual = slotsActual[0]?.semanaObjetivo ?? "";
   const lunesProximo = slotsProxima[0]?.semanaObjetivo ?? "";
 
