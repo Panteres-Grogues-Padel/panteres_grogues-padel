@@ -84,55 +84,61 @@ export function useSlots(currentUser) {
     let cancelled = false;
 
     (async () => {
-      // Cargar definiciones de slots
-      const { data: slotsData, error: slotsErr } = await supabase
-        .from("slots")
-        .select("id,label,club,dia_semana,pistas_default,pistas_activo")
-        .eq("activo", true)
-        .order("dia_semana", { ascending: true })
-        .order("id", { ascending: true });
+      try {
+        // Cargar definiciones de slots
+        const { data: slotsData, error: slotsErr } = await supabase
+          .from("slots")
+          .select("id,label,club,dia_semana,pistas_default,pistas_activo")
+          .eq("activo", true)
+          .order("dia_semana", { ascending: true })
+          .order("id", { ascending: true });
 
-      if (cancelled) return;
+        if (cancelled) return;
 
-      if (slotsErr || !slotsData?.length) {
-        setSlotsNotice(slotsErr?.message ?? "No hay slots activos. Se muestran slots de respaldo.");
-        setSlots(SLOTS_INICIALES);
-      } else {
-        setSlotsNotice("");
-        setSlots(
-          slotsData.map((s) => ({
-            id: s.id,
-            label: s.label,
-            club: s.club,
-            diaSemana: s.dia_semana,
-            pistas: Number(s.pistas_activo ?? 0),
-            pistasDefault: Number(s.pistas_default ?? 0),
-            jugadores: []
-          }))
-        );
+        if (slotsErr || !slotsData?.length) {
+          setSlotsNotice(slotsErr?.message ?? "No hay slots activos. Se muestran slots de respaldo.");
+          setSlots(SLOTS_INICIALES);
+        } else {
+          setSlotsNotice("");
+          setSlots(
+            slotsData.map((s) => ({
+              id: s.id,
+              label: s.label,
+              club: s.club,
+              diaSemana: s.dia_semana,
+              pistas: Number(s.pistas_activo ?? 0),
+              pistasDefault: Number(s.pistas_default ?? 0),
+              jugadores: []
+            }))
+          );
+        }
+
+        // Cargar inscripciones: rango de -2 a +4 semanas desde el lunes actual
+        const lunes = getMondayUtc(new Date());
+        const desde = formatDateUTC(addDaysUtc(lunes, -14));
+        const hasta = formatDateUTC(addDaysUtc(lunes, 28));
+
+        const { data: inscData, error: inscErr } = await supabase
+          .from("inscripciones")
+          .select("id,jugador_id,slot_id,semana,es_socio,inscrito_at")
+          .gte("semana", desde)
+          .lte("semana", hasta)
+          .order("inscrito_at", { ascending: true, nullsFirst: true })
+          .order("id", { ascending: true });
+
+        if (cancelled) return;
+
+        if (inscErr) {
+          setSlotsNotice("Error al cargar inscripciones: " + inscErr.message);
+        } else {
+          const conNombres = await cargarNombres(inscData ?? []);
+          if (!cancelled) setInscripciones(conNombres);
+        }
+      } catch (err) {
+        if (!cancelled) setSlotsNotice("Error al cargar datos: " + (err?.message ?? String(err)));
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-
-      // Cargar inscripciones: rango de -2 a +4 semanas desde el lunes actual
-      const lunes = getMondayUtc(new Date());
-      const desde = formatDateUTC(addDaysUtc(lunes, -14));
-      const hasta = formatDateUTC(addDaysUtc(lunes, 28));
-
-      const { data: inscData, error: inscErr } = await supabase
-        .from("inscripciones")
-        .select("id,jugador_id,slot_id,semana,es_socio,inscrito_at")
-        .gte("semana", desde)
-        .lte("semana", hasta)
-        .order("inscrito_at", { ascending: true, nullsFirst: true })
-        .order("id", { ascending: true });
-
-      if (cancelled) return;
-
-      if (!inscErr) {
-        const conNombres = await cargarNombres(inscData ?? []);
-        if (!cancelled) setInscripciones(conNombres);
-      }
-
-      if (!cancelled) setLoading(false);
     })();
 
     return () => {
@@ -316,7 +322,17 @@ export function useSlots(currentUser) {
     const { error: delErr } = await supabase.from("inscripciones").delete().in("id", ids);
     if (delErr) return { ok: false, error: delErr.message };
 
-    setInscripciones((prev) => prev.filter((i) => !ids.includes(i.id)));
+    // Remove by identity (slot+jugador+semana) so optimistic "local-*" entries are also removed
+    setInscripciones((prev) =>
+      prev.filter(
+        (i) =>
+          !(
+            i.slot_id === dbSlotId &&
+            normalizeSemana(i.semana) === semana &&
+            jugadoresCoinciden(i.jugador_id, jugadorId)
+          )
+      )
+    );
 
     void createActivityLog({
       jugadorId,
