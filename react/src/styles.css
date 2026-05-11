@@ -560,6 +560,16 @@ select {
   margin-top: 8px;
 }
 
+.bienvenida-actividad-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  text-align: left;
+  background: var(--bg);
+  margin-top: 8px;
+}
+
 .quick-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

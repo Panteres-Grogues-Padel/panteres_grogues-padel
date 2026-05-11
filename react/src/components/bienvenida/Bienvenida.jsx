@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "../../lib/supabase";
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
 
 function saludoPorHora() {
@@ -6,6 +7,33 @@ function saludoPorHora() {
   if (h < 12) return "Buenos días";
   if (h < 19) return "Buenas tardes";
   return "Buenas noches";
+}
+
+const ACTIVITY_ICONOS = { jugar: "📅", partidos: "🌐", resultados: "📋", agenda: "🗓️" };
+
+function formatActivityTs(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString("es-ES", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
+function mapActivityRow(row) {
+  const jugador = row.jugadores ?? {};
+  const nombreJugador = jugador.nombre_completo ?? jugador.nombre ?? "Jugador";
+  return {
+    id: row.id,
+    jugadorId: row.jugador_id,
+    jugador: nombreJugador,
+    tipo: row.tipo,
+    texto: row.texto,
+    ts: formatActivityTs(row.created_at)
+  };
 }
 
 export default function Bienvenida({
@@ -19,11 +47,67 @@ export default function Bienvenida({
   onGoToRanking
 }) {
   const [utilOpen, setUtilOpen] = useState(false);
+  const [activityOpen, setActivityOpen] = useState(false);
+  const [activityLog, setActivityLog] = useState([]);
+  const [activityLoading, setActivityLoading] = useState(false);
+  const [activityError, setActivityError] = useState("");
+  const [logFiltro, setLogFiltro] = useState("");
   const nombre = currentUser?.nombreCompleto?.split(" ")[0] || currentUser?.nombre || "jugador";
   const pos = Math.max(1, ranking.findIndex((j) => j.id === currentUser?.id) + 1);
   const rk = ranking.find((j) => j.id === currentUser?.id);
   const eficacia = rk ? `${(rk.eficacia * 100).toFixed(1)}%` : "-";
   const pj = rk?.pj ?? 0;
+  const isCoord = Boolean(currentUser?.es_coordinador || currentUser?.isCoord);
+  const entradasLog = isCoord && logFiltro ? activityLog.filter((e) => e.jugadorId === logFiltro) : activityLog;
+  const jugadoresLog = useMemo(() => {
+    const jugadores = new Map();
+    ranking.forEach((j) => {
+      if (j.id) jugadores.set(String(j.id), j.nombreCompleto ?? j.nombre ?? "Jugador");
+    });
+    activityLog.forEach((e) => {
+      if (e.jugadorId) jugadores.set(String(e.jugadorId), e.jugador);
+    });
+    return Array.from(jugadores, ([id, label]) => ({ id, label })).sort((a, b) =>
+      a.label.localeCompare(b.label, "es")
+    );
+  }, [activityLog, ranking]);
+
+  useEffect(() => {
+    if (!activityOpen) return undefined;
+    let cancelled = false;
+
+    async function loadActivityLog() {
+      setActivityError("");
+      setLogFiltro("");
+      if (!supabase || currentUser?.fromFallback) {
+        setActivityLog([]);
+        return;
+      }
+
+      setActivityLoading(true);
+      let query = supabase
+        .from("activity_log")
+        .select("id,jugador_id,tipo,texto,created_at,jugadores(nombre,nombre_completo)")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (!isCoord) query = query.eq("jugador_id", currentUser.id);
+
+      const { data, error } = await query;
+      if (cancelled) return;
+      if (error) {
+        setActivityError(error.message);
+        setActivityLog([]);
+      } else {
+        setActivityLog((data ?? []).map(mapActivityRow));
+      }
+      setActivityLoading(false);
+    }
+
+    void loadActivityLog();
+    return () => {
+      cancelled = true;
+    };
+  }, [activityOpen, currentUser?.fromFallback, currentUser?.id, isCoord]);
 
   return (
     <div>
@@ -120,6 +204,118 @@ export default function Bienvenida({
         </div>
         <span style={{ fontSize: 12, color: "var(--text2)" }}>→</span>
       </button>
+
+      <button
+        type="button"
+        className="btn btn-block bienvenida-actividad-btn"
+        onClick={() => setActivityOpen(true)}
+      >
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>Actividad</div>
+          <div style={{ fontSize: 11, color: "var(--text2)" }}>
+            {isCoord ? "Historial de todos los jugadores" : "Mi historial de acciones"}
+          </div>
+        </div>
+        <span style={{ fontSize: 12, color: "var(--text2)" }}>{">"}</span>
+      </button>
+
+      <div
+        className={`profile-overlay${activityOpen ? " open" : ""}`}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) setActivityOpen(false);
+        }}
+      >
+        <div className="profile-sheet">
+          <div className="profile-handle" />
+          <div style={{ fontSize: 18, fontWeight: 600, color: "var(--text)", marginBottom: "1.25rem" }}>
+            Historial
+          </div>
+
+          <div style={{ marginTop: ".75rem" }}>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: "var(--text2)",
+                textTransform: "uppercase",
+                letterSpacing: ".05em",
+                marginBottom: ".5rem",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between"
+              }}
+            >
+              <span>{isCoord ? "📋 Actividad reciente" : "📋 Mi actividad"}</span>
+              {isCoord ? (
+                <select
+                  id="log-filtro"
+                  value={logFiltro}
+                  onChange={(e) => setLogFiltro(e.target.value)}
+                  style={{
+                    fontSize: 11,
+                    height: 24,
+                    padding: "0 6px",
+                    border: "0.5px solid var(--border2)",
+                    borderRadius: "var(--radius)",
+                    background: "var(--bg)"
+                  }}
+                >
+                  <option value="">Todos</option>
+                  {jugadoresLog.map((j) => (
+                    <option key={j.id} value={j.id}>
+                      {j.label}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
+            </div>
+            <div id="log-landing">
+              {activityLoading ? (
+                <div style={{ fontSize: 12, color: "var(--text2)", padding: ".5rem 0", textAlign: "center" }}>
+                  Cargando actividad...
+                </div>
+              ) : null}
+              {!activityLoading && activityError ? (
+                <div style={{ fontSize: 12, color: "var(--danger)", padding: ".5rem 0", textAlign: "center" }}>
+                  {activityError}
+                </div>
+              ) : null}
+              {!activityLoading && !activityError && !entradasLog.length ? (
+                <div style={{ fontSize: 12, color: "var(--text2)", padding: ".5rem 0", textAlign: "center" }}>
+                  Sin actividad registrada todavía
+                </div>
+              ) : null}
+              {!activityLoading && !activityError
+                ? entradasLog.slice(0, 10).map((e) => (
+                    <div
+                      key={e.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 8,
+                        padding: "6px 0",
+                        borderBottom: "0.5px solid var(--border)"
+                      }}
+                    >
+                      <span style={{ fontSize: 14, flexShrink: 0 }}>{ACTIVITY_ICONOS[e.tipo] || "📌"}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        {isCoord && !logFiltro ? (
+                          <div style={{ fontSize: 10, fontWeight: 600, color: "var(--navy)" }}>{e.jugador}</div>
+                        ) : null}
+                        <div style={{ fontSize: 12, color: "var(--text)", lineHeight: 1.4 }}>{e.texto}</div>
+                        <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 1 }}>{e.ts}</div>
+                      </div>
+                    </div>
+                  ))
+                : null}
+            </div>
+          </div>
+
+          <button type="button" className="close-btn" onClick={() => setActivityOpen(false)}>
+            Cerrar
+          </button>
+        </div>
+      </div>
 
       {/* Utilidades sheet (mismo contenido que index.html) */}
       <div

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { EVENTOS_INICIALES } from "../utils/mockData";
+import { createActivityLog } from "../lib/engagement";
 import { supabase } from "../lib/supabase";
 import { isJugadorUuid, jugadoresCoinciden, normalizeJugadorUuid } from "../utils/jugador";
 
@@ -122,12 +123,18 @@ export function useEventos(currentUser, isCoord) {
       return { ok: true };
     }
 
+    const uid = normalizeJugadorUuid(currentUser.id);
     const { error: insError } = await supabase.from("inscripciones_eventos").insert({
       evento_id: eventoId,
-      jugador_id: normalizeJugadorUuid(currentUser.id),
+      jugador_id: uid,
       pareja: null
     });
     if (insError) return { ok: false, error: insError.message };
+    await createActivityLog({
+      jugadorId: uid,
+      tipo: "agenda",
+      texto: `Se apunta a ${evento.titulo} (${evento.fecha})`
+    });
     await loadEventos();
     return { ok: true };
   }
@@ -198,12 +205,18 @@ export function useEventos(currentUser, isCoord) {
       .eq("pareja", uid);
     if (clearErr) return { ok: false, error: clearErr.message };
 
+    const evento = eventos.find((e) => e.id === eventoId);
     const { error: delError } = await supabase
       .from("inscripciones_eventos")
       .delete()
       .eq("evento_id", eventoId)
       .eq("jugador_id", uid);
     if (delError) return { ok: false, error: delError.message };
+    await createActivityLog({
+      jugadorId: uid,
+      tipo: "agenda",
+      texto: `Se da de baja de ${evento?.titulo ?? "evento"} (${evento?.fecha ?? eventoId})`
+    });
     await loadEventos();
     return { ok: true };
   }
