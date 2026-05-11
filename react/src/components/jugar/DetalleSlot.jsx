@@ -1,20 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import { isJugadorUuid, jugadoresCoinciden } from "../../utils/jugador";
-import { getDiaSemanaActual, isNextWeekSlotOpen } from "../../utils/slots";
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
 
+const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+const MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+
 function dayOpenLabel(slot) {
-  const ds = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
-  const dow = slot?.diaSemana;
-  if (dow === undefined) return "Abierta";
-  const ahora = new Date();
-  const jsNow = getDiaSemanaActual(ahora);
-  if (isNextWeekSlotOpen(slot, ahora)) {
-    if (jsNow === dow) return "Abierta desde las 19:00";
-    return "Abierta · semana siguiente";
+  if (!slot) return "";
+  if (slot.semana === "actual") return "Abierta · semana actual";
+  if (slot.abierto) return "Abierta · semana próxima";
+  const dow = slot.diaSemana;
+  if (dow !== undefined && slot.semanaObjetivo) {
+    const targetLun = new Date(slot.semanaObjetivo + "T00:00:00Z");
+    const openDate = new Date(targetLun);
+    openDate.setUTCDate(openDate.getUTCDate() - 7 + dow);
+    return `Cerrada · abre el ${DIAS[dow]} ${openDate.getUTCDate()} ${MESES[openDate.getUTCMonth()]} a las 19:00`;
   }
-  if (jsNow === dow) return "Abierta · semana actual";
-  return `Abierta · semana actual · próxima semana abre el ${ds[dow]} a las 19:00`;
+  return "Cerrada";
 }
 
 function filaEsUsuarioActual(p, currentUser) {
