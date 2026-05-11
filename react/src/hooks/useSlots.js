@@ -1,41 +1,21 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-// Fallback offline: todos los slots del prototipo (index.html) en `utils/mockData.js` → SLOTS_INICIALES
+import { useEffect, useMemo, useState } from "react";
 import { SLOTS_INICIALES } from "../utils/mockData";
 import { isBajaWarning, isNextWeekSlotOpen, isSlotOpen, sameDiaSemanaSlot } from "../utils/slots";
 import { supabase } from "../lib/supabase";
 import { createActivityLog } from "../lib/engagement";
 import { isJugadorUuid, jugadoresCoinciden, normalizeJugadorUuid } from "../utils/jugador";
 
-/** Lunes ISO de la semana del calendario UTC (alineado con `CURRENT_DATE` y semana ISO en Postgres/Supabase). */
+// --- Utilidades de fecha UTC ---
+
 function getMondayUtc(date = new Date()) {
-  const y = date.getUTCFullYear();
-  const m = date.getUTCMonth();
-  const day = date.getUTCDate();
-  const d = new Date(Date.UTC(y, m, day));
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
   const dow = d.getUTCDay();
-  const diff = dow === 0 ? -6 : 1 - dow;
-  d.setUTCDate(d.getUTCDate() + diff);
+  d.setUTCDate(d.getUTCDate() + (dow === 0 ? -6 : 1 - dow));
   return d;
 }
 
 function formatDateUTC(d) {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
-}
-
-/** Normaliza columna `date` / JSON de Supabase a YYYY-MM-DD (sin cortar mal ISO con Z). */
-function normalizeSemanaValue(v) {
-  if (v == null) return "";
-  if (typeof v === "string") {
-    const m = v.match(/^(\d{4}-\d{2}-\d{2})/);
-    if (m) return m[1];
-  }
-  if (v instanceof Date && !Number.isNaN(v.getTime())) {
-    return formatDateUTC(v);
-  }
-  const s = String(v);
-  const m2 = s.match(/^(\d{4}-\d{2}-\d{2})/);
-  if (m2) return m2[1];
-  return s.length >= 10 ? s.slice(0, 10) : s;
 }
 
 function addDaysUtc(d, n) {
@@ -44,379 +24,181 @@ function addDaysUtc(d, n) {
   return x;
 }
 
+/** Extrae YYYY-MM-DD de cualquier valor que devuelva Supabase para columnas `date`. */
+function normalizeSemana(v) {
+  if (!v) return "";
+  const m = String(v).match(/^(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1] : "";
+}
+
 function formatTsStr(isoTs) {
   if (!isoTs) return "";
   return new Date(isoTs).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 }
 
-function normalizePlayerEntry(entry, idx = 0) {
-  if (!entry) return null;
-  if (typeof entry === "string") {
-    return { nombre: entry, socio: false, ts: idx + 1, tsStr: "" };
-  }
-  return {
-    nombre: entry.nombre ?? "",
-    socio: Boolean(entry.socio),
-    ts: entry.ts ?? idx + 1,
-    tsStr: entry.tsStr ?? ""
-  };
+function jugadorCoincide(insJugadorId, userId) {
+  const a = normalizeJugadorUuid(insJugadorId);
+  const b = normalizeJugadorUuid(userId);
+  return isJugadorUuid(a) && isJugadorUuid(b) && a === b;
 }
 
-/** Semana de alta en BD: lunes ISO en **UTC** (como `CURRENT_DATE` en Supabase) + regla de lista abierta (hora local). */
-function getSemanaObjetivo(slot, now = new Date()) {
-  const monday = getMondayUtc(now);
-  if (isNextWeekSlotOpen({ diaSemana: slot.diaSemana }, now)) {
-    monday.setUTCDate(monday.getUTCDate() + 7);
-  }
-  return formatDateUTC(monday);
-}
-
-/**
- * Semanas para filtrar inscripciones en UI: lunes ISO actual, el siguiente (p. ej. datos con semana 2026-05-11 un sábado)
- * y el lunes de alta (getSemanaObjetivo).
- */
-function semanasRelevantesParaSlot(slot, now = new Date()) {
-  const m0 = getMondayUtc(now);
-  const lunesEsta = formatDateUTC(m0);
-  const lunesProx = formatDateUTC(addDaysUtc(m0, 7));
-  const objetivo = getSemanaObjetivo(slot, now);
-  return [...new Set([lunesEsta, lunesProx, objetivo])];
-}
-
-function inscripcionEnSemanasRelevantes(ins, slot, now = new Date()) {
-  const s = normalizeSemanaValue(ins.semana);
-  return semanasRelevantesParaSlot(slot, now).includes(s);
-}
-
-function jugadorIdCoincide(insJugadorId, currentUserId) {
-  const insId = normalizeJugadorUuid(insJugadorId);
-  const userId = normalizeJugadorUuid(currentUserId);
-  return isJugadorUuid(insId) && isJugadorUuid(userId) && insId === userId;
-}
-
-/** ¿Ya hay inscripción del jugador en otro slot el mismo día de semana y misma semana calendario? */
-function inscripcionExclusividadDia(slotTarget, semanaNorm, jugadorId, rows, slotDefs) {
-  for (const ins of rows) {
-    if (ins.slot_id === slotTarget.id) continue;
-    if (!jugadoresCoinciden(ins.jugador_id, jugadorId)) continue;
-    if (normalizeSemanaValue(ins.semana) !== semanaNorm) continue;
-    const def = slotDefs.find((x) => x.id === ins.slot_id);
-    if (def && sameDiaSemanaSlot(def, slotTarget)) return def;
-  }
-  return null;
-}
-
-async function leerInscripcionesJugadorSemana(client, jugadorId, semanaNorm) {
-  const { data, error } = await client
-    .from("inscripciones")
-    .select("id,jugador_id,slot_id,semana")
-    .eq("jugador_id", jugadorId)
-    .eq("semana", semanaNorm);
-
-  if (error) return { ok: false, error: error.message, rows: [] };
-  return { ok: true, rows: data ?? [] };
-}
-
-/** Nombres aparte: el select embebido `jugadores(...)` puede reducir filas con RLS en `jugadores`. */
-async function enrichInscripcionesJugadoresNombres(client, rows) {
-  const ids = [
-    ...new Set(
-      rows
-        .map((r) => normalizeJugadorUuid(r.jugador_id))
-        .filter((id) => isJugadorUuid(id))
-    )
-  ];
+/** Enriquece las filas de inscripciones con el nombre del jugador. */
+async function cargarNombres(rows) {
+  const ids = [...new Set(rows.map((r) => normalizeJugadorUuid(r.jugador_id)).filter((id) => isJugadorUuid(id)))];
   const byId = {};
-  const chunkSize = 200;
-  for (let i = 0; i < ids.length; i += chunkSize) {
-    const chunk = ids.slice(i, i + chunkSize);
-    const { data, error } = await client.from("jugadores").select("id,nombre").in("id", chunk);
-    if (error) {
-      console.warn("[enrichInscripcionesJugadoresNombres]", error.message);
-      break;
-    }
-    for (const j of data ?? []) {
-      byId[normalizeJugadorUuid(j.id)] = j.nombre ?? "";
-    }
+  for (let i = 0; i < ids.length; i += 200) {
+    const { data } = await supabase.from("jugadores").select("id,nombre").in("id", ids.slice(i, i + 200));
+    for (const j of data ?? []) byId[normalizeJugadorUuid(j.id)] = j.nombre ?? "";
   }
-  return rows.map((row) => {
-    const jid = normalizeJugadorUuid(row.jugador_id);
-    const nombre = isJugadorUuid(jid) ? byId[jid] : undefined;
-    return {
-      ...row,
-      jugadores: {
-        nombre: nombre != null && nombre !== "" ? nombre : row.jugador_id
-      }
-    };
-  });
+  return rows.map((row) => ({
+    ...row,
+    jugadores: { nombre: byId[normalizeJugadorUuid(row.jugador_id)] || row.jugador_id }
+  }));
 }
+
+// --- Hook ---
 
 export function useSlots(currentUser) {
-  const [slots, setSlots] = useState(SLOTS_INICIALES);
+  const [slots, setSlots] = useState([]);
   const [inscripciones, setInscripciones] = useState([]);
-  const [inscripcionesLoadedForUserId, setInscripcionesLoadedForUserId] = useState("");
-  const [inscripcionesLoading, setInscripcionesLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [slotsNotice, setSlotsNotice] = useState("");
-  /** Invalida `loadInscripcionesSupabase` en vuelo al cambiar usuario o al desmontar. */
-  const inscripcionesReloadGenRef = useRef(0);
-  const currentUserId = currentUser?.id ? normalizeJugadorUuid(currentUser.id) : "";
 
-  const useFallback =
-    !supabase ||
-    !currentUser?.id ||
-    currentUser.fromFallback === true ||
-    !isJugadorUuid(currentUser.id);
-
-  async function loadSlotsSupabase() {
-    // Sin filtros extra: solo activo = true. Paginación por si PostgREST/Supabase limita filas por petición.
-    const selectCols = "id,label,club,dia_semana,pistas_default,pistas_activo,activo";
-    const pageSize = 200;
-    const allRows = [];
-    let from = 0;
-
-    for (;;) {
-      const { data, error } = await supabase
-        .from("slots")
-        .select(selectCols)
-        .eq("activo", true)
-        .order("dia_semana", { ascending: true })
-        .order("id", { ascending: true })
-        .range(from, from + pageSize - 1);
-
-      if (error) {
-        setSlotsNotice(
-          `Error al leer slots (tabla slots, campo activo): ${error.message}. Se muestran slots de respaldo.`
-        );
-        setSlots(SLOTS_INICIALES);
-        return;
-      }
-      if (!data?.length) break;
-      allRows.push(...data);
-      if (data.length < pageSize) break;
-      from += pageSize;
-    }
-
-    if (allRows.length) {
-      setSlotsNotice("");
-      setSlots(
-        allRows.map((s) => ({
-          id: s.id,
-          label: s.label,
-          club: s.club,
-          diaSemana: s.dia_semana,
-          pistasDefault: Number(s.pistas_default ?? 0),
-          pistas: Number(s.pistas_activo ?? 0),
-          jugadores: []
-        }))
-      );
-      return;
-    }
-    setSlotsNotice(
-      "No hay filas en slots con activo = true (revisa el seed). Se muestran slots de respaldo."
-    );
-    setSlots(SLOTS_INICIALES);
-  }
-
-  async function loadInscripcionesSupabase(extraSemanasRaw = [], reloadToken, userIdForLoad = currentUserId) {
-    if (!userIdForLoad) {
-      setInscripciones([]);
-      setInscripcionesLoadedForUserId("");
-      return;
-    }
-    const now = new Date();
-    const monday = getMondayUtc(now);
-    let semanaDesde = formatDateUTC(addDaysUtc(monday, -14));
-    let semanaHasta = formatDateUTC(addDaysUtc(monday, 28));
-    for (const raw of extraSemanasRaw ?? []) {
-      const n = normalizeSemanaValue(raw);
-      if (!n) continue;
-      if (n < semanaDesde) semanaDesde = n;
-      if (n > semanaHasta) semanaHasta = n;
-    }
-    // Sin embed: solo columnas de `inscripciones` (rango semana). Los nombres se unen después;
-    // `jugadores(nombre)` en el mismo select puede hacer que no lleguen todas las filas según RLS del join.
-    const selectCols = "id,jugador_id,slot_id,semana,es_socio,inscrito_at";
-    const pageSize = 500;
-    const allRows = [];
-    let from = 0;
-    let inscError = null;
-
-    for (;;) {
-      const { data, error } = await supabase
-        .from("inscripciones")
-        .select(selectCols)
-        .gte("semana", semanaDesde)
-        .lte("semana", semanaHasta)
-        .order("slot_id", { ascending: true })
-        .order("inscrito_at", { ascending: true, nullsFirst: true })
-        .order("id", { ascending: true })
-        .range(from, from + pageSize - 1);
-
-      if (error) {
-        inscError = error;
-        break;
-      }
-      if (!data?.length) break;
-      allRows.push(...data);
-      if (data.length < pageSize) break;
-      from += pageSize;
-    }
-
-    if (inscError) {
-      console.warn("[loadInscripcionesSupabase]", inscError.message);
-      if (reloadToken !== undefined && reloadToken !== inscripcionesReloadGenRef.current) {
-        return;
-      }
-      setInscripciones([]);
-      setInscripcionesLoadedForUserId(userIdForLoad);
-      return;
-    }
-
-    if (reloadToken !== undefined && reloadToken !== inscripcionesReloadGenRef.current) {
-      return;
-    }
-
-    const withNombres = await enrichInscripcionesJugadoresNombres(supabase, allRows);
-    if (reloadToken !== undefined && reloadToken !== inscripcionesReloadGenRef.current) {
-      return;
-    }
-    setInscripciones(withNombres);
-    setInscripcionesLoadedForUserId(userIdForLoad);
-  }
+  const userId = currentUser?.id ? normalizeJugadorUuid(currentUser.id) : "";
 
   useEffect(() => {
-    if (useFallback) {
+    const tieneId = isJugadorUuid(userId);
+
+    if (!supabase || !tieneId) {
       setInscripciones([]);
-      setInscripcionesLoadedForUserId(currentUserId);
-      setInscripcionesLoading(false);
       setSlots(SLOTS_INICIALES);
       setSlotsNotice("");
-      return undefined;
+      setLoading(false);
+      return;
     }
 
-    const reloadToken = ++inscripcionesReloadGenRef.current;
+    // Limpiar inscripciones del usuario anterior antes de cualquier await
     setInscripciones([]);
-    setInscripcionesLoadedForUserId("");
-    setInscripcionesLoading(true);
-    setSlots([]);
-    setSlotsNotice("");
+    setLoading(true);
 
     let cancelled = false;
+
     (async () => {
-      await loadSlotsSupabase();
+      // Cargar definiciones de slots
+      const { data: slotsData, error: slotsErr } = await supabase
+        .from("slots")
+        .select("id,label,club,dia_semana,pistas_default,pistas_activo")
+        .eq("activo", true)
+        .order("dia_semana", { ascending: true })
+        .order("id", { ascending: true });
+
       if (cancelled) return;
-      await loadInscripcionesSupabase([], reloadToken, currentUserId);
-      if (!cancelled && reloadToken === inscripcionesReloadGenRef.current) {
-        setInscripcionesLoading(false);
+
+      if (slotsErr || !slotsData?.length) {
+        setSlotsNotice(slotsErr?.message ?? "No hay slots activos. Se muestran slots de respaldo.");
+        setSlots(SLOTS_INICIALES);
+      } else {
+        setSlotsNotice("");
+        setSlots(
+          slotsData.map((s) => ({
+            id: s.id,
+            label: s.label,
+            club: s.club,
+            diaSemana: s.dia_semana,
+            pistas: Number(s.pistas_activo ?? 0),
+            pistasDefault: Number(s.pistas_default ?? 0),
+            jugadores: []
+          }))
+        );
       }
+
+      // Cargar inscripciones: rango de -2 a +4 semanas desde el lunes actual
+      const lunes = getMondayUtc(new Date());
+      const desde = formatDateUTC(addDaysUtc(lunes, -14));
+      const hasta = formatDateUTC(addDaysUtc(lunes, 28));
+
+      const { data: inscData, error: inscErr } = await supabase
+        .from("inscripciones")
+        .select("id,jugador_id,slot_id,semana,es_socio,inscrito_at")
+        .gte("semana", desde)
+        .lte("semana", hasta)
+        .order("inscrito_at", { ascending: true, nullsFirst: true })
+        .order("id", { ascending: true });
+
+      if (cancelled) return;
+
+      if (!inscErr) {
+        const conNombres = await cargarNombres(inscData ?? []);
+        if (!cancelled) setInscripciones(conNombres);
+      }
+
+      if (!cancelled) setLoading(false);
     })();
 
     return () => {
       cancelled = true;
-      inscripcionesReloadGenRef.current += 1;
     };
-  }, [useFallback, currentUserId]);
+  }, [userId]);
 
+  // --- Helpers compartidos entre memos ---
+
+  function inscritosPorSlotSemana(slotId, semana) {
+    return inscripciones
+      .filter((i) => i.slot_id === slotId && normalizeSemana(i.semana) === semana)
+      .map((i, idx) => ({
+        jugadorId: normalizeJugadorUuid(i.jugador_id),
+        nombre: i.jugadores?.nombre ?? i.jugador_id,
+        socio: Boolean(i.es_socio),
+        ts: i.inscrito_at ? new Date(i.inscrito_at).getTime() : idx + 1,
+        tsStr: formatTsStr(i.inscrito_at)
+      }))
+      .sort((a, b) => a.ts - b.ts);
+  }
+
+  function estaApuntado(slotId, semana) {
+    if (!currentUser) return false;
+    return inscripciones.some(
+      (i) =>
+        i.slot_id === slotId &&
+        normalizeSemana(i.semana) === semana &&
+        jugadorCoincide(i.jugador_id, currentUser.id)
+    );
+  }
+
+  // Una entrada por slot — para Partidos
   const slotsConEstado = useMemo(() => {
     const now = new Date();
-    const inscripcionesListas = !inscripcionesLoading && currentUserId !== "" && inscripcionesLoadedForUserId === currentUserId;
-    const inscripcionesVisibles = (useFallback || inscripcionesListas) ? inscripciones : [];
-    return slots.map((slot) => ({
-      ...slot,
-      abierto: isSlotOpen({ diaSemana: slot.diaSemana }),
-      bajaWarning: isBajaWarning({ diaSemana: slot.diaSemana }),
-      semanaObjetivo: getSemanaObjetivo(slot, now),
-      jugadores: (
-        useFallback
-          ? slot.jugadores.map((j, idx) => normalizePlayerEntry(j, idx)).filter(Boolean)
-          : inscripcionesVisibles
-              .filter((ins) => ins.slot_id === slot.id && inscripcionEnSemanasRelevantes(ins, slot, now))
-              .map((ins, idx) => ({
-                jugadorId: normalizeJugadorUuid(ins.jugador_id),
-                nombre: ins.jugadores?.nombre ?? ins.jugador_id,
-                socio: Boolean(ins.es_socio),
-                ts: ins.inscrito_at ? new Date(ins.inscrito_at).getTime() : idx + 1,
-                tsStr: formatTsStr(ins.inscrito_at)
-              }))
-      ).sort((a, b) => (a.ts ?? 0) - (b.ts ?? 0)),
-      sociosCount: (
-        useFallback
-          ? slot.jugadores.map((j, idx) => normalizePlayerEntry(j, idx)).filter(Boolean)
-          : inscripcionesVisibles
-              .filter((ins) => ins.slot_id === slot.id && inscripcionEnSemanasRelevantes(ins, slot, now))
-              .map((ins) => ({ socio: Boolean(ins.es_socio) }))
-      ).filter((p) => p.socio).length,
-      apuntado: useFallback
-        ? Boolean(
-            currentUser &&
-              slot.jugadores
-                .map((j, idx) => normalizePlayerEntry(j, idx))
-                .filter(Boolean)
-                .find((p) => p.nombre === currentUser.nombre)
-          )
-        : Boolean(
-            currentUser &&
-              inscripcionesVisibles.find(
-                (ins) =>
-                  ins.slot_id === slot.id &&
-                  jugadorIdCoincide(ins.jugador_id, currentUser.id) &&
-                  inscripcionEnSemanasRelevantes(ins, slot, now)
-              )
-          )
-    }));
-  }, [slots, currentUser, currentUserId, inscripciones, inscripcionesLoadedForUserId, inscripcionesLoading, useFallback]);
+    const lunes = getMondayUtc(now);
+    const lunesActual = formatDateUTC(lunes);
+    const lunesProximo = formatDateUTC(addDaysUtc(lunes, 7));
 
-  /** Dos entradas por slot (semana actual + próxima) con abierto correcto. Solo para la vista Jugar. */
-  const slotsJugarConEstado = useMemo(() => {
+    return slots.map((slot) => {
+      const semanaObjetivo = isNextWeekSlotOpen({ diaSemana: slot.diaSemana }, now)
+        ? lunesProximo
+        : lunesActual;
+      const jugadores = inscritosPorSlotSemana(slot.id, semanaObjetivo);
+      return {
+        ...slot,
+        abierto: isSlotOpen({ diaSemana: slot.diaSemana }),
+        bajaWarning: isBajaWarning({ diaSemana: slot.diaSemana }),
+        semanaObjetivo,
+        jugadores,
+        sociosCount: jugadores.filter((p) => p.socio).length,
+        apuntado: estaApuntado(slot.id, semanaObjetivo)
+      };
+    });
+  }, [slots, inscripciones, currentUser, userId]);
+
+  // Dos entradas por slot (actual + próxima) — para Jugar
+  const slotsJugar = useMemo(() => {
     const now = new Date();
-    const inscripcionesListas = !inscripcionesLoading && currentUserId !== "" && inscripcionesLoadedForUserId === currentUserId;
-    const inscripcionesVisibles = (useFallback || inscripcionesListas) ? inscripciones : [];
-
-    const monday = getMondayUtc(now);
-    const lunesActual = formatDateUTC(monday);
-    const lunesProximo = formatDateUTC(addDaysUtc(monday, 7));
-
-    function jugadoresParaSemana(slot, semanaTarget) {
-      if (useFallback) {
-        return semanaTarget === lunesActual
-          ? slot.jugadores.map((j, idx) => normalizePlayerEntry(j, idx)).filter(Boolean)
-          : [];
-      }
-      return inscripcionesVisibles
-        .filter((ins) => ins.slot_id === slot.id && normalizeSemanaValue(ins.semana) === semanaTarget)
-        .map((ins, idx) => ({
-          jugadorId: normalizeJugadorUuid(ins.jugador_id),
-          nombre: ins.jugadores?.nombre ?? ins.jugador_id,
-          socio: Boolean(ins.es_socio),
-          ts: ins.inscrito_at ? new Date(ins.inscrito_at).getTime() : idx + 1,
-          tsStr: formatTsStr(ins.inscrito_at)
-        }))
-        .sort((a, b) => (a.ts ?? 0) - (b.ts ?? 0));
-    }
-
-    function apuntadoParaSemana(slot, semanaTarget) {
-      if (!currentUser) return false;
-      if (useFallback) {
-        return semanaTarget === lunesActual && Boolean(
-          slot.jugadores
-            .map((j, idx) => normalizePlayerEntry(j, idx))
-            .filter(Boolean)
-            .find((p) => p.nombre === currentUser.nombre)
-        );
-      }
-      return Boolean(
-        inscripcionesVisibles.find(
-          (ins) =>
-            ins.slot_id === slot.id &&
-            jugadorIdCoincide(ins.jugador_id, currentUser.id) &&
-            normalizeSemanaValue(ins.semana) === semanaTarget
-        )
-      );
-    }
-
+    const lunes = getMondayUtc(now);
+    const lunesActual = formatDateUTC(lunes);
+    const lunesProximo = formatDateUTC(addDaysUtc(lunes, 7));
     const result = [];
+
     for (const slot of slots) {
-      const jActual = jugadoresParaSemana(slot, lunesActual);
+      const jActual = inscritosPorSlotSemana(slot.id, lunesActual);
       result.push({
         ...slot,
         id: slot.id,
@@ -427,10 +209,10 @@ export function useSlots(currentUser) {
         bajaWarning: isBajaWarning({ diaSemana: slot.diaSemana }),
         jugadores: jActual,
         sociosCount: jActual.filter((p) => p.socio).length,
-        apuntado: apuntadoParaSemana(slot, lunesActual)
+        apuntado: estaApuntado(slot.id, lunesActual)
       });
 
-      const jProxima = jugadoresParaSemana(slot, lunesProximo);
+      const jProxima = inscritosPorSlotSemana(slot.id, lunesProximo);
       result.push({
         ...slot,
         id: slot.id + "-prox",
@@ -441,192 +223,112 @@ export function useSlots(currentUser) {
         bajaWarning: false,
         jugadores: jProxima,
         sociosCount: jProxima.filter((p) => p.socio).length,
-        apuntado: apuntadoParaSemana(slot, lunesProximo)
+        apuntado: estaApuntado(slot.id, lunesProximo)
       });
     }
     return result;
-  }, [slots, currentUser, currentUserId, inscripciones, inscripcionesLoadedForUserId, inscripcionesLoading, useFallback]);
+  }, [slots, inscripciones, currentUser, userId]);
 
-  function getSlot(slotId) {
-    return slots.find((s) => s.id === slotId);
-  }
+  // --- Acciones ---
 
   async function apuntarEnSlot(slotId, options = {}) {
-    if (!currentUser) return { ok: false, error: "Debes iniciar sesion." };
-    const slot = slotsJugarConEstado.find((s) => s.id === slotId);
+    if (!currentUser || !supabase) return { ok: false, error: "No hay sesión activa." };
+
+    const slot = slotsJugar.find((s) => s.id === slotId);
     if (!slot) return { ok: false, error: "Slot no encontrado." };
-    if (!slot.abierto) return { ok: false, error: "La lista aun no esta abierta." };
-
-    const slotMismoDia = slotsJugarConEstado.find(
-      (s) =>
-        s.id !== slot.id &&
-        s.apuntado &&
-        s.semanaObjetivo === slot.semanaObjetivo &&
-        sameDiaSemanaSlot(s, slot)
-    );
-    if (slotMismoDia) {
-      return { ok: false, error: `Ya estas apuntado en ${slotMismoDia.label} ${slotMismoDia.club}.` };
-    }
-
-    const dbSlotId = slot.baseId ?? slot.id;
-
-    if (useFallback) {
-      const ts = Date.now();
-      setSlots((prev) =>
-        prev.map((s) =>
-          s.id === dbSlotId &&
-          !s.jugadores
-            .map((j, idx) => normalizePlayerEntry(j, idx))
-            .filter(Boolean)
-            .find((p) => p.nombre === currentUser.nombre)
-            ? {
-                ...s,
-                jugadores: [
-                  ...s.jugadores,
-                  {
-                    nombre: currentUser.nombre,
-                    socio: Boolean(options.socio),
-                    ts,
-                    tsStr: new Date(ts).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })
-                  }
-                ]
-              }
-            : s
-        )
-      );
-      return { ok: true };
-    }
+    if (!slot.abierto) return { ok: false, error: "La lista aún no está abierta." };
 
     const jugadorId = normalizeJugadorUuid(currentUser.id);
-    if (!isJugadorUuid(jugadorId)) {
-      return { ok: false, error: "Tu perfil no tiene un id de jugador válido para Supabase." };
-    }
+    if (!isJugadorUuid(jugadorId)) return { ok: false, error: "ID de jugador no válido." };
+
+    const dbSlotId = slot.baseId ?? slot.id;
     const semana = slot.semanaObjetivo;
-    const semanaNorm = normalizeSemanaValue(semana);
 
-    const inscripcionesJugador = await leerInscripcionesJugadorSemana(supabase, jugadorId, semanaNorm);
-    if (!inscripcionesJugador.ok) return { ok: false, error: inscripcionesJugador.error };
-
-    const conflicto = inscripcionExclusividadDia(
-      { id: dbSlotId, diaSemana: slot.diaSemana },
-      semanaNorm,
-      jugadorId,
-      inscripcionesJugador.rows,
-      slots
+    const yaMismoDia = slotsJugar.find(
+      (s) => s.id !== slotId && s.apuntado && s.semanaObjetivo === semana && sameDiaSemanaSlot(s, slot)
     );
-    if (conflicto) {
-      return {
-        ok: false,
-        error: `Ya tienes lista ese día: ${conflicto.label} — ${conflicto.club}. Date de baja ahí primero.`
-      };
+    if (yaMismoDia) {
+      return { ok: false, error: `Ya estás apuntado en ${yaMismoDia.label} — ${yaMismoDia.club}.` };
     }
 
     const { error } = await supabase.from("inscripciones").insert({
       jugador_id: jugadorId,
       slot_id: dbSlotId,
-      semana: semanaNorm,
+      semana,
       es_socio: Boolean(options.socio)
     });
-    if (error) {
-      return { ok: false, error: error.message };
-    }
+    if (error) return { ok: false, error: error.message };
 
     const nowIso = new Date().toISOString();
-    const filaInsertada = {
-      id: `local-${Date.now()}`,
-      jugador_id: jugadorId,
-      slot_id: dbSlotId,
-      semana: semanaNorm,
-      es_socio: Boolean(options.socio),
-      inscrito_at: nowIso,
-      jugadores: { nombre: currentUser.nombre }
-    };
     setInscripciones((prev) => {
       const ya = prev.some(
         (r) =>
           r.slot_id === dbSlotId &&
           jugadoresCoinciden(r.jugador_id, jugadorId) &&
-          normalizeSemanaValue(r.semana) === semanaNorm
+          normalizeSemana(r.semana) === normalizeSemana(semana)
       );
       if (ya) return prev;
-      return [...prev, filaInsertada];
+      return [
+        ...prev,
+        {
+          id: `local-${Date.now()}`,
+          jugador_id: jugadorId,
+          slot_id: dbSlotId,
+          semana,
+          es_socio: Boolean(options.socio),
+          inscrito_at: nowIso,
+          jugadores: { nombre: currentUser.nombre }
+        }
+      ];
     });
 
     void createActivityLog({
       jugadorId: currentUser.id,
       tipo: "jugar",
-      texto: `Se apunta a ${slot.label} · ${slot.club} (${slot.semanaObjetivo})`
+      texto: `Se apunta a ${slot.label} · ${slot.club} (${semana})`
     });
     return { ok: true };
   }
 
   async function bajaEnSlot(slotId) {
-    if (!currentUser) return { ok: false, error: "Debes iniciar sesion." };
-    const slot = slotsJugarConEstado.find((s) => s.id === slotId);
+    if (!currentUser || !supabase) return { ok: false, error: "No hay sesión activa." };
+
+    const slot = slotsJugar.find((s) => s.id === slotId);
     if (!slot) return { ok: false, error: "Slot no encontrado." };
 
+    const jugadorId = normalizeJugadorUuid(currentUser.id);
+    if (!isJugadorUuid(jugadorId)) return { ok: false, error: "ID de jugador no válido." };
+
     const dbSlotId = slot.baseId ?? slot.id;
+    const semana = normalizeSemana(slot.semanaObjetivo);
 
-    if (useFallback) {
-      setSlots((prev) =>
-        prev.map((s) =>
-          s.id === dbSlotId
-            ? {
-                ...s,
-                jugadores: s.jugadores.filter((p, idx) => normalizePlayerEntry(p, idx)?.nombre !== currentUser.nombre)
-              }
-            : s
-        )
-      );
-    } else {
-      const jugadorUuid = normalizeJugadorUuid(currentUser.id);
-      if (!isJugadorUuid(jugadorUuid)) {
-        return { ok: false, error: "Tu perfil no tiene un id de jugador válido para Supabase." };
-      }
+    const { data: filas, error: selErr } = await supabase
+      .from("inscripciones")
+      .select("id")
+      .eq("jugador_id", jugadorId)
+      .eq("slot_id", dbSlotId)
+      .eq("semana", semana);
 
-      const semanaNorm = normalizeSemanaValue(slot.semanaObjetivo);
+    if (selErr) return { ok: false, error: selErr.message };
+    if (!filas?.length) return { ok: false, error: "No hay inscripción en este slot." };
 
-      const { data: filasInsc, error: selErr } = await supabase
-        .from("inscripciones")
-        .select("id")
-        .eq("jugador_id", jugadorUuid)
-        .eq("slot_id", dbSlotId)
-        .eq("semana", semanaNorm);
+    const ids = filas.map((r) => r.id);
+    const { error: delErr } = await supabase.from("inscripciones").delete().in("id", ids);
+    if (delErr) return { ok: false, error: delErr.message };
 
-      if (selErr) return { ok: false, error: selErr.message };
-      if (!filasInsc?.length) {
-        return { ok: false, error: "No hay inscripción en este slot para tu usuario." };
-      }
+    setInscripciones((prev) => prev.filter((i) => !ids.includes(i.id)));
 
-      const inscIds = filasInsc.map((r) => r.id);
-      const { error: delErr } = await supabase
-        .from("inscripciones")
-        .delete()
-        .in("id", inscIds);
-
-      if (delErr) {
-        return { ok: false, error: delErr.message };
-      }
-
-      setInscripciones((prev) =>
-        prev.filter((i) => !inscIds.includes(i.id))
-      );
-
-      void createActivityLog({
-        jugadorId: jugadorUuid,
-        tipo: "jugar",
-        texto: `Se da de baja de ${slot.label} · ${slot.club} (${slot.semanaObjetivo})`
-      });
-    }
+    void createActivityLog({
+      jugadorId,
+      tipo: "jugar",
+      texto: `Se da de baja de ${slot.label} · ${slot.club} (${slot.semanaObjetivo})`
+    });
 
     if (slot.semana === "actual" && isBajaWarning({ diaSemana: slot.diaSemana })) {
-      return {
-        ok: true,
-        warning: "Si te das de baja hoy, por favor busca un@ sustitut@ para el partido."
-      };
+      return { ok: true, warning: "Si te das de baja hoy, por favor busca un@ sustitut@." };
     }
     return { ok: true };
   }
 
-  return { slots: slotsConEstado, slotsJugar: slotsJugarConEstado, rawSlots: slots, slotsNotice, apuntarEnSlot, bajaEnSlot };
+  return { slots: slotsConEstado, slotsJugar, rawSlots: slots, slotsNotice, apuntarEnSlot, bajaEnSlot };
 }
