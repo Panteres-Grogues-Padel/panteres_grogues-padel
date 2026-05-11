@@ -103,6 +103,17 @@ function inscripcionExclusividadDia(slotTarget, semanaNorm, jugadorId, rows, slo
   return null;
 }
 
+async function leerInscripcionesJugadorSemana(client, jugadorId, semanaNorm) {
+  const { data, error } = await client
+    .from("inscripciones")
+    .select("id,jugador_id,slot_id,semana")
+    .eq("jugador_id", jugadorId)
+    .eq("semana", semanaNorm);
+
+  if (error) return { ok: false, error: error.message, rows: [] };
+  return { ok: true, rows: data ?? [] };
+}
+
 /** Nombres aparte: el select embebido `jugadores(...)` puede reducir filas con RLS en `jugadores`. */
 async function enrichInscripcionesJugadoresNombres(client, rows) {
   const ids = [
@@ -387,7 +398,10 @@ export function useSlots(currentUser) {
     const semana = slot.semanaObjetivo;
     const semanaNorm = normalizeSemanaValue(semana);
 
-    const conflicto = inscripcionExclusividadDia(slot, semanaNorm, jugadorId, inscripciones, slots);
+    const inscripcionesJugador = await leerInscripcionesJugadorSemana(supabase, jugadorId, semanaNorm);
+    if (!inscripcionesJugador.ok) return { ok: false, error: inscripcionesJugador.error };
+
+    const conflicto = inscripcionExclusividadDia(slot, semanaNorm, jugadorId, inscripcionesJugador.rows, slots);
     if (conflicto) {
       return {
         ok: false,
