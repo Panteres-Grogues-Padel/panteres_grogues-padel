@@ -275,6 +275,15 @@ export function useSlots(currentUser) {
     if (reloadToken !== undefined && reloadToken !== inscripcionesReloadGenRef.current) {
       return;
     }
+
+    const idsUnicos = [...new Set(allRows.map((r) => r.jugador_id))];
+    console.log("[loadInscripciones] rango:", semanaDesde, "→", semanaHasta);
+    console.log("[loadInscripciones] filas recibidas de Supabase:", allRows.length);
+    console.log("[loadInscripciones] jugador_ids únicos:", JSON.stringify(idsUnicos));
+    const coordId = "10000000-0000-4000-b000-000000000001";
+    const filasCoord = allRows.filter((r) => normalizeJugadorUuid(r.jugador_id) === coordId);
+    console.log("[loadInscripciones] filas del coordinador:", filasCoord.length, JSON.stringify(filasCoord));
+
     const withNombres = await enrichInscripcionesJugadoresNombres(supabase, allRows);
     if (reloadToken !== undefined && reloadToken !== inscripcionesReloadGenRef.current) {
       return;
