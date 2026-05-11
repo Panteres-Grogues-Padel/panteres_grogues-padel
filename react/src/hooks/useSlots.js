@@ -380,25 +380,27 @@ export function useSlots(currentUser) {
     const inscripcionesListas = !inscripcionesLoading && currentUserId !== "" && inscripcionesLoadedForUserId === currentUserId;
     const inscripcionesVisibles = (useFallback || inscripcionesListas) ? inscripciones : [];
 
-    console.log("[useSlots] useFallback:", useFallback, "| loading:", inscripcionesLoading, "| listas:", inscripcionesListas);
-    console.log("[useSlots] currentUserId:", currentUserId, "| loadedFor:", inscripcionesLoadedForUserId);
-    console.log("[useSlots] inscripciones total:", inscripciones.length, "| visibles:", inscripcionesVisibles.length);
-    console.log("[useSlots] currentUser.id RAW:", currentUser?.id);
-    if (inscripcionesVisibles.length > 0) {
-      console.log("[useSlots] visibles[0]:", JSON.stringify(inscripcionesVisibles[0]));
-      if (inscripcionesVisibles.length > 1) {
-        console.log("[useSlots] visibles[1]:", JSON.stringify(inscripcionesVisibles[1]));
-      }
+    const rawUserId = String(currentUser?.id ?? "");
+    const normUserId = normalizeJugadorUuid(rawUserId);
+    console.log("[useSlots:DIAG] currentUser.id RAW=", JSON.stringify(rawUserId), "NORM=", JSON.stringify(normUserId));
+    console.log("[useSlots:DIAG] total inscripciones:", inscripciones.length, "| visibles:", inscripcionesVisibles.length);
+    const filasCoord = inscripcionesVisibles.filter((i) => jugadorIdCoincide(i.jugador_id, rawUserId));
+    console.log("[useSlots:DIAG] filas que coinciden:", filasCoord.length);
+    for (const f of filasCoord) {
+      const rawIns = String(f.jugador_id ?? "");
+      const normIns = normalizeJugadorUuid(rawIns);
+      const iguales = normIns === normUserId;
+      console.log("[useSlots:DIAG] MATCH row:", {
+        slot_id: f.slot_id,
+        semana: f.semana,
+        jugador_id_raw: rawIns,
+        jugador_id_norm: normIns,
+        currentUser_id_norm: normUserId,
+        son_iguales: iguales,
+        jugador_id_hex: Array.from(rawIns).map((c) => c.charCodeAt(0).toString(16)).join(" "),
+        currentUser_id_hex: Array.from(rawUserId).map((c) => c.charCodeAt(0).toString(16)).join(" ")
+      });
     }
-    const apuntadoEnLunDel = inscripcionesVisibles.some(
-      (i) => i.slot_id === "lun-del" && jugadorIdCoincide(i.jugador_id, currentUser?.id ?? "")
-    );
-    const apuntadoEnLunUp = inscripcionesVisibles.some(
-      (i) => i.slot_id === "lun-up" && jugadorIdCoincide(i.jugador_id, currentUser?.id ?? "")
-    );
-    console.log("[useSlots] apuntado lun-del:", apuntadoEnLunDel, "| apuntado lun-up:", apuntadoEnLunUp);
-    const filasCoord = inscripcionesVisibles.filter((i) => jugadorIdCoincide(i.jugador_id, currentUser?.id ?? ""));
-    console.log("[useSlots] filas que coinciden con coordinador:", filasCoord.length, JSON.stringify(filasCoord));
 
     const monday = getMondayUtc(now);
     const lunesActual = formatDateUTC(monday);
