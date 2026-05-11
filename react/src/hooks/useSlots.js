@@ -88,21 +88,10 @@ function inscripcionEnSemanasRelevantes(ins, slot, now = new Date()) {
   return semanasRelevantesParaSlot(slot, now).includes(s);
 }
 
-function jugadorIdCoincide(insJugadorId, currentUserId, context = {}) {
+function jugadorIdCoincide(insJugadorId, currentUserId) {
   const insId = normalizeJugadorUuid(insJugadorId);
   const userId = normalizeJugadorUuid(currentUserId);
-  const coincide = isJugadorUuid(insId) && isJugadorUuid(userId) && insId === userId;
-  console.log("[useSlots] comparar inscripción/currentUser", {
-    slotId: context.slotId,
-    inscripcionId: context.inscripcionId,
-    semana: context.semana,
-    insJugadorId,
-    currentUserId,
-    insIdNormalizado: insId,
-    currentUserIdNormalizado: userId,
-    coincide
-  });
-  return coincide;
+  return isJugadorUuid(insId) && isJugadorUuid(userId) && insId === userId;
 }
 
 /** ¿Ya hay inscripción del jugador en otro slot el mismo día de semana y misma semana calendario? */
@@ -273,9 +262,6 @@ export function useSlots(currentUser) {
       from += pageSize;
     }
 
-    console.log("Rango semanas:", semanaDesde, semanaHasta);
-    console.log("Inscripciones recibidas:", allRows?.length, inscError);
-
     if (inscError) {
       console.warn("[loadInscripcionesSupabase]", inscError.message);
       if (reloadToken !== undefined && reloadToken !== inscripcionesReloadGenRef.current) {
@@ -332,8 +318,8 @@ export function useSlots(currentUser) {
 
   const slotsConEstado = useMemo(() => {
     const now = new Date();
-    const inscripcionesListas = useFallback || (!inscripcionesLoading && inscripcionesLoadedForUserId === currentUserId);
-    const inscripcionesVisibles = inscripcionesListas ? inscripciones : [];
+    const inscripcionesListas = !inscripcionesLoading && currentUserId !== "" && inscripcionesLoadedForUserId === currentUserId;
+    const inscripcionesVisibles = (useFallback || inscripcionesListas) ? inscripciones : [];
     return slots.map((slot) => ({
       ...slot,
       abierto: isSlotOpen({ diaSemana: slot.diaSemana }),
@@ -372,11 +358,7 @@ export function useSlots(currentUser) {
               inscripcionesVisibles.find(
                 (ins) =>
                   ins.slot_id === slot.id &&
-                  jugadorIdCoincide(ins.jugador_id, currentUser.id, {
-                    slotId: slot.id,
-                    inscripcionId: ins.id,
-                    semana: ins.semana
-                  }) &&
+                  jugadorIdCoincide(ins.jugador_id, currentUser.id) &&
                   inscripcionEnSemanasRelevantes(ins, slot, now)
               )
           )
@@ -386,8 +368,8 @@ export function useSlots(currentUser) {
   /** Dos entradas por slot (semana actual + próxima) con abierto correcto. Solo para la vista Jugar. */
   const slotsJugarConEstado = useMemo(() => {
     const now = new Date();
-    const inscripcionesListas = useFallback || (!inscripcionesLoading && inscripcionesLoadedForUserId === currentUserId);
-    const inscripcionesVisibles = inscripcionesListas ? inscripciones : [];
+    const inscripcionesListas = !inscripcionesLoading && currentUserId !== "" && inscripcionesLoadedForUserId === currentUserId;
+    const inscripcionesVisibles = (useFallback || inscripcionesListas) ? inscripciones : [];
 
     const monday = getMondayUtc(now);
     const lunesActual = formatDateUTC(monday);
@@ -425,11 +407,7 @@ export function useSlots(currentUser) {
         inscripcionesVisibles.find(
           (ins) =>
             ins.slot_id === slot.id &&
-            jugadorIdCoincide(ins.jugador_id, currentUser.id, {
-              slotId: slot.id,
-              inscripcionId: ins.id,
-              semana: ins.semana
-            }) &&
+            jugadorIdCoincide(ins.jugador_id, currentUser.id) &&
             normalizeSemanaValue(ins.semana) === semanaTarget
         )
       );
@@ -605,27 +583,26 @@ export function useSlots(currentUser) {
         return { ok: false, error: "Tu perfil no tiene un id de jugador válido para Supabase." };
       }
 
+      const semanaNorm = normalizeSemanaValue(slot.semanaObjetivo);
+
       const { data: filasInsc, error: selErr } = await supabase
         .from("inscripciones")
-        .select("semana")
+        .select("id")
         .eq("jugador_id", jugadorUuid)
-        .eq("slot_id", dbSlotId);
+        .eq("slot_id", dbSlotId)
+        .eq("semana", semanaNorm);
 
       if (selErr) return { ok: false, error: selErr.message };
       if (!filasInsc?.length) {
         return { ok: false, error: "No hay inscripción en este slot para tu usuario." };
       }
 
-      const objNorm = normalizeSemanaValue(slot.semanaObjetivo);
-      const semanasEnBd = filasInsc.map((f) => normalizeSemanaValue(f.semana)).filter(Boolean);
-      const semanaPrioritaria = semanasEnBd.find((s) => s === objNorm) ?? semanasEnBd[0];
-
       const { data: deleted, error: delErr } = await supabase
         .from("inscripciones")
         .delete()
         .eq("jugador_id", jugadorUuid)
         .eq("slot_id", dbSlotId)
-        .eq("semana", semanaPrioritaria)
+        .eq("semana", semanaNorm)
         .select("id");
 
       if (delErr) {
@@ -641,7 +618,7 @@ export function useSlots(currentUser) {
             !(
               i.slot_id === dbSlotId &&
               jugadoresCoinciden(i.jugador_id, jugadorUuid) &&
-              normalizeSemanaValue(i.semana) === semanaPrioritaria
+              normalizeSemanaValue(i.semana) === semanaNorm
             )
         )
       );
