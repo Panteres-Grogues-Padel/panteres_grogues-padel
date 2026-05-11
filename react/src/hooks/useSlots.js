@@ -371,18 +371,25 @@ export function useSlots(currentUser) {
     const inscripcionesListas = !inscripcionesLoading && currentUserId !== "" && inscripcionesLoadedForUserId === currentUserId;
     const inscripcionesVisibles = (useFallback || inscripcionesListas) ? inscripciones : [];
 
-    console.log("[useSlots:slotsJugar] diagnóstico", {
-      useFallback,
-      inscripcionesLoading,
-      currentUserId,
-      inscripcionesLoadedForUserId,
-      inscripcionesListas,
-      totalInscripciones: inscripciones.length,
-      totalVisibles: inscripcionesVisibles.length,
-      inscripcionesVisibles: inscripcionesVisibles.map((i) => ({
-        jugador_id: i.jugador_id, slot_id: i.slot_id, semana: i.semana
-      }))
-    });
+    console.log("[useSlots] useFallback:", useFallback, "| loading:", inscripcionesLoading, "| listas:", inscripcionesListas);
+    console.log("[useSlots] currentUserId:", currentUserId, "| loadedFor:", inscripcionesLoadedForUserId);
+    console.log("[useSlots] inscripciones total:", inscripciones.length, "| visibles:", inscripcionesVisibles.length);
+    console.log("[useSlots] currentUser.id RAW:", currentUser?.id);
+    if (inscripcionesVisibles.length > 0) {
+      console.log("[useSlots] visibles[0]:", JSON.stringify(inscripcionesVisibles[0]));
+      if (inscripcionesVisibles.length > 1) {
+        console.log("[useSlots] visibles[1]:", JSON.stringify(inscripcionesVisibles[1]));
+      }
+    }
+    const apuntadoEnLunDel = inscripcionesVisibles.some(
+      (i) => i.slot_id === "lun-del" && jugadorIdCoincide(i.jugador_id, currentUser?.id ?? "")
+    );
+    const apuntadoEnLunUp = inscripcionesVisibles.some(
+      (i) => i.slot_id === "lun-up" && jugadorIdCoincide(i.jugador_id, currentUser?.id ?? "")
+    );
+    console.log("[useSlots] apuntado lun-del:", apuntadoEnLunDel, "| apuntado lun-up:", apuntadoEnLunUp);
+    const filasCoord = inscripcionesVisibles.filter((i) => jugadorIdCoincide(i.jugador_id, currentUser?.id ?? ""));
+    console.log("[useSlots] filas que coinciden con coordinador:", filasCoord.length, JSON.stringify(filasCoord));
 
     const monday = getMondayUtc(now);
     const lunesActual = formatDateUTC(monday);
