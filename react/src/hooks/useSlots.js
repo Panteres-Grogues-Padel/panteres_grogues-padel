@@ -371,6 +371,19 @@ export function useSlots(currentUser) {
     const inscripcionesListas = !inscripcionesLoading && currentUserId !== "" && inscripcionesLoadedForUserId === currentUserId;
     const inscripcionesVisibles = (useFallback || inscripcionesListas) ? inscripciones : [];
 
+    console.log("[useSlots:slotsJugar] diagnóstico", {
+      useFallback,
+      inscripcionesLoading,
+      currentUserId,
+      inscripcionesLoadedForUserId,
+      inscripcionesListas,
+      totalInscripciones: inscripciones.length,
+      totalVisibles: inscripcionesVisibles.length,
+      inscripcionesVisibles: inscripcionesVisibles.map((i) => ({
+        jugador_id: i.jugador_id, slot_id: i.slot_id, semana: i.semana
+      }))
+    });
+
     const monday = getMondayUtc(now);
     const lunesActual = formatDateUTC(monday);
     const lunesProximo = formatDateUTC(addDaysUtc(monday, 7));
