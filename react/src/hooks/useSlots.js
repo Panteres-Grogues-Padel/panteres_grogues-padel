@@ -87,8 +87,21 @@ function inscripcionEnSemanasRelevantes(ins, slot, now = new Date()) {
   return semanasRelevantesParaSlot(slot, now).includes(s);
 }
 
-function jugadorIdCoincide(insJugadorId, currentUserId) {
-  return jugadoresCoinciden(insJugadorId, currentUserId);
+function jugadorIdCoincide(insJugadorId, currentUserId, context = {}) {
+  const insId = normalizeJugadorUuid(insJugadorId);
+  const userId = normalizeJugadorUuid(currentUserId);
+  const coincide = isJugadorUuid(insId) && isJugadorUuid(userId) && insId === userId;
+  console.log("[useSlots] comparar inscripción/currentUser", {
+    slotId: context.slotId,
+    inscripcionId: context.inscripcionId,
+    semana: context.semana,
+    insJugadorId,
+    currentUserId,
+    insIdNormalizado: insId,
+    currentUserIdNormalizado: userId,
+    coincide
+  });
+  return coincide;
 }
 
 /** ¿Ya hay inscripción del jugador en otro slot el mismo día de semana y misma semana calendario? */
@@ -358,7 +371,11 @@ export function useSlots(currentUser) {
               inscripcionesVisibles.find(
                 (ins) =>
                   ins.slot_id === slot.id &&
-                  jugadorIdCoincide(ins.jugador_id, currentUser.id) &&
+                  jugadorIdCoincide(ins.jugador_id, currentUser.id, {
+                    slotId: slot.id,
+                    inscripcionId: ins.id,
+                    semana: ins.semana
+                  }) &&
                   inscripcionEnSemanasRelevantes(ins, slot, now)
               )
           )

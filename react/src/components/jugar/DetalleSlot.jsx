@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { jugadoresCoinciden } from "../../utils/jugador";
+import { isJugadorUuid, jugadoresCoinciden } from "../../utils/jugador";
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
 
 function dayOpenLabel(slot) {
@@ -20,7 +20,10 @@ function dayOpenLabel(slot) {
 
 function filaEsUsuarioActual(p, currentUser) {
   if (!currentUser) return false;
-  if (p.jugadorId && jugadoresCoinciden(p.jugadorId, currentUser.id)) return true;
+  if (isJugadorUuid(p.jugadorId) && isJugadorUuid(currentUser.id)) {
+    return jugadoresCoinciden(p.jugadorId, currentUser.id);
+  }
+  if (p.jugadorId) return false;
   return currentUser.nombre === p.nombre;
 }
 
