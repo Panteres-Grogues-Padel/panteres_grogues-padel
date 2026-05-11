@@ -151,9 +151,12 @@ async function enrichInscripcionesJugadoresNombres(client, rows) {
 export function useSlots(currentUser) {
   const [slots, setSlots] = useState(SLOTS_INICIALES);
   const [inscripciones, setInscripciones] = useState([]);
+  const [inscripcionesLoadedForUserId, setInscripcionesLoadedForUserId] = useState("");
+  const [inscripcionesLoading, setInscripcionesLoading] = useState(false);
   const [slotsNotice, setSlotsNotice] = useState("");
   /** Invalida `loadInscripcionesSupabase` en vuelo al cambiar usuario o al desmontar. */
   const inscripcionesReloadGenRef = useRef(0);
+  const currentUserId = currentUser?.id ? normalizeJugadorUuid(currentUser.id) : "";
 
   const useFallback =
     !supabase ||
@@ -211,8 +214,12 @@ export function useSlots(currentUser) {
     setSlots(SLOTS_INICIALES);
   }
 
-  async function loadInscripcionesSupabase(extraSemanasRaw = [], reloadToken) {
-    if (!currentUser?.id) return;
+  async function loadInscripcionesSupabase(extraSemanasRaw = [], reloadToken, userIdForLoad = currentUserId) {
+    if (!userIdForLoad) {
+      setInscripciones([]);
+      setInscripcionesLoadedForUserId("");
+      return;
+    }
     const now = new Date();
     const monday = getMondayUtc(now);
     let semanaDesde = formatDateUTC(addDaysUtc(monday, -14));
@@ -261,6 +268,7 @@ export function useSlots(currentUser) {
         return;
       }
       setInscripciones([]);
+      setInscripcionesLoadedForUserId(userIdForLoad);
       return;
     }
 
@@ -272,11 +280,14 @@ export function useSlots(currentUser) {
       return;
     }
     setInscripciones(withNombres);
+    setInscripcionesLoadedForUserId(userIdForLoad);
   }
 
   useEffect(() => {
     if (useFallback) {
       setInscripciones([]);
+      setInscripcionesLoadedForUserId(currentUserId);
+      setInscripcionesLoading(false);
       setSlots(SLOTS_INICIALES);
       setSlotsNotice("");
       return undefined;
@@ -284,6 +295,8 @@ export function useSlots(currentUser) {
 
     const reloadToken = ++inscripcionesReloadGenRef.current;
     setInscripciones([]);
+    setInscripcionesLoadedForUserId("");
+    setInscripcionesLoading(true);
     setSlots([]);
     setSlotsNotice("");
 
@@ -291,17 +304,22 @@ export function useSlots(currentUser) {
     (async () => {
       await loadSlotsSupabase();
       if (cancelled) return;
-      await loadInscripcionesSupabase([], reloadToken);
+      await loadInscripcionesSupabase([], reloadToken, currentUserId);
+      if (!cancelled && reloadToken === inscripcionesReloadGenRef.current) {
+        setInscripcionesLoading(false);
+      }
     })();
 
     return () => {
       cancelled = true;
       inscripcionesReloadGenRef.current += 1;
     };
-  }, [useFallback, currentUser?.id]);
+  }, [useFallback, currentUserId]);
 
   const slotsConEstado = useMemo(() => {
     const now = new Date();
+    const inscripcionesListas = useFallback || (!inscripcionesLoading && inscripcionesLoadedForUserId === currentUserId);
+    const inscripcionesVisibles = inscripcionesListas ? inscripciones : [];
     return slots.map((slot) => ({
       ...slot,
       abierto: isSlotOpen({ diaSemana: slot.diaSemana }),
@@ -310,7 +328,7 @@ export function useSlots(currentUser) {
       jugadores: (
         useFallback
           ? slot.jugadores.map((j, idx) => normalizePlayerEntry(j, idx)).filter(Boolean)
-          : inscripciones
+          : inscripcionesVisibles
               .filter((ins) => ins.slot_id === slot.id && inscripcionEnSemanasRelevantes(ins, slot, now))
               .map((ins, idx) => ({
                 jugadorId: normalizeJugadorUuid(ins.jugador_id),
@@ -323,7 +341,7 @@ export function useSlots(currentUser) {
       sociosCount: (
         useFallback
           ? slot.jugadores.map((j, idx) => normalizePlayerEntry(j, idx)).filter(Boolean)
-          : inscripciones
+          : inscripcionesVisibles
               .filter((ins) => ins.slot_id === slot.id && inscripcionEnSemanasRelevantes(ins, slot, now))
               .map((ins) => ({ socio: Boolean(ins.es_socio) }))
       ).filter((p) => p.socio).length,
@@ -337,7 +355,7 @@ export function useSlots(currentUser) {
           )
         : Boolean(
             currentUser &&
-              inscripciones.find(
+              inscripcionesVisibles.find(
                 (ins) =>
                   ins.slot_id === slot.id &&
                   jugadorIdCoincide(ins.jugador_id, currentUser.id) &&
@@ -345,7 +363,7 @@ export function useSlots(currentUser) {
               )
           )
     }));
-  }, [slots, currentUser, inscripciones, useFallback]);
+  }, [slots, currentUser, currentUserId, inscripciones, inscripcionesLoadedForUserId, inscripcionesLoading, useFallback]);
 
   function getSlot(slotId) {
     return slots.find((s) => s.id === slotId);
