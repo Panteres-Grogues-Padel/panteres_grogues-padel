@@ -336,12 +336,27 @@ export function useSlots(currentUser) {
       .eq("slot_id", dbSlotId)
       .eq("semana", semana);
 
+    console.log("[baja] SELECT filas:", filas, "selErr:", selErr, "| jugadorId:", jugadorId, "dbSlotId:", dbSlotId, "semana:", semana);
+
     if (selErr) return { ok: false, error: selErr.message };
     if (!filas?.length) return { ok: false, error: "No hay inscripción en este slot." };
 
     const ids = filas.map((r) => r.id);
-    const { error: delErr } = await supabase.from("inscripciones").delete().in("id", ids);
+    console.log("[baja] ids a borrar:", ids);
+
+    const { data: deleted, error: delErr, count: delCount } = await supabase
+      .from("inscripciones")
+      .delete()
+      .in("id", ids)
+      .select("id");
+
+    console.log("[baja] DELETE → deleted:", deleted, "delErr:", delErr, "count:", delCount);
+
     if (delErr) return { ok: false, error: delErr.message };
+    if (!deleted?.length) {
+      console.warn("[baja] DELETE ejecutado pero 0 filas borradas — posible bloqueo RLS");
+      return { ok: false, error: "No se pudo borrar la inscripción (RLS o permisos)." };
+    }
 
     // Remove by identity (slot+jugador+semana) so optimistic "local-*" entries are also removed
     setInscripciones((prev) =>
