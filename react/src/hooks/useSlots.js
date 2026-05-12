@@ -340,20 +340,16 @@ export function useSlots(currentUser) {
     console.log("[baja] session:", session?.user?.id ?? "NULL");
     if (!session) return { ok: false, error: "Sesión expirada. Vuelve a iniciar sesión." };
 
-    // DELETE directo con los mismos filtros que el SELECT, sin paso intermedio por IDs
-    const { data: deleted, error: delErr } = await supabase
-      .from("inscripciones")
-      .delete()
-      .eq("jugador_id", jugadorId)
-      .eq("slot_id", dbSlotId)
-      .eq("semana", semana)
-      .select("id");
+    const { data: rowsDeleted, error: rpcErr } = await supabase.rpc("borrar_inscripcion", {
+      p_jugador_id: jugadorId,
+      p_slot_id: dbSlotId,
+      p_semana: semana,
+    });
 
-    console.log("[baja] DELETE jugadorId:", jugadorId, "slot:", dbSlotId, "semana:", semana, "→ deleted:", deleted, "err:", delErr);
+    console.log("[baja] RPC borrar_inscripcion → rows:", rowsDeleted, "err:", rpcErr);
 
-    if (delErr) return { ok: false, error: delErr.message };
-    if (!deleted?.length) {
-      console.warn("[baja] DELETE 0 filas — la fila no existe o RLS la oculta");
+    if (rpcErr) return { ok: false, error: rpcErr.message };
+    if (!rowsDeleted) {
       return { ok: false, error: "No se encontró la inscripción para borrar." };
     }
 
