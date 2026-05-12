@@ -45,6 +45,7 @@ export function useAuth() {
   }
 
   async function aplicarSesionSupabase(authUser) {
+    console.log("[aplicarSesion] authId:", authUser?.id, "ref actual:", ultimoAuthIdCargadoRef.current);
     if (!authUser) {
       ultimoAuthIdCargadoRef.current = null;
       setCurrentUser(null);
@@ -205,6 +206,7 @@ export function useAuth() {
 
   async function logout() {
     ultimoAuthIdCargadoRef.current = null;
+    console.log("[logout] ref limpiado");
     setLoading(false);
     setCurrentUser(null);
     setPassword("");
