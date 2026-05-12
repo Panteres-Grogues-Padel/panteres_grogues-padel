@@ -118,20 +118,31 @@ export function useSlots(currentUser) {
         const desde = formatDateUTC(addDaysUtc(lunes, -14));
         const hasta = formatDateUTC(addDaysUtc(lunes, 28));
 
+        // Contar filas totales en el rango para detectar truncado por Max Rows
+        const { count: totalCount } = await supabase
+          .from("inscripciones")
+          .select("*", { count: "exact", head: true })
+          .gte("semana", desde)
+          .lte("semana", hasta);
+
         const { data: inscData, error: inscErr } = await supabase
           .from("inscripciones")
           .select("id,jugador_id,slot_id,semana,es_socio,inscrito_at")
           .gte("semana", desde)
           .lte("semana", hasta)
           .order("inscrito_at", { ascending: true, nullsFirst: true })
-          .order("id", { ascending: true });
+          .order("id", { ascending: true })
+          .limit(1000);
 
         if (cancelled) return;
 
         console.log("[useSlots] currentUser.id raw — typeof:", typeof currentUser?.id, "JSON.stringify:", JSON.stringify(currentUser?.id));
         console.log("[useSlots] userId (normalizado):", userId, "isJugadorUuid:", isJugadorUuid(userId));
         console.log("[useSlots] rango semanas:", desde, "→", hasta);
-        console.log("[useSlots] inscripciones cargadas:", inscData?.length, "error:", inscErr);
+        console.log("[useSlots] COUNT total en BD:", totalCount, "| filas recibidas:", inscData?.length, "| error:", inscErr);
+        if (totalCount !== null && inscData?.length !== undefined && totalCount > inscData.length) {
+          console.warn("[useSlots] ⚠️ TRUNCADO: BD tiene", totalCount, "filas pero solo se recibieron", inscData?.length, "— revisar Max Rows en Supabase API settings");
+        }
         if (inscData?.length) {
           console.log("[useSlots] jugador_ids únicos en filas:", [...new Set(inscData.map((i) => i.jugador_id))]);
           const propias = inscData.filter((i) => normalizeJugadorUuid(i.jugador_id) === userId);
