@@ -125,6 +125,9 @@ export function useSlots(currentUser) {
           .gte("semana", desde)
           .lte("semana", hasta);
 
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
         const { data: inscData, error: inscErr } = await supabase
           .from("inscripciones")
           .select("id,jugador_id,slot_id,semana,es_socio,inscrito_at")
