@@ -160,6 +160,7 @@ export function useSlots(currentUser) {
           setSlotsNotice("Error al cargar inscripciones: " + inscErr.message);
         } else {
           const conNombres = await cargarNombres(inscData ?? []);
+          console.log("[useSlots] setInscripciones con", conNombres.length, "filas (reemplazo completo — sin mezclar estado anterior)");
           if (!cancelled) setInscripciones(conNombres);
         }
       } catch (err) {
@@ -265,6 +266,25 @@ export function useSlots(currentUser) {
 
   // --- Acciones ---
 
+  async function reloadInscripciones() {
+    if (!supabase || !isJugadorUuid(userId)) return;
+    const lunes = getMondayUtc(new Date());
+    const desde = formatDateUTC(addDaysUtc(lunes, -14));
+    const hasta = formatDateUTC(addDaysUtc(lunes, 28));
+    const { data, error } = await supabase
+      .from("inscripciones")
+      .select("id,jugador_id,slot_id,semana,es_socio,inscrito_at")
+      .gte("semana", desde)
+      .lte("semana", hasta)
+      .order("inscrito_at", { ascending: true, nullsFirst: true })
+      .order("id", { ascending: true })
+      .limit(1000);
+    if (!error) {
+      const conNombres = await cargarNombres(data ?? []);
+      setInscripciones(conNombres);
+    }
+  }
+
   async function apuntarEnSlot(slotId, options = {}) {
     if (!currentUser || !supabase) return { ok: false, error: "No hay sesión activa." };
 
@@ -340,20 +360,16 @@ export function useSlots(currentUser) {
     console.log("[baja] session:", session?.user?.id ?? "NULL");
     if (!session) return { ok: false, error: "Sesión expirada. Vuelve a iniciar sesión." };
 
-    const { data: rowsDeleted, error: rpcErr } = await supabase.rpc("borrar_inscripcion", {
+    const { error: rpcErr } = await supabase.rpc("borrar_inscripcion", {
       p_jugador_id: jugadorId,
       p_slot_id: dbSlotId,
       p_semana: semana,
     });
 
-    console.log("[baja] RPC borrar_inscripcion → rows:", rowsDeleted, "err:", rpcErr);
+    console.log("[baja] RPC borrar_inscripcion → err:", rpcErr);
 
     if (rpcErr) return { ok: false, error: rpcErr.message };
-    if (!rowsDeleted) {
-      return { ok: false, error: "No se encontró la inscripción para borrar." };
-    }
 
-    // Remove by identity (slot+jugador+semana) so optimistic "local-*" entries are also removed
     setInscripciones((prev) =>
       prev.filter(
         (i) =>
@@ -364,6 +380,7 @@ export function useSlots(currentUser) {
           )
       )
     );
+    void reloadInscripciones();
 
     void createActivityLog({
       jugadorId,
