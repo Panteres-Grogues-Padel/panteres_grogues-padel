@@ -118,13 +118,6 @@ export function useSlots(currentUser) {
         const desde = formatDateUTC(addDaysUtc(lunes, -14));
         const hasta = formatDateUTC(addDaysUtc(lunes, 28));
 
-        // Contar filas totales en el rango para detectar truncado por Max Rows
-        const { count: totalCount } = await supabase
-          .from("inscripciones")
-          .select("*", { count: "exact", head: true })
-          .gte("semana", desde)
-          .lte("semana", hasta);
-
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
 
@@ -139,33 +132,10 @@ export function useSlots(currentUser) {
 
         if (cancelled) return;
 
-        console.log("[useSlots] jugador2 filas:", JSON.stringify(inscData?.filter(r => r.jugador_id === '10000000-0000-4000-b000-000000000002')));
-
-        console.log("[useSlots] currentUser.id raw — typeof:", typeof currentUser?.id, "JSON.stringify:", JSON.stringify(currentUser?.id));
-        console.log("[useSlots] userId (normalizado):", userId, "isJugadorUuid:", isJugadorUuid(userId));
-        console.log("[useSlots] rango semanas:", desde, "→", hasta);
-        console.log("[useSlots] COUNT total en BD:", totalCount, "| filas recibidas:", inscData?.length, "| error:", inscErr);
-        if (totalCount !== null && inscData?.length !== undefined && totalCount > inscData.length) {
-          console.warn("[useSlots] ⚠️ TRUNCADO: BD tiene", totalCount, "filas pero solo se recibieron", inscData?.length, "— revisar Max Rows en Supabase API settings");
-        }
-        if (inscData?.length) {
-          console.log("[useSlots] jugador_ids únicos en filas:", [...new Set(inscData.map((i) => i.jugador_id))]);
-          const propias = inscData.filter((i) => normalizeJugadorUuid(i.jugador_id) === userId);
-          console.log("[useSlots] filas propias count:", propias.length);
-          console.log("[useSlots] filas propias detalle:", propias.map((f) => ({
-            jugador_id_raw: f.jugador_id,
-            jugador_id_normalizado: normalizeJugadorUuid(f.jugador_id),
-            slot_id: f.slot_id,
-            semana: f.semana,
-          })));
-          console.log("[useSlots] userId comparado:", userId);
-        }
-
         if (inscErr) {
           setSlotsNotice("Error al cargar inscripciones: " + inscErr.message);
         } else {
           const conNombres = await cargarNombres(inscData ?? []);
-          console.log("[useSlots] setInscripciones con", conNombres.length, "filas (reemplazo completo — sin mezclar estado anterior)");
           if (!cancelled) setInscripciones(conNombres);
         }
       } catch (err) {
@@ -362,7 +332,6 @@ export function useSlots(currentUser) {
     const semana = normalizeSemana(slot.semanaObjetivo);
 
     const { data: { session } } = await supabase.auth.getSession();
-    console.log("[baja] session:", session?.user?.id ?? "NULL");
     if (!session) return { ok: false, error: "Sesión expirada. Vuelve a iniciar sesión." };
 
     const { error: rpcErr } = await supabase.rpc("borrar_inscripcion", {
@@ -371,12 +340,8 @@ export function useSlots(currentUser) {
       p_semana: semana,
     });
 
-    console.log("[baja] RPC borrar_inscripcion → err:", rpcErr);
-
     if (rpcErr) return { ok: false, error: rpcErr.message };
 
-    console.log("[baja] inscripciones antes filtro:", inscripciones.map(i => ({ slot_id: i.slot_id, semana: i.semana, jugador_id: i.jugador_id })));
-    console.log("[baja] buscando:", { dbSlotId, semana, jugadorId });
     setInscripciones((prev) =>
       prev.filter(
         (i) =>
