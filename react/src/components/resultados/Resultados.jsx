@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { getFechaPartido, parejasPorSet } from "../../hooks/useResultados";
+import { jugadoresCoinciden, normalizeJugadorUuid } from "../../utils/jugador";
 
 function emptySets() {
   return [
@@ -9,21 +10,46 @@ function emptySets() {
   ];
 }
 
+// Estilos usando las CSS vars del proyecto para coherencia visual
 const STATUS = {
   vacio: {
     label: "Sin resultado",
-    style: { color: "#6b7280", fontWeight: 500 },
+    badgeStyle: {
+      display: "inline-block",
+      padding: "2px 8px",
+      borderRadius: "6px",
+      fontSize: "0.78rem",
+      fontWeight: 500,
+      color: "var(--text2)",
+      background: "transparent",
+    },
     cardStyle: {},
   },
   pendiente: {
     label: "Introducido · pendiente de validacion",
-    style: { color: "#d97706", fontWeight: 500 },
-    cardStyle: { borderLeft: "3px solid #d97706" },
+    badgeStyle: {
+      display: "inline-block",
+      padding: "2px 8px",
+      borderRadius: "6px",
+      fontSize: "0.78rem",
+      fontWeight: 600,
+      color: "var(--warn-t)",
+      background: "var(--warn-bg)",
+    },
+    cardStyle: { borderLeft: "3px solid var(--warn-t)" },
   },
   validado: {
     label: "✓ Validado",
-    style: { color: "#16a34a", fontWeight: 700 },
-    cardStyle: { borderLeft: "3px solid #16a34a" },
+    badgeStyle: {
+      display: "inline-block",
+      padding: "2px 8px",
+      borderRadius: "6px",
+      fontSize: "0.78rem",
+      fontWeight: 700,
+      color: "var(--green-t)",
+      background: "var(--green-bg)",
+    },
+    cardStyle: { borderLeft: "3px solid var(--green-t)" },
   },
 };
 
@@ -50,11 +76,21 @@ export default function Resultados({
     setSetsDraft((prev) => ({ ...prev, [pistaId]: next }));
   }
 
-  const userId = currentUser?.id;
+  // Limpiar el draft tras guardar para que el estado se lea de Supabase en el próximo render
+  async function handleGuardar(pistaId, fecha, sets) {
+    await onGuardar(pistaId, fecha, sets);
+    setSetsDraft((prev) => {
+      const next = { ...prev };
+      delete next[pistaId];
+      return next;
+    });
+  }
+
+  const userId = normalizeJugadorUuid(currentUser?.id);
 
   const partidosVisibles = partidos.filter((partido) => {
     if (isCoord) return true;
-    const esJugador = partido.jugadores.some((j) => j.jugadorId === userId);
+    const esJugador = partido.jugadores.some((j) => jugadoresCoinciden(j.jugadorId, userId));
     if (esJugador) return true;
     const fecha = getFechaPartido(partido.semana, partido.diaSemana);
     const resultado = getResultado?.(partido.id, fecha);
@@ -78,7 +114,7 @@ export default function Resultados({
         const resultado = getResultado?.(partido.id, fecha);
         const parejas = parejasPorSet(partido.jugadores);
 
-        const esJugador = partido.jugadores.some((j) => j.jugadorId === userId);
+        const esJugador = partido.jugadores.some((j) => jugadoresCoinciden(j.jugadorId, userId));
         const yaIntroducido = Boolean(resultado?.introducido_por);
         const validado = Boolean(resultado?.validado_por);
 
@@ -104,8 +140,8 @@ export default function Resultados({
               {fecha || "Fecha pendiente"} · Semana {partido.semana}
             </p>
 
-            <p style={{ margin: "6px 0 10px", fontSize: "0.875rem", ...status.style }}>
-              {status.label}
+            <p style={{ margin: "6px 0 10px" }}>
+              <span style={status.badgeStyle}>{status.label}</span>
             </p>
 
             {parejas ? (
@@ -138,7 +174,7 @@ export default function Resultados({
                       ) : resultado ? (
                         <span
                           className="set-score"
-                          style={validado ? { color: "#16a34a", fontWeight: 600 } : undefined}
+                          style={validado ? { color: "var(--green-t)", fontWeight: 600 } : undefined}
                         >
                           {baseSets[idx].p1} — {baseSets[idx].p2}
                         </span>
@@ -160,7 +196,7 @@ export default function Resultados({
               <div className="slot-actions">
                 <button
                   className="btn btn-primary btn-sm"
-                  onClick={() => onGuardar(partido.id, fecha, baseSets)}
+                  onClick={() => handleGuardar(partido.id, fecha, baseSets)}
                 >
                   {yaIntroducido ? "Modificar resultado" : "Guardar resultado"}
                 </button>

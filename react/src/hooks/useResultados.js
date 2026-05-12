@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { createActivityLog, createNotifications } from "../lib/engagement";
-import { isJugadorUuid } from "../utils/jugador";
+import { isJugadorUuid, jugadoresCoinciden, normalizeJugadorUuid } from "../utils/jugador";
 
 // Calcula la fecha real del partido a partir del lunes de la semana y el día de la semana del slot
 export function getFechaPartido(semana, diaSemana) {
@@ -93,7 +93,8 @@ export function useResultados(partidos, currentUser, isCoord) {
     const partido = partidos.find((p) => p.id === pistaId);
     if (!partido) return { ok: false, error: "Partido no encontrado." };
 
-    const esJugadorDelPartido = partido.jugadores.some((j) => j.jugadorId === currentUser.id);
+    const jugadorId = normalizeJugadorUuid(currentUser.id);
+    const esJugadorDelPartido = partido.jugadores.some((j) => jugadoresCoinciden(j.jugadorId, jugadorId));
     if (!isCoord && !esJugadorDelPartido) {
       return { ok: false, error: "No puedes reportar este partido." };
     }
@@ -114,7 +115,7 @@ export function useResultados(partidos, currentUser, isCoord) {
       set2_p2: sets[1].p2,
       set3_p1: sets[2].p1,
       set3_p2: sets[2].p2,
-      introducido_por: currentUser.id,
+      introducido_por: jugadorId,
     };
 
     let query;
@@ -127,12 +128,12 @@ export function useResultados(partidos, currentUser, isCoord) {
     if (saveError) return { ok: false, error: saveError.message };
 
     await createActivityLog({
-      jugadorId: currentUser.id,
+      jugadorId,
       tipo: "resultados",
       texto: `Introduce resultado en pista ${pistaId} (${fecha})`,
     });
     const notifications = partido.jugadores
-      .filter((j) => j.jugadorId !== currentUser.id)
+      .filter((j) => !jugadoresCoinciden(j.jugadorId, jugadorId))
       .map((j) => ({
         jugadorId: j.jugadorId,
         tipo: "resultados",
@@ -153,9 +154,11 @@ export function useResultados(partidos, currentUser, isCoord) {
     if (r.validado_por) return { ok: false, error: "Este resultado ya esta validado." };
     if (useFallback) return { ok: true };
 
+    const jugadorId = normalizeJugadorUuid(currentUser.id);
+
     const { error: valError } = await supabase
       .from("resultados")
-      .update({ validado_por: currentUser.id, validado_at: new Date().toISOString() })
+      .update({ validado_por: jugadorId, validado_at: new Date().toISOString() })
       .eq("id", r.id);
     if (valError) return { ok: false, error: valError.message };
 
@@ -165,7 +168,7 @@ export function useResultados(partidos, currentUser, isCoord) {
     if (rpcError) return { ok: false, error: rpcError.message };
 
     await createActivityLog({
-      jugadorId: currentUser.id,
+      jugadorId,
       tipo: "resultados",
       texto: `Valida resultado en pista ${pistaId} (${fecha})`,
     });
