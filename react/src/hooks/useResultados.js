@@ -3,19 +3,36 @@ import { supabase } from "../lib/supabase";
 import { createActivityLog, createNotifications } from "../lib/engagement";
 import { isJugadorUuid } from "../utils/jugador";
 
-function todayStr() {
-  return new Date().toISOString().slice(0, 10);
+// Calcula la fecha real del partido a partir del lunes de la semana y el día de la semana del slot
+export function getFechaPartido(semana, diaSemana) {
+  if (!semana || diaSemana === null || diaSemana === undefined) return "";
+  const d = new Date(`${semana}T00:00:00`);
+  d.setDate(d.getDate() + Number(diaSemana));
+  return d.toISOString().slice(0, 10);
+}
+
+// Parejas fijas por set dado un array de 4 jugadores ordenados por posición (1-4)
+export function parejasPorSet(jugadores) {
+  const [j1, j2, j3, j4] = jugadores;
+  if (!j1 || !j2 || !j3 || !j4) return null;
+  return [
+    { label: "Set 1", p1: [j1, j4], p2: [j2, j3] },
+    { label: "Set 2", p1: [j1, j3], p2: [j2, j4] },
+    { label: "Set 3", p1: [j1, j2], p2: [j3, j4] },
+  ];
 }
 
 export function useResultados(partidos, currentUser, isCoord) {
   const [resultados, setResultados] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
   const useFallback =
     !supabase ||
     !currentUser?.id ||
     currentUser.fromFallback === true ||
     !isJugadorUuid(currentUser.id);
+
   const pistaIdsKey = partidos.map((p) => p.id).sort().join("|");
 
   async function loadResultados() {
@@ -28,7 +45,7 @@ export function useResultados(partidos, currentUser, isCoord) {
     const pistaIds = partidos.map((p) => p.id);
     const { data, error: fetchError } = await supabase
       .from("resultados")
-      .select("id,pista_id,fecha,set1_p1,set1_p2,set2_p1,set2_p2,set3_p1,set3_p2,introducido_por,validado_por")
+      .select("id,pista_id,fecha,set1_p1,set1_p2,set2_p1,set2_p2,set3_p1,set3_p2,introducido_por,validado_por,validado_at")
       .in("pista_id", pistaIds)
       .order("fecha", { ascending: false });
     setLoading(false);
@@ -54,15 +71,15 @@ export function useResultados(partidos, currentUser, isCoord) {
     };
   }, [useFallback]);
 
-  function getResultado(partidoId, fecha) {
-    return resultados.find((r) => r.pista_id === partidoId && r.fecha === fecha) ?? null;
+  function getResultado(pistaId, fecha) {
+    return resultados.find((r) => r.pista_id === pistaId && r.fecha === fecha) ?? null;
   }
 
   function mapSetsFromResultado(r) {
     return [
       { p1: r.set1_p1, p2: r.set1_p2 },
       { p1: r.set2_p1, p2: r.set2_p2 },
-      { p1: r.set3_p1, p2: r.set3_p2 }
+      { p1: r.set3_p1, p2: r.set3_p2 },
     ];
   }
 
@@ -71,21 +88,25 @@ export function useResultados(partidos, currentUser, isCoord) {
     [resultados]
   );
 
-  async function guardarResultado(partidoId, fecha, sets) {
+  async function guardarResultado(pistaId, fecha, sets) {
     if (!currentUser) return { ok: false, error: "Debes iniciar sesion." };
-    const partido = partidos.find((p) => p.id === partidoId);
+    const partido = partidos.find((p) => p.id === pistaId);
     if (!partido) return { ok: false, error: "Partido no encontrado." };
+
     const esJugadorDelPartido = partido.jugadores.some((j) => j.jugadorId === currentUser.id);
-    if (!isCoord && !esJugadorDelPartido) return { ok: false, error: "No puedes reportar este partido." };
-    if (!isCoord && fecha !== todayStr()) {
-      return { ok: false, error: "Solo puedes introducir el marcador del partido del dia." };
+    if (!isCoord && !esJugadorDelPartido) {
+      return { ok: false, error: "No puedes reportar este partido." };
+    }
+
+    const prev = getResultado(pistaId, fecha);
+    if (prev && !isCoord) {
+      return { ok: false, error: "El resultado ya fue introducido. Solo el coordinador puede modificarlo." };
     }
 
     if (useFallback) return { ok: true };
 
-    const prev = getResultado(partidoId, fecha);
     const payload = {
-      pista_id: partidoId,
+      pista_id: pistaId,
       fecha,
       set1_p1: sets[0].p1,
       set1_p2: sets[0].p2,
@@ -93,7 +114,7 @@ export function useResultados(partidos, currentUser, isCoord) {
       set2_p2: sets[1].p2,
       set3_p1: sets[2].p1,
       set3_p2: sets[2].p2,
-      introducido_por: currentUser.id
+      introducido_por: currentUser.id,
     };
 
     let query;
@@ -104,10 +125,11 @@ export function useResultados(partidos, currentUser, isCoord) {
     }
     const { error: saveError } = await query;
     if (saveError) return { ok: false, error: saveError.message };
+
     await createActivityLog({
       jugadorId: currentUser.id,
       tipo: "resultados",
-      texto: `Introduce resultado en pista ${partidoId} (${fecha})`
+      texto: `Introduce resultado en pista ${pistaId} (${fecha})`,
     });
     const notifications = partido.jugadores
       .filter((j) => j.jugadorId !== currentUser.id)
@@ -115,25 +137,20 @@ export function useResultados(partidos, currentUser, isCoord) {
         jugadorId: j.jugadorId,
         tipo: "resultados",
         titulo: "Resultado pendiente de validacion",
-        texto: `Se ha subido un resultado en tu partido (${fecha}).`
+        texto: `Se ha subido un resultado en tu partido (${fecha}).`,
       }));
     await createNotifications(notifications);
     await loadResultados();
     return { ok: true };
   }
 
-  async function validarResultado(partidoId, fecha) {
+  async function validarResultado(pistaId, fecha) {
     if (!currentUser) return { ok: false, error: "Debes iniciar sesion." };
-    const partido = partidos.find((p) => p.id === partidoId);
-    if (!partido) return { ok: false, error: "Partido no encontrado." };
-    const esJugadorDelPartido = partido.jugadores.some((j) => j.jugadorId === currentUser.id);
-    if (!isCoord && !esJugadorDelPartido) return { ok: false, error: "No puedes validar este partido." };
+    if (!isCoord) return { ok: false, error: "Solo el coordinador puede validar resultados." };
 
-    const r = getResultado(partidoId, fecha);
+    const r = getResultado(pistaId, fecha);
     if (!r) return { ok: false, error: "No hay resultado para validar." };
-    if (r.introducido_por === currentUser.id) {
-      return { ok: false, error: "No puedes validar tu propio resultado." };
-    }
+    if (r.validado_por) return { ok: false, error: "Este resultado ya esta validado." };
     if (useFallback) return { ok: true };
 
     const { error: valError } = await supabase
@@ -143,24 +160,25 @@ export function useResultados(partidos, currentUser, isCoord) {
     if (valError) return { ok: false, error: valError.message };
 
     const { error: rpcError } = await supabase.rpc("actualizar_ranking", {
-      p_resultado_id: r.id
+      p_resultado_id: r.id,
     });
     if (rpcError) return { ok: false, error: rpcError.message };
 
     await createActivityLog({
       jugadorId: currentUser.id,
       tipo: "resultados",
-      texto: `Valida resultado en pista ${partidoId} (${fecha})`
+      texto: `Valida resultado en pista ${pistaId} (${fecha})`,
     });
-    const notifications = partido.jugadores
-      .filter((j) => j.jugadorId !== currentUser.id)
-      .map((j) => ({
+    const partido = partidos.find((p) => p.id === pistaId);
+    if (partido) {
+      const notifications = partido.jugadores.map((j) => ({
         jugadorId: j.jugadorId,
         tipo: "resultados",
         titulo: "Resultado validado",
-        texto: `El resultado de tu partido (${fecha}) ya esta validado.`
+        texto: `El resultado de tu partido (${fecha}) ya esta validado.`,
       }));
-    await createNotifications(notifications);
+      await createNotifications(notifications);
+    }
 
     await loadResultados();
     return { ok: true };
@@ -173,6 +191,6 @@ export function useResultados(partidos, currentUser, isCoord) {
     getResultado,
     mapSetsFromResultado,
     loading,
-    error
+    error,
   };
 }
