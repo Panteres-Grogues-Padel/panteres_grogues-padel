@@ -329,37 +329,25 @@ export function useSlots(currentUser) {
     const dbSlotId = slot.baseId ?? slot.id;
     const semana = normalizeSemana(slot.semanaObjetivo);
 
-    const { data: filas, error: selErr } = await supabase
-      .from("inscripciones")
-      .select("id")
-      .eq("jugador_id", jugadorId)
-      .eq("slot_id", dbSlotId)
-      .eq("semana", semana);
-
-    console.log("[baja] SELECT filas:", filas, "selErr:", selErr, "| jugadorId:", jugadorId, "dbSlotId:", dbSlotId, "semana:", semana);
-
-    if (selErr) return { ok: false, error: selErr.message };
-    if (!filas?.length) return { ok: false, error: "No hay inscripción en este slot." };
-
-    const ids = filas.map((r) => r.id);
-    console.log("[baja] ids a borrar:", ids);
-
     const { data: { session } } = await supabase.auth.getSession();
-    console.log("[baja] session antes del DELETE:", session?.user?.id ?? "NULL — sin JWT");
+    console.log("[baja] session:", session?.user?.id ?? "NULL");
     if (!session) return { ok: false, error: "Sesión expirada. Vuelve a iniciar sesión." };
 
-    const { data: deleted, error: delErr, count: delCount } = await supabase
+    // DELETE directo con los mismos filtros que el SELECT, sin paso intermedio por IDs
+    const { data: deleted, error: delErr } = await supabase
       .from("inscripciones")
       .delete()
-      .in("id", ids)
+      .eq("jugador_id", jugadorId)
+      .eq("slot_id", dbSlotId)
+      .eq("semana", semana)
       .select("id");
 
-    console.log("[baja] DELETE → deleted:", deleted, "delErr:", delErr, "count:", delCount);
+    console.log("[baja] DELETE jugadorId:", jugadorId, "slot:", dbSlotId, "semana:", semana, "→ deleted:", deleted, "err:", delErr);
 
     if (delErr) return { ok: false, error: delErr.message };
     if (!deleted?.length) {
-      console.warn("[baja] DELETE ejecutado pero 0 filas borradas — posible bloqueo RLS");
-      return { ok: false, error: "No se pudo borrar la inscripción (RLS o permisos)." };
+      console.warn("[baja] DELETE 0 filas — la fila no existe o RLS la oculta");
+      return { ok: false, error: "No se encontró la inscripción para borrar." };
     }
 
     // Remove by identity (slot+jugador+semana) so optimistic "local-*" entries are also removed
