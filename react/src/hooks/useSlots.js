@@ -344,6 +344,10 @@ export function useSlots(currentUser) {
     const ids = filas.map((r) => r.id);
     console.log("[baja] ids a borrar:", ids);
 
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log("[baja] session antes del DELETE:", session?.user?.id ?? "NULL — sin JWT");
+    if (!session) return { ok: false, error: "Sesión expirada. Vuelve a iniciar sesión." };
+
     const { data: deleted, error: delErr, count: delCount } = await supabase
       .from("inscripciones")
       .delete()
