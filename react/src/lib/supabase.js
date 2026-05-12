@@ -13,7 +13,11 @@ export const supabase =
           storageKey: "sb-session",
         },
         global: {
-          fetch: (url, options = {}) => fetch(url, { ...options, cache: "no-store" }),
+          fetch: (url, options = {}) => {
+            const headers = new Headers(options.headers || {});
+            headers.set("Cache-Control", "no-cache, no-store");
+            return fetch(url, { ...options, headers, cache: "no-store" });
+          },
         },
       })
     : null;
