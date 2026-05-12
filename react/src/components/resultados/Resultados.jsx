@@ -1,62 +1,15 @@
 import { useState } from "react";
-import { getFechaPartido, parejasPorSet } from "../../hooks/useResultados";
-import { jugadoresCoinciden, normalizeJugadorUuid } from "../../utils/jugador";
 
 function emptySets() {
   return [
     { p1: 0, p2: 0 },
     { p1: 0, p2: 0 },
-    { p1: 0, p2: 0 },
+    { p1: 0, p2: 0 }
   ];
 }
 
-// Estilos usando las CSS vars del proyecto para coherencia visual
-const STATUS = {
-  vacio: {
-    label: "Sin resultado",
-    badgeStyle: {
-      display: "inline-block",
-      padding: "2px 8px",
-      borderRadius: "6px",
-      fontSize: "0.78rem",
-      fontWeight: 500,
-      color: "var(--text2)",
-      background: "transparent",
-    },
-    cardStyle: {},
-  },
-  pendiente: {
-    label: "Introducido · pendiente de validacion",
-    badgeStyle: {
-      display: "inline-block",
-      padding: "2px 8px",
-      borderRadius: "6px",
-      fontSize: "0.78rem",
-      fontWeight: 600,
-      color: "var(--warn-t)",
-      background: "var(--warn-bg)",
-    },
-    cardStyle: { borderLeft: "3px solid var(--warn-t)" },
-  },
-  validado: {
-    label: "✓ Validado",
-    badgeStyle: {
-      display: "inline-block",
-      padding: "2px 8px",
-      borderRadius: "6px",
-      fontSize: "0.78rem",
-      fontWeight: 700,
-      color: "var(--green-t)",
-      background: "var(--green-bg)",
-    },
-    cardStyle: { borderLeft: "3px solid var(--green-t)" },
-  },
-};
-
-function getStatus(yaIntroducido, validado) {
-  if (validado) return STATUS.validado;
-  if (yaIntroducido) return STATUS.pendiente;
-  return STATUS.vacio;
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
 }
 
 export default function Resultados({
@@ -66,153 +19,90 @@ export default function Resultados({
   currentUser,
   isCoord,
   getResultado,
-  mapSetsFromResultado,
+  mapSetsFromResultado
 }) {
   const [setsDraft, setSetsDraft] = useState({});
+  const [fecha, setFecha] = useState(todayStr());
 
-  function updateSet(pistaId, setIndex, side, value) {
-    const base = setsDraft[pistaId] ?? emptySets();
+  function updateSet(partidoId, setIndex, side, value) {
+    const base = setsDraft[partidoId] ?? emptySets();
     const next = base.map((s, i) => (i === setIndex ? { ...s, [side]: Number(value) || 0 } : s));
-    setSetsDraft((prev) => ({ ...prev, [pistaId]: next }));
+    setSetsDraft((prev) => ({ ...prev, [partidoId]: next }));
   }
 
-  // Limpiar el draft tras guardar para que el estado se lea de Supabase en el próximo render
-  async function handleGuardar(pistaId, fecha, sets) {
-    await onGuardar(pistaId, fecha, sets);
-    setSetsDraft((prev) => {
-      const next = { ...prev };
-      delete next[pistaId];
-      return next;
-    });
-  }
-
-  const userId = normalizeJugadorUuid(currentUser?.id);
-
-  const partidosVisibles = partidos.filter((partido) => {
-    if (isCoord) return true;
-    const esJugador = partido.jugadores.some((j) => jugadoresCoinciden(j.jugadorId, userId));
-    if (esJugador) return true;
-    const fecha = getFechaPartido(partido.semana, partido.diaSemana);
-    const resultado = getResultado?.(partido.id, fecha);
-    return Boolean(resultado?.validado_por);
-  });
-
-  if (partidosVisibles.length === 0) {
-    return (
-      <div>
-        <h2 className="section-title">Resultados</h2>
-        <p className="slot-meta">No hay partidos disponibles.</p>
-      </div>
-    );
-  }
+  const partidosFiltrados = isCoord
+    ? partidos
+    : partidos.filter((p) => p.jugadores.some((j) => j.jugadorId === currentUser?.id));
 
   return (
     <div>
       <h2 className="section-title">Resultados</h2>
-      {partidosVisibles.map((partido) => {
-        const fecha = getFechaPartido(partido.semana, partido.diaSemana);
-        const resultado = getResultado?.(partido.id, fecha);
-        const parejas = parejasPorSet(partido.jugadores);
-
-        const esJugador = partido.jugadores.some((j) => jugadoresCoinciden(j.jugadorId, userId));
-        const yaIntroducido = Boolean(resultado?.introducido_por);
-        const validado = Boolean(resultado?.validado_por);
-
-        const status = getStatus(yaIntroducido, validado);
-
-        // Jugador puede editar solo si es del partido y aún no hay resultado.
-        // El coord siempre puede editar.
-        const puedeEditar = isCoord || (esJugador && !yaIntroducido);
-
-        const baseSets =
-          setsDraft[partido.id] ??
-          (resultado ? mapSetsFromResultado(resultado) : emptySets());
-
+      <div className="card">
+        {isCoord ? (
+          <label className="stack">
+            <span>Fecha</span>
+            <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+          </label>
+        ) : (
+          <p className="slot-meta">Solo puedes introducir resultados de hoy: {todayStr()}</p>
+        )}
+      </div>
+      {partidosFiltrados.map((p) => {
+        const resultado = getResultado?.(p.id, fecha);
+        const prefill = resultado ? mapSetsFromResultado(resultado) : null;
+        const baseSets = setsDraft[p.id] ?? prefill ?? emptySets();
+        const canValidate =
+          currentUser &&
+          resultado &&
+          resultado.introducido_por !== currentUser.id &&
+          !resultado.validado_por &&
+          (isCoord || p.jugadores.some((j) => j.jugadorId === currentUser.id));
         return (
-          <article className="card" key={partido.id} style={status.cardStyle}>
+          <article className="card" key={p.id}>
             <p>
               <strong>
-                {partido.slotLabel} · {partido.club}
+                {p.slotLabel} · {p.club}
               </strong>
-              {partido.numeroPista ? ` — Pista ${partido.numeroPista}` : ""}
             </p>
-            <p className="slot-meta">
-              {fecha || "Fecha pendiente"} · Semana {partido.semana}
-            </p>
-
-            <p style={{ margin: "6px 0 10px" }}>
-              <span style={status.badgeStyle}>{status.label}</span>
-            </p>
-
-            {parejas ? (
-              <div className="sets-container">
-                {parejas.map((par, idx) => (
-                  <div key={idx} className="set-box">
-                    <div className="set-header">
-                      <span className="set-label">{par.label}</span>
-                    </div>
-                    <div className="set-row">
-                      <span className="set-pareja">
-                        {par.p1.map((j) => j.nombre).join(" + ")}
-                      </span>
-                      {puedeEditar ? (
-                        <div className="set-inputs">
-                          <input
-                            type="number"
-                            min="0"
-                            value={baseSets[idx].p1}
-                            onChange={(e) => updateSet(partido.id, idx, "p1", e.target.value)}
-                          />
-                          <span className="set-vs">—</span>
-                          <input
-                            type="number"
-                            min="0"
-                            value={baseSets[idx].p2}
-                            onChange={(e) => updateSet(partido.id, idx, "p2", e.target.value)}
-                          />
-                        </div>
-                      ) : resultado ? (
-                        <span
-                          className="set-score"
-                          style={validado ? { color: "var(--green-t)", fontWeight: 600 } : undefined}
-                        >
-                          {baseSets[idx].p1} — {baseSets[idx].p2}
-                        </span>
-                      ) : (
-                        <span className="slot-meta">—</span>
-                      )}
-                      <span className="set-pareja">
-                        {par.p2.map((j) => j.nombre).join(" + ")}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="slot-meta">Faltan jugadores para calcular parejas.</p>
-            )}
-
-            {puedeEditar && (
-              <div className="slot-actions">
-                <button
-                  className="btn btn-primary btn-sm"
-                  onClick={() => handleGuardar(partido.id, fecha, baseSets)}
-                >
-                  {yaIntroducido ? "Modificar resultado" : "Guardar resultado"}
-                </button>
-              </div>
-            )}
-
-            {isCoord && resultado && !validado && (
-              <div className="slot-actions">
-                <button
-                  className="btn btn-sm"
-                  onClick={() => onValidar(partido.id, fecha)}
-                >
+            <p className="slot-meta">Fecha resultado: {fecha}</p>
+            <p className="slot-meta">{p.jugadores.map((j) => j.nombre).join(", ")}</p>
+            <div className="grid-sets">
+              {[0, 1, 2].map((idx) => (
+                <div key={idx} className="set-box">
+                  <span>Set {idx + 1}</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={baseSets[idx].p1}
+                    onChange={(e) => updateSet(p.id, idx, "p1", e.target.value)}
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    value={baseSets[idx].p2}
+                    onChange={(e) => updateSet(p.id, idx, "p2", e.target.value)}
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="slot-actions">
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => onGuardar(p.id, fecha, baseSets)}
+              >
+                Guardar resultado
+              </button>
+              {canValidate ? (
+                <button className="btn btn-sm" onClick={() => onValidar(p.id, fecha)}>
                   Validar resultado
                 </button>
-              </div>
-            )}
+              ) : null}
+            </div>
+            {resultado?.validado_por ? (
+              <p className="info-box">Resultado validado</p>
+            ) : resultado ? (
+              <p className="slot-meta">Pendiente de validacion</p>
+            ) : null}
           </article>
         );
       })}
