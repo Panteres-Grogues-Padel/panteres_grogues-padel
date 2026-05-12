@@ -175,7 +175,7 @@ export function useSlots(currentUser) {
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, currentUser?.auth_id]);
 
   // --- Helpers compartidos entre memos ---
 
