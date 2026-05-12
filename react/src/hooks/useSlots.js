@@ -136,6 +136,8 @@ export function useSlots(currentUser) {
 
         if (cancelled) return;
 
+        console.log("[useSlots] jugador2 filas:", JSON.stringify(inscData?.filter(r => r.jugador_id === '10000000-0000-4000-b000-000000000002')));
+
         console.log("[useSlots] currentUser.id raw — typeof:", typeof currentUser?.id, "JSON.stringify:", JSON.stringify(currentUser?.id));
         console.log("[useSlots] userId (normalizado):", userId, "isJugadorUuid:", isJugadorUuid(userId));
         console.log("[useSlots] rango semanas:", desde, "→", hasta);
