@@ -128,6 +128,15 @@ export function useSlots(currentUser) {
 
         if (cancelled) return;
 
+        console.log("[useSlots] userId:", userId);
+        console.log("[useSlots] rango semanas:", desde, "→", hasta);
+        console.log("[useSlots] inscripciones cargadas:", inscData?.length, "error:", inscErr);
+        if (inscData?.length) {
+          console.log("[useSlots] muestra primeras 3 filas:", inscData.slice(0, 3));
+          const propias = inscData.filter((i) => normalizeJugadorUuid(i.jugador_id) === userId);
+          console.log("[useSlots] filas propias (jugador_id === userId):", propias.length, propias);
+        }
+
         if (inscErr) {
           setSlotsNotice("Error al cargar inscripciones: " + inscErr.message);
         } else {
