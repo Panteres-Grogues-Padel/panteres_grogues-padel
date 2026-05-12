@@ -9,6 +9,30 @@ function emptySets() {
   ];
 }
 
+const STATUS = {
+  vacio: {
+    label: "Sin resultado",
+    style: { color: "#6b7280", fontWeight: 500 },
+    cardStyle: {},
+  },
+  pendiente: {
+    label: "Introducido · pendiente de validacion",
+    style: { color: "#d97706", fontWeight: 500 },
+    cardStyle: { borderLeft: "3px solid #d97706" },
+  },
+  validado: {
+    label: "✓ Validado",
+    style: { color: "#16a34a", fontWeight: 700 },
+    cardStyle: { borderLeft: "3px solid #16a34a" },
+  },
+};
+
+function getStatus(yaIntroducido, validado) {
+  if (validado) return STATUS.validado;
+  if (yaIntroducido) return STATUS.pendiente;
+  return STATUS.vacio;
+}
+
 export default function Resultados({
   partidos,
   onGuardar,
@@ -58,8 +82,10 @@ export default function Resultados({
         const yaIntroducido = Boolean(resultado?.introducido_por);
         const validado = Boolean(resultado?.validado_por);
 
-        // Un jugador puede introducir si es del partido y aún no hay resultado.
-        // El coord puede siempre modificar.
+        const status = getStatus(yaIntroducido, validado);
+
+        // Jugador puede editar solo si es del partido y aún no hay resultado.
+        // El coord siempre puede editar.
         const puedeEditar = isCoord || (esJugador && !yaIntroducido);
 
         const baseSets =
@@ -67,7 +93,7 @@ export default function Resultados({
           (resultado ? mapSetsFromResultado(resultado) : emptySets());
 
         return (
-          <article className="card" key={partido.id}>
+          <article className="card" key={partido.id} style={status.cardStyle}>
             <p>
               <strong>
                 {partido.slotLabel} · {partido.club}
@@ -76,6 +102,10 @@ export default function Resultados({
             </p>
             <p className="slot-meta">
               {fecha || "Fecha pendiente"} · Semana {partido.semana}
+            </p>
+
+            <p style={{ margin: "6px 0 10px", fontSize: "0.875rem", ...status.style }}>
+              {status.label}
             </p>
 
             {parejas ? (
@@ -106,11 +136,14 @@ export default function Resultados({
                           />
                         </div>
                       ) : resultado ? (
-                        <span className="set-score">
+                        <span
+                          className="set-score"
+                          style={validado ? { color: "#16a34a", fontWeight: 600 } : undefined}
+                        >
                           {baseSets[idx].p1} — {baseSets[idx].p2}
                         </span>
                       ) : (
-                        <span className="slot-meta">Sin resultado</span>
+                        <span className="slot-meta">—</span>
                       )}
                       <span className="set-pareja">
                         {par.p2.map((j) => j.nombre).join(" + ")}
@@ -144,12 +177,6 @@ export default function Resultados({
                 </button>
               </div>
             )}
-
-            {validado ? (
-              <p className="info-box">Resultado validado</p>
-            ) : yaIntroducido ? (
-              <p className="slot-meta">Pendiente de validacion</p>
-            ) : null}
           </article>
         );
       })}
