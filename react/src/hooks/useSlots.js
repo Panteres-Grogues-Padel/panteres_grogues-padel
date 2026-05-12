@@ -370,6 +370,8 @@ export function useSlots(currentUser) {
 
     if (rpcErr) return { ok: false, error: rpcErr.message };
 
+    console.log("[baja] inscripciones antes filtro:", inscripciones.map(i => ({ slot_id: i.slot_id, semana: i.semana, jugador_id: i.jugador_id })));
+    console.log("[baja] buscando:", { dbSlotId, semana, jugadorId });
     setInscripciones((prev) =>
       prev.filter(
         (i) =>
@@ -380,7 +382,7 @@ export function useSlots(currentUser) {
           )
       )
     );
-    void reloadInscripciones();
+    await reloadInscripciones();
 
     void createActivityLog({
       jugadorId,
