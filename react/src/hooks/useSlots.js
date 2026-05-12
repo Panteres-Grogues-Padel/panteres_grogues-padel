@@ -146,7 +146,14 @@ export function useSlots(currentUser) {
         if (inscData?.length) {
           console.log("[useSlots] jugador_ids únicos en filas:", [...new Set(inscData.map((i) => i.jugador_id))]);
           const propias = inscData.filter((i) => normalizeJugadorUuid(i.jugador_id) === userId);
-          console.log("[useSlots] filas propias (normalizeJugadorUuid(jugador_id) === userId):", propias.length, propias);
+          console.log("[useSlots] filas propias count:", propias.length);
+          console.log("[useSlots] filas propias detalle:", propias.map((f) => ({
+            jugador_id_raw: f.jugador_id,
+            jugador_id_normalizado: normalizeJugadorUuid(f.jugador_id),
+            slot_id: f.slot_id,
+            semana: f.semana,
+          })));
+          console.log("[useSlots] userId comparado:", userId);
         }
 
         if (inscErr) {
