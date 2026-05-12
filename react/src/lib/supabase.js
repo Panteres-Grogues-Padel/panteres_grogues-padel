@@ -12,5 +12,8 @@ export const supabase =
           detectSessionInUrl: true,
           storageKey: "sb-session",
         },
+        global: {
+          fetch: (url, options = {}) => fetch(url, { ...options, cache: "no-store" }),
+        },
       })
     : null;
