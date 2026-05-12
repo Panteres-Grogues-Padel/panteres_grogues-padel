@@ -128,13 +128,14 @@ export function useSlots(currentUser) {
 
         if (cancelled) return;
 
-        console.log("[useSlots] userId:", userId);
+        console.log("[useSlots] currentUser.id raw — typeof:", typeof currentUser?.id, "JSON.stringify:", JSON.stringify(currentUser?.id));
+        console.log("[useSlots] userId (normalizado):", userId, "isJugadorUuid:", isJugadorUuid(userId));
         console.log("[useSlots] rango semanas:", desde, "→", hasta);
         console.log("[useSlots] inscripciones cargadas:", inscData?.length, "error:", inscErr);
         if (inscData?.length) {
-          console.log("[useSlots] muestra primeras 3 filas:", inscData.slice(0, 3));
+          console.log("[useSlots] jugador_ids únicos en filas:", [...new Set(inscData.map((i) => i.jugador_id))]);
           const propias = inscData.filter((i) => normalizeJugadorUuid(i.jugador_id) === userId);
-          console.log("[useSlots] filas propias (jugador_id === userId):", propias.length, propias);
+          console.log("[useSlots] filas propias (normalizeJugadorUuid(jugador_id) === userId):", propias.length, propias);
         }
 
         if (inscErr) {
