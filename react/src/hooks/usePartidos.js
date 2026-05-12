@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PARTIDOS_INICIALES } from "../utils/mockData";
 import { supabase } from "../lib/supabase";
 import { createActivityLog, createNotifications } from "../lib/engagement";
@@ -74,7 +74,7 @@ async function reindexPista(pistaId) {
 }
 
 export function usePartidos(currentUser) {
-  const [partidos, setPartidos] = useState(PARTIDOS_INICIALES);
+  const [partidos, setPartidos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const useFallback =
@@ -84,7 +84,7 @@ export function usePartidos(currentUser) {
     !isJugadorUuid(currentUser.id);
   const remindersSentRef = useRef(new Set());
 
-  async function loadPartidos() {
+  const loadPartidos = useCallback(async () => {
     if (useFallback) return { ok: false, skipped: true };
     setLoading(true);
     setError("");
@@ -104,21 +104,26 @@ export function usePartidos(currentUser) {
     const flat = flattenPartidos(data);
     setPartidos((prev) => {
       if (flat.length > 0) return flat;
-      const hadPersisted = prev.some((p) => p.partidoGeneradoId != null);
-      if (hadPersisted) {
+      if (prev.length > 0) {
         console.warn(
-          "[loadPartidos] La query devolvió partidos_generados pero 0 pistas/jugadores en el árbol; se mantiene estado local (revisa embed RLS o activo en jugadores)."
+          "[loadPartidos] La query devolvió 0 pistas; se mantiene el último estado local para evitar vaciar Resultados durante una recarga."
         );
         return prev;
       }
       return flat;
     });
     return { ok: true, count: flat.length };
-  }
+  }, [useFallback]);
 
   useEffect(() => {
-    loadPartidos();
-  }, [useFallback]);
+    if (useFallback) {
+      setPartidos(PARTIDOS_INICIALES);
+      setLoading(false);
+      setError("");
+      return;
+    }
+    void loadPartidos();
+  }, [loadPartidos, useFallback]);
 
   useEffect(() => {
     if (useFallback || !currentUser?.es_coordinador) return;
@@ -154,7 +159,7 @@ export function usePartidos(currentUser) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [useFallback]);
+  }, [loadPartidos, useFallback]);
 
   const partidosAgrupados = useMemo(() => {
     const map = {};

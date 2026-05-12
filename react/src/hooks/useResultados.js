@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { createActivityLog, createNotifications } from "../lib/engagement";
 import { isJugadorUuid, jugadoresCoinciden, normalizeJugadorUuid } from "../utils/jugador";
@@ -26,6 +26,7 @@ export function useResultados(partidos, currentUser, isCoord) {
   const [resultados, setResultados] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const latestPistaIdsKeyRef = useRef("");
 
   const useFallback =
     !supabase ||
@@ -33,32 +34,39 @@ export function useResultados(partidos, currentUser, isCoord) {
     currentUser.fromFallback === true ||
     !isJugadorUuid(currentUser.id);
 
-  const pistaIdsKey = partidos.map((p) => p.id).sort().join("|");
+  const pistaIds = useMemo(() => partidos.map((p) => p.id).filter(Boolean), [partidos]);
+  const pistaIdsKey = useMemo(() => [...pistaIds].sort().join("|"), [pistaIds]);
+  latestPistaIdsKeyRef.current = pistaIdsKey;
 
-  async function loadResultados() {
-    if (useFallback || partidos.length === 0) {
+  const loadResultados = useCallback(async () => {
+    if (useFallback) {
       setResultados([]);
       return;
     }
+    if (pistaIds.length === 0) {
+      setLoading(false);
+      return;
+    }
+    const requestKey = pistaIdsKey;
     setLoading(true);
     setError("");
-    const pistaIds = partidos.map((p) => p.id);
     const { data, error: fetchError } = await supabase
       .from("resultados")
       .select("id,pista_id,fecha,set1_p1,set1_p2,set2_p1,set2_p2,set3_p1,set3_p2,introducido_por,validado_por,validado_at")
       .in("pista_id", pistaIds)
       .order("fecha", { ascending: false });
+    if (latestPistaIdsKeyRef.current !== requestKey) return;
     setLoading(false);
     if (fetchError) {
       setError(fetchError.message);
       return;
     }
     setResultados(data ?? []);
-  }
+  }, [pistaIds, pistaIdsKey, useFallback]);
 
   useEffect(() => {
-    loadResultados();
-  }, [useFallback, pistaIdsKey]);
+    void loadResultados();
+  }, [loadResultados]);
 
   useEffect(() => {
     if (useFallback) return undefined;
@@ -69,7 +77,7 @@ export function useResultados(partidos, currentUser, isCoord) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [useFallback]);
+  }, [loadResultados, useFallback]);
 
   function getResultado(pistaId, fecha) {
     return resultados.find((r) => r.pista_id === pistaId && r.fecha === fecha) ?? null;
