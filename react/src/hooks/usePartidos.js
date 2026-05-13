@@ -80,6 +80,47 @@ function groupsOf4(jugadoresOrdenados) {
   return groups;
 }
 
+async function borrarPartidosGeneradosSlotSemana(slotId, semanaNorm) {
+  const { data: existing, error: fetchErr } = await supabase
+    .from("partidos_generados")
+    .select("id")
+    .eq("slot_id", slotId)
+    .eq("semana", semanaNorm)
+    .maybeSingle();
+  if (fetchErr) return { ok: false, error: fetchErr.message };
+  if (!existing?.id) return { ok: true, deleted: false };
+
+  const partidoGeneradoId = existing.id;
+
+  const { data: pistas, error: pistasErr } = await supabase
+    .from("pistas_partido")
+    .select("id")
+    .eq("partido_generado_id", partidoGeneradoId);
+  if (pistasErr) return { ok: false, error: pistasErr.message };
+
+  const pistaIds = (pistas ?? []).map((p) => p.id).filter(Boolean);
+
+  if (pistaIds.length) {
+    const { error: jpErr } = await supabase.from("jugadores_pista").delete().in("pista_id", pistaIds);
+    if (jpErr) return { ok: false, error: jpErr.message };
+  }
+
+  const { error: ppErr } = await supabase
+    .from("pistas_partido")
+    .delete()
+    .eq("partido_generado_id", partidoGeneradoId);
+  if (ppErr) return { ok: false, error: ppErr.message };
+
+  const { error: pgErr } = await supabase
+    .from("partidos_generados")
+    .delete()
+    .eq("slot_id", slotId)
+    .eq("semana", semanaNorm);
+  if (pgErr) return { ok: false, error: pgErr.message };
+
+  return { ok: true, deleted: true };
+}
+
 async function reindexPista(pistaId) {
   const { data, error } = await supabase
     .from("jugadores_pista")
@@ -313,37 +354,23 @@ export function usePartidos(currentUser) {
     const grupos = groupsOf4(titulares);
     if (!grupos.length) return { ok: false, error: "No hay suficientes jugadores para generar pistas de 4." };
 
-    const { data: prevGenerated } = await supabase
-      .from("partidos_generados")
-      .select("id")
-      .eq("slot_id", slotId)
-      .eq("semana", semanaNorm)
-      .maybeSingle();
+    const delRes = await borrarPartidosGeneradosSlotSemana(slotId, semanaNorm);
+    if (!delRes.ok) return { ok: false, error: delRes.error };
 
-    const { data: upserted, error: pgError } = await supabase
+    const { data: inserted, error: pgError } = await supabase
       .from("partidos_generados")
-      .upsert(
-        {
-          slot_id: slotId,
-          semana: semanaNorm,
-          num_pistas: grupos.length,
-          num_indoor: Math.max(0, Math.min(Number(numIndoor || 0), grupos.length)),
-          generado_por: currentUserId
-        },
-        { onConflict: "slot_id,semana" }
-      )
+      .insert({
+        slot_id: slotId,
+        semana: semanaNorm,
+        num_pistas: grupos.length,
+        num_indoor: Math.max(0, Math.min(Number(numIndoor || 0), grupos.length)),
+        generado_por: currentUserId
+      })
       .select("id")
       .single();
     if (pgError) return { ok: false, error: pgError.message };
 
-    const partidoGeneradoId = upserted.id;
-    const { data: oldPistas } = await supabase
-      .from("pistas_partido")
-      .select("id")
-      .eq("partido_generado_id", partidoGeneradoId);
-    if (oldPistas?.length) {
-      await supabase.from("pistas_partido").delete().eq("partido_generado_id", partidoGeneradoId);
-    }
+    const partidoGeneradoId = inserted.id;
 
     const indoorCount = Math.max(0, Math.min(Number(numIndoor || 0), grupos.length));
     const indexes = [...Array(grupos.length).keys()];
@@ -411,7 +438,7 @@ export function usePartidos(currentUser) {
     if (loadRes && loadRes.ok === false && loadRes.error) {
       console.warn("[generarPartidos] loadPartidos falló tras insertar; UI usa filas optimistas.", loadRes.error);
     }
-    const generatedType = prevGenerated?.id ? "Regeneracion de partidos" : "Partidos generados";
+    const generatedType = delRes.deleted ? "Regeneracion de partidos" : "Partidos generados";
     await createActivityLog({
       jugadorId: currentUserId,
       tipo: "partidos",
