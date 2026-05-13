@@ -19,6 +19,34 @@ export function sameDiaSemanaSlot(a, b) {
   return da === db;
 }
 
+/** Parsea hora_cierre (time de Postgres: "HH:MM" o "HH:MM:SS"). */
+function parseHoraCierreMinutos(horaCierre) {
+  if (horaCierre == null || horaCierre === "") return null;
+  const m = String(horaCierre).match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  return Number(m[1]) * 60 + Number(m[2]);
+}
+
+function startOfLocalDay(d) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+/** Fecha calendario local del día del slot dentro de la semana (lunes = semanaObjetivo). */
+function dateFromSemanaObjetivo(semanaObjetivo, diaSemana) {
+  const [y, m, day] = semanaObjetivo.split("-").map(Number);
+  const monday = new Date(y, m - 1, day);
+  const slotDay = new Date(monday);
+  slotDay.setDate(monday.getDate() + diaSemana);
+  return startOfLocalDay(slotDay);
+}
+
+function isPastHoraCierre(horaCierre, now) {
+  const closeMins = parseHoraCierreMinutos(horaCierre);
+  if (closeMins == null) return false;
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  return nowMins >= closeMins;
+}
+
 /**
  * ¿Está abierta la lista de la semana próxima?
  * Cada slot abre exactamente 7 días antes, el mismo día de la semana a las 19:00h.
@@ -35,11 +63,32 @@ export function isNextWeekSlotOpen(slot, now = new Date()) {
 
 /**
  * ¿Lista abierta para apuntarse?
- * - Semana actual: todos los días están siempre abiertos.
- * - Semana próxima: usar `isNextWeekSlotOpen` cuando haga falta distinguirla.
+ * - Día del slot ya pasado (en la semana objetivo): cerrada.
+ * - Día del slot es hoy: cerrada si la hora actual supera hora_cierre.
+ * - Día futuro, semana próxima: abre 7 días antes el mismo día de la semana a las 19:00h.
+ * - Día futuro, semana actual: abierta.
  */
 export function isSlotOpen(slot, options = {}) {
-  if (options.semana === "proxima") return isNextWeekSlotOpen(slot, options.now);
+  const now = options.now ?? new Date();
+  const ds = normalizeDiaSemana(slot);
+  if (ds == null) return true;
+
+  const horaCierre = slot.horaCierre ?? slot.hora_cierre;
+  const semanaObjetivo = options.semanaObjetivo;
+
+  if (semanaObjetivo) {
+    const slotDay = dateFromSemanaObjetivo(semanaObjetivo, ds);
+    const today = startOfLocalDay(now);
+
+    if (today > slotDay) return false;
+    if (today.getTime() === slotDay.getTime()) {
+      return !isPastHoraCierre(horaCierre, now);
+    }
+    if (options.semana === "proxima") return isNextWeekSlotOpen(slot, now);
+    return true;
+  }
+
+  if (options.semana === "proxima") return isNextWeekSlotOpen(slot, now);
   return true;
 }
 

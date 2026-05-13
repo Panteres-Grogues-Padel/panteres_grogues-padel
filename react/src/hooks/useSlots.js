@@ -88,7 +88,7 @@ export function useSlots(currentUser, authEpoch = 0) {
         // Cargar definiciones de slots
         const { data: slotsData, error: slotsErr } = await supabase
           .from("slots")
-          .select("id,label,club,dia_semana,pistas_default,pistas_activo")
+          .select("id,label,club,dia_semana,pistas_default,pistas_activo,hora_cierre")
           .eq("activo", true)
           .order("dia_semana", { ascending: true })
           .order("id", { ascending: true });
@@ -106,6 +106,7 @@ export function useSlots(currentUser, authEpoch = 0) {
               label: s.label,
               club: s.club,
               diaSemana: s.dia_semana,
+              horaCierre: s.hora_cierre ?? null,
               pistas: Number(s.pistas_activo ?? 0),
               pistasDefault: Number(s.pistas_default ?? 0),
               jugadores: []
@@ -194,13 +195,12 @@ export function useSlots(currentUser, authEpoch = 0) {
     const lunesProximo = formatDateUTC(addDaysUtc(lunes, 7));
 
     return slots.map((slot) => {
-      const semanaObjetivo = isNextWeekSlotOpen({ diaSemana: slot.diaSemana }, now)
-        ? lunesProximo
-        : lunesActual;
+      const esProxima = isNextWeekSlotOpen({ diaSemana: slot.diaSemana }, now);
+      const semanaObjetivo = esProxima ? lunesProximo : lunesActual;
       const jugadores = inscritosPorSlotSemana(slot.id, semanaObjetivo);
       return {
         ...slot,
-        abierto: isSlotOpen({ diaSemana: slot.diaSemana }),
+        abierto: isSlotOpen(slot, { semana: esProxima ? "proxima" : "actual", semanaObjetivo, now }),
         bajaWarning: isBajaWarning({ diaSemana: slot.diaSemana }),
         semanaObjetivo,
         jugadores,
@@ -226,7 +226,7 @@ export function useSlots(currentUser, authEpoch = 0) {
         baseId: slot.id,
         semana: "actual",
         semanaObjetivo: lunesActual,
-        abierto: true,
+        abierto: isSlotOpen(slot, { semana: "actual", semanaObjetivo: lunesActual, now }),
         bajaWarning: isBajaWarning({ diaSemana: slot.diaSemana }),
         jugadores: jActual,
         sociosCount: jActual.filter((p) => p.socio).length,
@@ -240,7 +240,7 @@ export function useSlots(currentUser, authEpoch = 0) {
         baseId: slot.id,
         semana: "proxima",
         semanaObjetivo: lunesProximo,
-        abierto: isNextWeekSlotOpen({ diaSemana: slot.diaSemana }, now),
+        abierto: isSlotOpen(slot, { semana: "proxima", semanaObjetivo: lunesProximo, now }),
         bajaWarning: false,
         jugadores: jProxima,
         sociosCount: jProxima.filter((p) => p.socio).length,
