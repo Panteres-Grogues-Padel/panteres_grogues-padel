@@ -118,6 +118,8 @@ export function useSlots(currentUser, authEpoch = 0) {
         const desde = formatDateUTC(addDaysUtc(lunes, -14));
         const hasta = formatDateUTC(addDaysUtc(lunes, 28));
 
+        console.log("[debug] rango SELECT:", desde, "→", hasta);
+
         const { data: inscData, error: inscErr } = await supabase
           .from("inscripciones")
           .select("id,jugador_id,slot_id,semana,es_socio,inscrito_at")
