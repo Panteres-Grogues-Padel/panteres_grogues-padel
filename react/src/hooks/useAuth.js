@@ -9,6 +9,7 @@ function jugadorToState(jugador) {
   return {
     ...jugador,
     id: jugador.id != null ? String(jugador.id) : jugador.id,
+    auth_id: jugador.auth_id ?? null,
     nombreCompleto: jugador.nombre_completo,
     fromFallback: false
   };
@@ -22,6 +23,8 @@ export function useAuth() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [demoId, setDemoId] = useState("");
+  /** Incrementa en cada login/logout para que useSlots vuelva a cargar inscripciones. */
+  const [authEpoch, setAuthEpoch] = useState(0);
   const ultimoAuthIdCargadoRef = useRef(null);
 
   const demoUsers = useMemo(
@@ -49,10 +52,11 @@ export function useAuth() {
       ultimoAuthIdCargadoRef.current = null;
       setCurrentUser(null);
       setError("");
+      setAuthEpoch((n) => n + 1);
       return;
     }
 
-    if (ultimoAuthIdCargadoRef.current === authUser.id) return;
+    const mismoAuthId = ultimoAuthIdCargadoRef.current === authUser.id;
 
     setLoading(true);
     try {
@@ -67,6 +71,7 @@ export function useAuth() {
       setError("");
       setCurrentUser(jugadorToState(result.jugador));
       ultimoAuthIdCargadoRef.current = authUser.id;
+      if (!mismoAuthId) setAuthEpoch((n) => n + 1);
     } catch (e) {
       setError(e?.message ?? "Error de conexion.");
       setCurrentUser(null);
@@ -96,6 +101,7 @@ export function useAuth() {
         setCurrentUser(null);
         setError("");
         setLoading(false);
+        setAuthEpoch((n) => n + 1);
       }
     });
 
@@ -157,6 +163,7 @@ export function useAuth() {
       setError("");
       setCurrentUser(jugadorToState(result.jugador));
       ultimoAuthIdCargadoRef.current = authUser.id;
+      setAuthEpoch((n) => n + 1);
     } catch (e) {
       setError(e?.message ?? "Error de conexion al iniciar sesion.");
       ultimoAuthIdCargadoRef.current = null;
@@ -205,6 +212,7 @@ export function useAuth() {
 
   async function logout() {
     ultimoAuthIdCargadoRef.current = null;
+    setAuthEpoch((n) => n + 1);
     setLoading(false);
     setCurrentUser(null);
     setPassword("");
@@ -221,6 +229,7 @@ export function useAuth() {
 
   return {
     currentUser,
+    authEpoch,
     email,
     setEmail,
     password,

@@ -58,7 +58,7 @@ async function cargarNombres(rows) {
 
 // --- Hook ---
 
-export function useSlots(currentUser) {
+export function useSlots(currentUser, authEpoch = 0) {
   const [slots, setSlots] = useState([]);
   const [inscripciones, setInscripciones] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -118,9 +118,6 @@ export function useSlots(currentUser) {
         const desde = formatDateUTC(addDaysUtc(lunes, -14));
         const hasta = formatDateUTC(addDaysUtc(lunes, 28));
 
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
-
         const { data: inscData, error: inscErr } = await supabase
           .from("inscripciones")
           .select("id,jugador_id,slot_id,semana,es_socio,inscrito_at")
@@ -148,7 +145,20 @@ export function useSlots(currentUser) {
     return () => {
       cancelled = true;
     };
-  }, [userId, currentUser?.auth_id]);
+  }, [userId, currentUser?.auth_id, authEpoch]);
+
+  useEffect(() => {
+    if (!supabase || !isJugadorUuid(userId)) return undefined;
+
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session || (event !== "SIGNED_IN" && event !== "INITIAL_SESSION" && event !== "TOKEN_REFRESHED")) {
+        return;
+      }
+      void reloadInscripciones();
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }, [userId, authEpoch]);
 
   // --- Helpers compartidos entre memos ---
 
