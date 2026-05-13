@@ -9,6 +9,28 @@ function strId(id) {
   return id == null ? id : String(id);
 }
 
+function partidoPistaKey(p) {
+  return String(p.pistaId ?? p.id);
+}
+
+/** Una fila por pista; evita duplicados por cargas concurrentes o merges repetidos. */
+function dedupePartidos(items) {
+  const byPista = new Map();
+  for (const p of items ?? []) {
+    byPista.set(partidoPistaKey(p), p);
+  }
+  return [...byPista.values()];
+}
+
+function mergePartidosSlot(prev, slotId, semana, incoming) {
+  const semanaNorm = normalizeSemanaDate(semana);
+  const sid = String(slotId);
+  const rest = prev.filter(
+    (p) => !(String(p.slotId) === sid && normalizeSemanaDate(p.semana) === semanaNorm)
+  );
+  return dedupePartidos([...incoming, ...rest]);
+}
+
 function flattenPartidos(data) {
   const items = [];
   (data ?? []).forEach((pg) => {
@@ -83,6 +105,7 @@ export function usePartidos(currentUser) {
     currentUser.fromFallback === true ||
     !isJugadorUuid(currentUser.id);
   const remindersSentRef = useRef(new Set());
+  const slotLoadGenRef = useRef(0);
 
   const loadPartidos = useCallback(async () => {
     if (useFallback) return { ok: false, skipped: true };
@@ -101,7 +124,7 @@ export function usePartidos(currentUser) {
       console.warn("[loadPartidos] error", fetchError.message);
       return { ok: false, error: fetchError.message };
     }
-    const flat = flattenPartidos(data);
+    const flat = dedupePartidos(flattenPartidos(data));
     setPartidos((prev) => {
       if (flat.length > 0) return flat;
       if (prev.length > 0) {
@@ -119,6 +142,7 @@ export function usePartidos(currentUser) {
     async (slotId, semana) => {
       if (useFallback || !slotId) return { ok: false, skipped: true };
       const semanaNorm = normalizeSemanaDate(semana);
+      const gen = ++slotLoadGenRef.current;
       setLoading(true);
       setError("");
       const { data, error: fetchError } = await supabase
@@ -129,6 +153,10 @@ export function usePartidos(currentUser) {
         .eq("slot_id", slotId)
         .eq("semana", semanaNorm);
 
+      if (gen !== slotLoadGenRef.current) {
+        return { ok: false, skipped: true };
+      }
+
       setLoading(false);
       if (fetchError) {
         setError(fetchError.message);
@@ -136,13 +164,8 @@ export function usePartidos(currentUser) {
       }
 
       const rows = Array.isArray(data) ? data : data ? [data] : [];
-      const flat = flattenPartidos(rows);
-      setPartidos((prev) => {
-        const rest = prev.filter(
-          (p) => !(String(p.slotId) === String(slotId) && normalizeSemanaDate(p.semana) === semanaNorm)
-        );
-        return [...flat, ...rest];
-      });
+      const flat = dedupePartidos(flattenPartidos(rows));
+      setPartidos((prev) => mergePartidosSlot(prev, slotId, semanaNorm, flat));
       return { ok: true, count: flat.length };
     },
     [useFallback]
@@ -382,12 +405,7 @@ export function usePartidos(currentUser) {
       }))
     }));
 
-    setPartidos((prev) => {
-      const filtered = prev.filter(
-        (p) => !(String(p.slotId) === String(slotId) && normalizeSemanaDate(p.semana) === semanaNorm)
-      );
-      return [...optItems, ...filtered];
-    });
+    setPartidos((prev) => mergePartidosSlot(prev, slotId, semanaNorm, optItems));
 
     const loadRes = await loadPartidos();
     if (loadRes && loadRes.ok === false && loadRes.error) {

@@ -55,13 +55,16 @@ export default function Partidos({
   const slotActual = useMemo(() => slots.find((s) => s.id === slotId), [slots, slotId]);
   const semNorm = normalizeSemanaDate(semanaActual);
 
-  const partidosFiltrados = useMemo(
-    () =>
-      partidos.filter(
-        (p) => p.slotId === slotId && (!semNorm || normalizeSemanaDate(p.semana) === semNorm)
-      ),
-    [partidos, slotId, semNorm]
-  );
+  const partidosFiltrados = useMemo(() => {
+    const sid = String(slotId);
+    const seen = new Map();
+    for (const p of partidos) {
+      if (String(p.slotId) !== sid) continue;
+      if (semNorm && normalizeSemanaDate(p.semana) !== semNorm) continue;
+      seen.set(String(p.pistaId ?? p.id), p);
+    }
+    return [...seen.values()];
+  }, [partidos, slotId, semNorm]);
 
   const rankingPosByJugador = useMemo(() => {
     const map = {};
