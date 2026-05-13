@@ -22,6 +22,7 @@ export default function Partidos({
   currentUser,
   onGenerar,
   onLoadSlot,
+  reloadEpoch = 0,
   onHora,
   onIndoor,
   onMover,
@@ -42,7 +43,7 @@ export default function Partidos({
   useEffect(() => {
     if (!slotId || !onLoadSlot) return;
     void onLoadSlot(slotId, semanaActual);
-  }, [slotId, semanaActual, onLoadSlot]);
+  }, [slotId, semanaActual, onLoadSlot, reloadEpoch]);
 
   const slotActual = useMemo(() => slots.find((s) => s.id === slotId), [slots, slotId]);
   const semNorm = normalizeSemanaDate(semanaActual);
