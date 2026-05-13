@@ -165,7 +165,6 @@ export default function App() {
               partidos={partidos}
               onGenerar={handleGenerar}
               onLoadSlot={loadPartidosForSlot}
-              reloadEpoch={auth.authEpoch}
               onHora={async (id, hora) => {
                 const res = await asignarHora(id, hora);
                 if (!res.ok) showMessage(res.error);

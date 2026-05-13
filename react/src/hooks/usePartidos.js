@@ -189,9 +189,6 @@ export function usePartidos(currentUser) {
       if (useFallback || !slotId) return { ok: false, skipped: true };
       const semanaNorm = normalizeSemanaDate(semana);
       const gen = ++slotLoadGenRef.current;
-
-      setPartidos((prev) => mergePartidosSlot(prev, slotId, semanaNorm, []));
-
       setLoading(true);
       setError("");
       const { data, error: fetchError } = await supabase.rpc("get_partidos_generados", {
