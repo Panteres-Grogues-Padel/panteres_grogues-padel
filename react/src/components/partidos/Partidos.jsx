@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import PartidoCard from "./PartidoCard";
 import MoverJugador from "./MoverJugador";
 import { copyTextToClipboard } from "../../utils/clipboard";
-import { formatHoraInput, getLunesSemanaActual, normalizeSemanaDate, puedeGenerarPartidos } from "../../utils/dates";
+import { formatHoraInput, getLunesSemanaActual, normalizeSemanaDate } from "../../utils/dates";
 
 function jugadoresOrdenRanking(jugadores, rankingPosByJugador) {
   const copy = [...jugadores];
@@ -75,10 +75,7 @@ export default function Partidos({
   }, [ranking]);
 
   const yaGenerado = partidosFiltrados.length > 0;
-  const puedeGenerar = useMemo(
-    () => puedeGenerarPartidos(semanaActual, slotActual?.diaSemana),
-    [semanaActual, slotActual?.diaSemana]
-  );
+  const hayInscritos = (slotActual?.jugadores?.length ?? 0) > 0;
 
   function handleGenerarClick(regenerar) {
     if (!slotId || !semanaActual) return;
@@ -199,7 +196,7 @@ export default function Partidos({
             <button type="button" className="btn btn-primary btn-sm btn-block" onClick={() => handleGenerarClick(true)}>
               Regenerar partidos
             </button>
-          ) : puedeGenerar ? (
+          ) : hayInscritos ? (
             <button type="button" className="btn btn-primary btn-sm btn-block" onClick={() => handleGenerarClick(false)}>
               Generar partidos
             </button>
