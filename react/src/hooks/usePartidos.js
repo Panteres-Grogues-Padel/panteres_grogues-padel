@@ -56,6 +56,8 @@ function flattenPartidos(data) {
         club: pg.slots?.club ?? "",
         diaSemana: pg.slots?.dia_semana ?? null,
         semana: normalizeSemanaDate(pg.semana),
+        numPistasGenerado: Number(pg.num_pistas ?? 0),
+        numIndoorGenerado: Number(pg.num_indoor ?? 0),
         indoor: Boolean(pista.es_indoor),
         hora: formatHoraInput(pista.hora),
         jugadores: jugadoresOrdenados
@@ -155,7 +157,7 @@ export function usePartidos(currentUser) {
     const { data, error: fetchError } = await supabase
       .from("partidos_generados")
       .select(
-        "id,slot_id,semana,pistas_partido(id,numero_pista,hora,es_indoor,jugadores_pista(id,jugador_id,posicion,confirmado,jugadores(nombre,nombre_completo))),slots(label,club,dia_semana)"
+        "id,slot_id,semana,num_pistas,num_indoor,pistas_partido(id,numero_pista,hora,es_indoor,jugadores_pista(id,jugador_id,posicion,confirmado,jugadores(nombre,nombre_completo))),slots(label,club,dia_semana)"
       )
       .order("semana", { ascending: false });
 
@@ -189,7 +191,7 @@ export function usePartidos(currentUser) {
       const { data, error: fetchError } = await supabase
         .from("partidos_generados")
         .select(
-          "id,slot_id,semana,pistas_partido(id,numero_pista,hora,es_indoor,jugadores_pista(id,jugador_id,posicion,confirmado,jugadores(nombre,nombre_completo))),slots(label,club,dia_semana)"
+          "id,slot_id,semana,num_pistas,num_indoor,pistas_partido(id,numero_pista,hora,es_indoor,jugadores_pista(id,jugador_id,posicion,confirmado,jugadores(nombre,nombre_completo))),slots(label,club,dia_semana)"
         )
         .eq("slot_id", slotId)
         .eq("semana", semanaNorm);
@@ -420,6 +422,8 @@ export function usePartidos(currentUser) {
       club: slotMeta?.club ?? "",
       diaSemana: slotMeta?.diaSemana ?? null,
       semana: semanaNorm,
+      numPistasGenerado: grupos.length,
+      numIndoorGenerado: indoorCount,
       indoor: pc.esIndoor,
       hora: "",
       jugadores: pc.grupo.map((j, idx) => ({

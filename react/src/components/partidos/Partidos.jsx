@@ -40,14 +40,6 @@ export default function Partidos({
   }, [slotId, slots]);
 
   useEffect(() => {
-    const slot = slots.find((s) => s.id === slotId);
-    if (slot) {
-      setNumPistas(slot.pistas ?? 0);
-      setNumIndoor(0);
-    }
-  }, [slotId, slots]);
-
-  useEffect(() => {
     if (!slotId || !onLoadSlot) return;
     void onLoadSlot(slotId, semanaActual);
   }, [slotId, semanaActual, onLoadSlot]);
@@ -65,6 +57,19 @@ export default function Partidos({
     }
     return [...seen.values()];
   }, [partidos, slotId, semNorm]);
+
+  useEffect(() => {
+    const slot = slots.find((s) => s.id === slotId);
+    if (!slot) return;
+    if (partidosFiltrados.length > 0) {
+      const generado = partidosFiltrados[0];
+      setNumPistas(Number(generado.numPistasGenerado ?? partidosFiltrados.length));
+      setNumIndoor(Number(generado.numIndoorGenerado ?? 0));
+    } else {
+      setNumPistas(Number(slot.pistasDefault ?? slot.pistas ?? 0));
+      setNumIndoor(0);
+    }
+  }, [slotId, slots, partidosFiltrados]);
 
   const rankingPosByJugador = useMemo(() => {
     const map = {};
