@@ -120,15 +120,10 @@ export function useSlots(currentUser, authEpoch = 0) {
 
         console.log("[debug] rango SELECT:", desde, "→", hasta);
 
-        const { data: inscData, error: inscErr } = await supabase
-          .from("inscripciones")
-          .select("id,jugador_id,slot_id,semana,es_socio,inscrito_at")
-          .gte("semana", desde)
-          .lte("semana", hasta)
-          .order("inscrito_at", { ascending: true, nullsFirst: true })
-          .order("id", { ascending: true })
-          .limit(1000)
-          .gte("inscrito_at", "1970-01-01");
+        const { data: inscData, error: inscErr } = await supabase.rpc("get_inscripciones", {
+          p_desde: desde,
+          p_hasta: hasta
+        });
 
         console.log("[debug] data cruda de Supabase:", JSON.stringify(inscData));
         console.log("[debug] userId actual:", userId);
@@ -262,14 +257,10 @@ export function useSlots(currentUser, authEpoch = 0) {
     const lunes = getMondayUtc(new Date());
     const desde = formatDateUTC(addDaysUtc(lunes, -14));
     const hasta = formatDateUTC(addDaysUtc(lunes, 28));
-    const { data, error } = await supabase
-      .from("inscripciones")
-      .select("id,jugador_id,slot_id,semana,es_socio,inscrito_at")
-      .gte("semana", desde)
-      .lte("semana", hasta)
-      .order("inscrito_at", { ascending: true, nullsFirst: true })
-      .order("id", { ascending: true })
-      .limit(1000);
+    const { data, error } = await supabase.rpc("get_inscripciones", {
+      p_desde: desde,
+      p_hasta: hasta
+    });
     if (!error) {
       const conNombres = await cargarNombres(data ?? []);
       setInscripciones(conNombres);
