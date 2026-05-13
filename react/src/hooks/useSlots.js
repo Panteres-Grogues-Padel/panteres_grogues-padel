@@ -127,6 +127,9 @@ export function useSlots(currentUser, authEpoch = 0) {
           .order("id", { ascending: true })
           .limit(1000);
 
+        console.log("[debug] data cruda de Supabase:", JSON.stringify(inscData));
+        console.log("[debug] userId actual:", userId);
+
         if (cancelled) return;
 
         if (inscErr) {
