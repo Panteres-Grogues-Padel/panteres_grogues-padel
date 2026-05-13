@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PartidoCard from "./PartidoCard";
 import MoverJugador from "./MoverJugador";
 import { copyTextToClipboard } from "../../utils/clipboard";
-import { formatHoraInput, normalizeSemanaDate } from "../../utils/dates";
+import { formatHoraInput, getLunesSemanaActual, normalizeSemanaDate, puedeGenerarPartidos } from "../../utils/dates";
 
 function jugadoresOrdenRanking(jugadores, rankingPosByJugador) {
   const copy = [...jugadores];
@@ -21,6 +21,7 @@ export default function Partidos({
   ranking,
   currentUser,
   onGenerar,
+  onLoadSlot,
   onHora,
   onIndoor,
   onMover,
@@ -28,31 +29,14 @@ export default function Partidos({
   isCoord
 }) {
   const [slotId, setSlotId] = useState(slots[0]?.id ?? "");
-  const [semana, setSemana] = useState(slots[0]?.semanaObjetivo ?? "");
   const [numPistas, setNumPistas] = useState(0);
   const [numIndoor, setNumIndoor] = useState(0);
   const [moverState, setMoverState] = useState({ open: false, origen: null, jugador: null });
-  const slotIdAnteriorRef = useRef(null);
 
-  const semanasDisponibles = useMemo(() => {
-    const set = new Set([
-      ...slots.map((s) => s.semanaObjetivo).filter(Boolean),
-      ...partidos.map((p) => p.semana).filter(Boolean)
-    ]);
-    return [...set].sort();
-  }, [slots, partidos]);
+  const semanaActual = useMemo(() => getLunesSemanaActual(), []);
 
   useEffect(() => {
     if (!slotId && slots.length) setSlotId(slots[0].id);
-  }, [slotId, slots]);
-
-  /** Misma semana que alta en Jugar: `getSemanaObjetivo` en useSlots (no dejar la semana del slot anterior en el desplegable). */
-  useEffect(() => {
-    if (!slotId) return;
-    if (slotIdAnteriorRef.current === slotId) return;
-    slotIdAnteriorRef.current = slotId;
-    const slot = slots.find((s) => s.id === slotId);
-    if (slot?.semanaObjetivo) setSemana(slot.semanaObjetivo);
   }, [slotId, slots]);
 
   useEffect(() => {
@@ -64,18 +48,21 @@ export default function Partidos({
   }, [slotId, slots]);
 
   useEffect(() => {
-    if (!semana && semanasDisponibles.length) setSemana(semanasDisponibles[0]);
-  }, [semana, semanasDisponibles]);
+    if (!slotId || !onLoadSlot) return;
+    void onLoadSlot(slotId, semanaActual);
+  }, [slotId, semanaActual, onLoadSlot]);
 
   const slotActual = useMemo(() => slots.find((s) => s.id === slotId), [slots, slotId]);
-  const partidosFiltrados = useMemo(() => {
-    const semNorm = normalizeSemanaDate(semana);
-    return partidos.filter((p) => {
-      if (p.slotId !== slotId) return false;
-      if (!semana || !semNorm) return true;
-      return normalizeSemanaDate(p.semana) === semNorm;
-    });
-  }, [partidos, slotId, semana]);
+  const semNorm = normalizeSemanaDate(semanaActual);
+
+  const partidosFiltrados = useMemo(
+    () =>
+      partidos.filter(
+        (p) => p.slotId === slotId && (!semNorm || normalizeSemanaDate(p.semana) === semNorm)
+      ),
+    [partidos, slotId, semNorm]
+  );
+
   const rankingPosByJugador = useMemo(() => {
     const map = {};
     (ranking ?? []).forEach((r, idx) => {
@@ -84,31 +71,30 @@ export default function Partidos({
     return map;
   }, [ranking]);
 
-  const yaGenerado = useMemo(
-    () => partidosFiltrados.length > 0,
-    [partidos, slotId, semana]
+  const yaGenerado = partidosFiltrados.length > 0;
+  const puedeGenerar = useMemo(
+    () => puedeGenerarPartidos(semanaActual, slotActual?.diaSemana),
+    [semanaActual, slotActual?.diaSemana]
   );
 
-  function handleGenerarClick() {
-    if (!slotId || !semana) {
-      console.warn("[Partidos] Generar cancelado: falta slotId o semana", { slotId, semana });
-      return;
-    }
-    if (yaGenerado) {
-      const ok = window.confirm("Ya existen partidos para ese slot y semana. ¿Regenerar?");
+  function handleGenerarClick(regenerar) {
+    if (!slotId || !semanaActual) return;
+    if (regenerar) {
+      const ok = window.confirm("¿Regenerar los partidos de esta semana?");
       if (!ok) return;
     }
-    onGenerar(slotId, semana, { numPistas, numIndoor });
+    onGenerar(slotId, semanaActual, { numPistas, numIndoor });
   }
 
   const reservas = useMemo(() => {
     if (!slotActual) return [];
     const idsAsignados = new Set(partidosFiltrados.flatMap((p) => p.jugadores.map((j) => j.jugadorId)));
-    const candidates = (ranking ?? []).filter((r) => slotActual.jugadores?.some((j) => j.nombre === r.nombre && !idsAsignados.has(r.id)));
+    const candidates = (ranking ?? []).filter((r) =>
+      slotActual.jugadores?.some((j) => j.nombre === r.nombre && !idsAsignados.has(r.id))
+    );
     return candidates;
   }, [slotActual, partidosFiltrados, ranking]);
 
-  /** Misma estructura que `buildWA` en index.html; hora solo si existe; indoor solo la palabra "Indoor" (sin iconos). */
   function buildWaText() {
     if (!slotActual || !partidosFiltrados.length) return "";
     const ordenados = [...partidosFiltrados].sort((a, b) => (a.numeroPista ?? 0) - (b.numeroPista ?? 0));
@@ -150,7 +136,19 @@ export default function Partidos({
     <div>
       <h2 className="section-title">Partidos</h2>
       <div id="partidos-days">
-        <select value={slotId} onChange={(e) => setSlotId(e.target.value)} style={{ fontSize: "14px", fontWeight: 600, height: "46px", borderColor: "var(--border2)", background: "var(--bg)", width: "100%", marginBottom: "1rem" }}>
+        <select
+          value={slotId}
+          onChange={(e) => setSlotId(e.target.value)}
+          style={{
+            fontSize: "14px",
+            fontWeight: 600,
+            height: "46px",
+            borderColor: "var(--border2)",
+            background: "var(--bg)",
+            width: "100%",
+            marginBottom: "1rem"
+          }}
+        >
           {slots.map((slot) => (
             <option key={slot.id} value={slot.id}>
               {slot.label} — {slot.club} ({slot.jugadores?.length ?? 0})
@@ -163,6 +161,9 @@ export default function Partidos({
         <div className="coord-box">
           <div className="coord-box-title">
             <span className="coord-pill">Coord.</span> {slotActual?.label} — {slotActual?.club}
+            <span style={{ display: "block", fontSize: "12px", fontWeight: 400, color: "var(--text2)", marginTop: "4px" }}>
+              Semana {semanaActual}
+            </span>
           </div>
           <div className="pistas-row">
             <span style={{ flex: 1, fontSize: "13px", color: "var(--text2)" }}>
@@ -191,16 +192,15 @@ export default function Partidos({
               <button className="pistas-btn" onClick={() => setNumIndoor((v) => Math.min(numPistas, v + 1))}>+</button>
             </div>
           </div>
-          <select value={semana} onChange={(e) => setSemana(e.target.value)}>
-            {semanasDisponibles.map((sem) => (
-              <option key={sem} value={sem}>
-                Semana {sem}
-              </option>
-            ))}
-          </select>
-          <button className="btn btn-primary btn-sm btn-block" onClick={handleGenerarClick}>
-            {yaGenerado ? "🔄 Regenerar partidos" : "Generar partidos"}
-          </button>
+          {yaGenerado ? (
+            <button type="button" className="btn btn-primary btn-sm btn-block" onClick={() => handleGenerarClick(true)}>
+              Regenerar partidos
+            </button>
+          ) : puedeGenerar ? (
+            <button type="button" className="btn btn-primary btn-sm btn-block" onClick={() => handleGenerarClick(false)}>
+              Generar partidos
+            </button>
+          ) : null}
         </div>
       ) : null}
 

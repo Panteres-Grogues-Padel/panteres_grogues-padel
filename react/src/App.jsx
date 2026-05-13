@@ -30,7 +30,7 @@ export default function App() {
     auth.authEpoch
   );
   const { ranking, loading: rankingLoading, error: rankingError } = useRanking();
-  const { partidos, generarPartidos, asignarHora, toggleIndoor, moverJugador, confirmarAsistencia } =
+  const { partidos, generarPartidos, loadPartidosForSlot, asignarHora, toggleIndoor, moverJugador, confirmarAsistencia } =
     usePartidos(auth.currentUser);
   const isCoord = useMemo(
     () => Boolean(auth.currentUser?.es_coordinador),
@@ -164,6 +164,7 @@ export default function App() {
             <Partidos
               partidos={partidos}
               onGenerar={handleGenerar}
+              onLoadSlot={loadPartidosForSlot}
               onHora={async (id, hora) => {
                 const res = await asignarHora(id, hora);
                 if (!res.ok) showMessage(res.error);

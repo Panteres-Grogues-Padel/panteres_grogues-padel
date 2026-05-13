@@ -115,6 +115,39 @@ export function usePartidos(currentUser) {
     return { ok: true, count: flat.length };
   }, [useFallback]);
 
+  const loadPartidosForSlot = useCallback(
+    async (slotId, semana) => {
+      if (useFallback || !slotId) return { ok: false, skipped: true };
+      const semanaNorm = normalizeSemanaDate(semana);
+      setLoading(true);
+      setError("");
+      const { data, error: fetchError } = await supabase
+        .from("partidos_generados")
+        .select(
+          "id,slot_id,semana,pistas_partido(id,numero_pista,hora,es_indoor,jugadores_pista(id,jugador_id,posicion,confirmado,jugadores(nombre,nombre_completo))),slots(label,club,dia_semana)"
+        )
+        .eq("slot_id", slotId)
+        .eq("semana", semanaNorm);
+
+      setLoading(false);
+      if (fetchError) {
+        setError(fetchError.message);
+        return { ok: false, error: fetchError.message };
+      }
+
+      const rows = Array.isArray(data) ? data : data ? [data] : [];
+      const flat = flattenPartidos(rows);
+      setPartidos((prev) => {
+        const rest = prev.filter(
+          (p) => !(String(p.slotId) === String(slotId) && normalizeSemanaDate(p.semana) === semanaNorm)
+        );
+        return [...flat, ...rest];
+      });
+      return { ok: true, count: flat.length };
+    },
+    [useFallback]
+  );
+
   useEffect(() => {
     if (useFallback) {
       setPartidos(PARTIDOS_INICIALES);
@@ -497,6 +530,7 @@ export function usePartidos(currentUser) {
     loading,
     error,
     generarPartidos,
+    loadPartidosForSlot,
     asignarHora,
     toggleIndoor,
     moverJugador,
