@@ -127,7 +127,8 @@ export function useSlots(currentUser, authEpoch = 0) {
           .lte("semana", hasta)
           .order("inscrito_at", { ascending: true, nullsFirst: true })
           .order("id", { ascending: true })
-          .limit(1000);
+          .limit(1000)
+          .gte("inscrito_at", "1970-01-01");
 
         console.log("[debug] data cruda de Supabase:", JSON.stringify(inscData));
         console.log("[debug] userId actual:", userId);
