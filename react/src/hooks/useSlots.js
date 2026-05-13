@@ -119,15 +119,10 @@ export function useSlots(currentUser, authEpoch = 0) {
         const desde = formatDateUTC(addDaysUtc(lunes, -14));
         const hasta = formatDateUTC(addDaysUtc(lunes, 28));
 
-        console.log("[debug] rango SELECT:", desde, "→", hasta);
-
         const { data: inscData, error: inscErr } = await supabase.rpc("get_inscripciones", {
           p_desde: desde,
           p_hasta: hasta
         });
-
-        console.log("[debug] data cruda de Supabase:", JSON.stringify(inscData));
-        console.log("[debug] userId actual:", userId);
 
         if (cancelled) return;
 
