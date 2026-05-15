@@ -2,7 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import PartidoCard from "./PartidoCard";
 import MoverJugador from "./MoverJugador";
 import { copyTextToClipboard } from "../../utils/clipboard";
-import { buildOpcionesDropdownPartidos, formatHoraInput, normalizeSemanaDate } from "../../utils/dates";
+import {
+  buildOpcionesDropdownPartidos,
+  formatFechaLocal,
+  formatHoraInput,
+  normalizeSemanaDate
+} from "../../utils/dates";
 
 const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
@@ -60,7 +65,8 @@ export default function Partidos({
   const slotId = seleccion?.slotId ?? "";
   const semanaObjetivo = seleccion?.semanaObjetivo ?? null;
   const esSoloConsulta = seleccion?.modo === "ayer";
-  const puedeGenerar = seleccion?.modo === "hoy" || seleccion?.modo === "proximo";
+  const esHoy = seleccion?.modo === "hoy";
+  const puedeGestionar = esHoy || seleccion?.modo === "proximo";
 
   const jugadoresSlot = useMemo(() => {
     if (!slotId || !semanaObjetivo) return [];
@@ -86,18 +92,24 @@ export default function Partidos({
     void onLoadSlot(slotId, semanaObjetivo);
   }, [slotId, semanaObjetivo, onLoadSlot]);
 
+  const fechaPartidoSel = useMemo(() => {
+    if (!seleccion?.fechaPartido) return "";
+    return formatFechaLocal(seleccion.fechaPartido);
+  }, [seleccion]);
+
   const partidosFiltrados = useMemo(() => {
-    if (!semanaObjetivo || !slotId) return [];
+    if (!slotId) return [];
     const sid = String(slotId);
-    const semNorm = normalizeSemanaDate(semanaObjetivo);
+    const semNorm = semanaObjetivo ? normalizeSemanaDate(semanaObjetivo) : "";
     const seen = new Map();
     for (const p of partidos) {
       if (String(p.slotId) !== sid) continue;
-      if (normalizeSemanaDate(p.semana) !== semNorm) continue;
+      if (semNorm && normalizeSemanaDate(p.semana) !== semNorm) continue;
+      if (fechaPartidoSel && p.fechaPartido && p.fechaPartido !== fechaPartidoSel) continue;
       seen.set(String(p.pistaId ?? p.id), p);
     }
     return [...seen.values()];
-  }, [partidos, slotId, semanaObjetivo]);
+  }, [partidos, slotId, semanaObjetivo, fechaPartidoSel]);
 
   useEffect(() => {
     if (!slotActual) return;
@@ -121,9 +133,11 @@ export default function Partidos({
 
   const yaGenerado = partidosFiltrados.length > 0;
   const hayInscritos = (slotActual?.jugadores?.length ?? 0) > 0;
+  const mostrarRegenerar = yaGenerado || (isCoord && esHoy);
+  const mostrarGenerar = !mostrarRegenerar && hayInscritos && puedeGestionar;
 
   function handleGenerarClick(regenerar) {
-    if (!slotId || !semanaObjetivo || !puedeGenerar) return;
+    if (!slotId || !semanaObjetivo || !puedeGestionar) return;
     if (regenerar) {
       const ok = window.confirm("¿Regenerar los partidos de esta semana?");
       if (!ok) return;
@@ -213,7 +227,7 @@ export default function Partidos({
         </p>
       ) : null}
 
-      {puedeGenerar && isCoord ? (
+      {puedeGestionar && isCoord ? (
         <div className="coord-box">
           <div className="coord-box-title">
             <span className="coord-pill">Coord.</span> {slotActual?.label} — {slotActual?.club}
@@ -248,11 +262,11 @@ export default function Partidos({
               <button className="pistas-btn" onClick={() => setNumIndoor((v) => Math.min(numPistas, v + 1))}>+</button>
             </div>
           </div>
-          {yaGenerado ? (
+          {mostrarRegenerar ? (
             <button type="button" className="btn btn-primary btn-sm btn-block" onClick={() => handleGenerarClick(true)}>
               Regenerar partidos
             </button>
-          ) : hayInscritos ? (
+          ) : mostrarGenerar ? (
             <button type="button" className="btn btn-primary btn-sm btn-block" onClick={() => handleGenerarClick(false)}>
               Generar partidos
             </button>

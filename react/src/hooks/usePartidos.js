@@ -91,26 +91,28 @@ function groupsOf4(jugadoresOrdenados) {
 }
 
 async function borrarPartidosGeneradosSlotSemana(slotId, semanaNorm) {
-  const { data: existing, error: fetchErr } = await supabase
+  const { data: existingRows, error: fetchErr } = await supabase
     .from("partidos_generados")
     .select("id")
     .eq("slot_id", slotId)
-    .eq("semana", semanaNorm)
-    .maybeSingle();
+    .eq("semana", semanaNorm);
   if (fetchErr) return { ok: false, error: fetchErr.message };
-  if (!existing?.id) return { ok: true, deleted: false };
+  if (!existingRows?.length) return { ok: true, deleted: false };
 
-  const partidoGeneradoId = existing.id;
+  const partidoGeneradoIds = existingRows.map((r) => r.id).filter(Boolean);
 
   const { data: pistas, error: pistasErr } = await supabase
     .from("pistas_partido")
     .select("id")
-    .eq("partido_generado_id", partidoGeneradoId);
+    .in("partido_generado_id", partidoGeneradoIds);
   if (pistasErr) return { ok: false, error: pistasErr.message };
 
   const pistaIds = (pistas ?? []).map((p) => p.id).filter(Boolean);
 
   if (pistaIds.length) {
+    const { error: resErr } = await supabase.from("resultados").delete().in("pista_id", pistaIds);
+    if (resErr) return { ok: false, error: resErr.message };
+
     const { error: jpErr } = await supabase.from("jugadores_pista").delete().in("pista_id", pistaIds);
     if (jpErr) return { ok: false, error: jpErr.message };
   }
@@ -118,7 +120,7 @@ async function borrarPartidosGeneradosSlotSemana(slotId, semanaNorm) {
   const { error: ppErr } = await supabase
     .from("pistas_partido")
     .delete()
-    .eq("partido_generado_id", partidoGeneradoId);
+    .in("partido_generado_id", partidoGeneradoIds);
   if (ppErr) return { ok: false, error: ppErr.message };
 
   const { error: pgErr } = await supabase

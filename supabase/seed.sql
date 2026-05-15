@@ -317,6 +317,9 @@ CREATE POLICY "Jugadores validan resultados" ON resultados
     OR es_coordinador()
   );
 
+CREATE POLICY "Coord borra resultados" ON resultados
+  FOR DELETE USING (es_coordinador());
+
 CREATE POLICY "Todos ven ranking" ON ranking
   FOR SELECT USING (true);
 
