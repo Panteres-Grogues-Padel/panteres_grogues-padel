@@ -191,7 +191,7 @@ export function usePartidos(currentUser) {
       const gen = ++slotLoadGenRef.current;
       setLoading(true);
       setError("");
-      const { data, error: fetchError } = await supabase.rpc("get_partidos_generados", {
+      const { data, error: fetchError } = await supabase.rpc("get_partidos_slot", {
         p_slot_id: slotId,
         p_semana: semanaNorm
       });
