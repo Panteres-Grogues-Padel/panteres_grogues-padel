@@ -191,19 +191,21 @@ export function usePartidos(currentUser) {
       const gen = ++slotLoadGenRef.current;
       setLoading(true);
       setError("");
-      const { data, error: fetchError } = await supabase.rpc("get_partidos_slot", {
+      const { data, error } = await supabase.rpc("get_partidos_slot", {
         p_slot_id: slotId,
         p_semana: semanaNorm
       });
+
+      console.log("[partidos] RPC resultado:", JSON.stringify(data), "error:", error?.message);
 
       if (gen !== slotLoadGenRef.current) {
         return { ok: false, skipped: true };
       }
 
       setLoading(false);
-      if (fetchError) {
-        setError(fetchError.message);
-        return { ok: false, error: fetchError.message };
+      if (error) {
+        setError(error.message);
+        return { ok: false, error: error.message };
       }
 
       const flat = dedupePartidos(flattenPartidos(rowsFromRpcPartidos(data)));
