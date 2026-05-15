@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PARTIDOS_INICIALES } from "../utils/mockData";
 import { supabase } from "../lib/supabase";
 import { createActivityLog, createNotifications } from "../lib/engagement";
-import { formatHoraInput, normalizeSemanaDate } from "../utils/dates";
+import { formatHoraInput, getLunesSemanaActual, normalizeSemanaDate } from "../utils/dates";
 import { isJugadorUuid } from "../utils/jugador";
 
 function strId(id) {
@@ -138,6 +138,18 @@ async function reindexPista(pistaId) {
   );
 }
 
+function rowsFromRpcPartidos(data) {
+  if (data == null) return [];
+  return Array.isArray(data) ? data : [data];
+}
+
+async function rpcGetPartidosSlot(slotId, semanaNorm) {
+  return supabase.rpc("get_partidos_slot", {
+    p_slot_id: slotId,
+    p_semana: semanaNorm
+  });
+}
+
 export function usePartidos(currentUser) {
   const [partidos, setPartidos] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -150,27 +162,40 @@ export function usePartidos(currentUser) {
   const remindersSentRef = useRef(new Set());
   const slotLoadGenRef = useRef(0);
 
-  function rowsFromRpcPartidos(data) {
-    if (data == null) return [];
-    return Array.isArray(data) ? data : [data];
-  }
-
   const loadPartidos = useCallback(async () => {
     if (useFallback) return { ok: false, skipped: true };
     setLoading(true);
     setError("");
-    const { data, error: fetchError } = await supabase.rpc("get_partidos_generados", {
-      p_slot_id: null,
-      p_semana: null
-    });
+    const semanaNorm = getLunesSemanaActual();
 
-    setLoading(false);
-    if (fetchError) {
-      setError(fetchError.message);
-      console.warn("[loadPartidos] error", fetchError.message);
-      return { ok: false, error: fetchError.message };
+    const { data: slotsData, error: slotsErr } = await supabase
+      .from("slots")
+      .select("id")
+      .eq("activo", true);
+
+    if (slotsErr) {
+      setLoading(false);
+      setError(slotsErr.message);
+      console.warn("[loadPartidos] error slots", slotsErr.message);
+      return { ok: false, error: slotsErr.message };
     }
-    const flat = dedupePartidos(flattenPartidos(rowsFromRpcPartidos(data)));
+
+    const slotIds = (slotsData ?? []).map((s) => s.id).filter(Boolean);
+    let flat = [];
+
+    for (const id of slotIds) {
+      const { data, error: rpcErr } = await rpcGetPartidosSlot(id, semanaNorm);
+      if (rpcErr) {
+        setLoading(false);
+        setError(rpcErr.message);
+        console.warn("[loadPartidos] error", rpcErr.message);
+        return { ok: false, error: rpcErr.message };
+      }
+      flat.push(...flattenPartidos(rowsFromRpcPartidos(data)));
+    }
+
+    flat = dedupePartidos(flat);
+    setLoading(false);
     setPartidos((prev) => {
       if (flat.length > 0) return flat;
       if (prev.length > 0) {
@@ -191,10 +216,7 @@ export function usePartidos(currentUser) {
       const gen = ++slotLoadGenRef.current;
       setLoading(true);
       setError("");
-      const { data, error } = await supabase.rpc("get_partidos_slot", {
-        p_slot_id: slotId,
-        p_semana: semanaNorm
-      });
+      const { data, error } = await rpcGetPartidosSlot(slotId, semanaNorm);
 
       console.log("[partidos] RPC resultado:", JSON.stringify(data), "error:", error?.message);
 
@@ -439,9 +461,9 @@ export function usePartidos(currentUser) {
 
     setPartidos((prev) => mergePartidosSlot(prev, slotId, semanaNorm, optItems));
 
-    const loadRes = await loadPartidos();
+    const loadRes = await loadPartidosForSlot(slotId, semanaNorm);
     if (loadRes && loadRes.ok === false && loadRes.error) {
-      console.warn("[generarPartidos] loadPartidos falló tras insertar; UI usa filas optimistas.", loadRes.error);
+      console.warn("[generarPartidos] loadPartidosForSlot falló tras insertar; UI usa filas optimistas.", loadRes.error);
     }
     const generatedType = delRes.deleted ? "Regeneracion de partidos" : "Partidos generados";
     await createActivityLog({
@@ -471,7 +493,12 @@ export function usePartidos(currentUser) {
       .update({ hora })
       .eq("id", partidoId);
     if (updateError) return { ok: false, error: updateError.message };
-    await loadPartidos();
+    const partido = partidos.find((p) => p.id === partidoId);
+    if (partido?.slotId && partido?.semana) {
+      await loadPartidosForSlot(partido.slotId, partido.semana);
+    } else {
+      await loadPartidos();
+    }
     return { ok: true };
   }
 
@@ -487,7 +514,11 @@ export function usePartidos(currentUser) {
       .update({ es_indoor: !partido.indoor })
       .eq("id", partidoId);
     if (updateError) return { ok: false, error: updateError.message };
-    await loadPartidos();
+    if (partido?.slotId && partido?.semana) {
+      await loadPartidosForSlot(partido.slotId, partido.semana);
+    } else {
+      await loadPartidos();
+    }
     return { ok: true };
   }
 
@@ -540,7 +571,11 @@ export function usePartidos(currentUser) {
         .update({ confirmado: false, confirmado_at: null })
         .eq("id", row.id);
     }
-    await loadPartidos();
+    if (origen?.slotId && origen?.semana) {
+      await loadPartidosForSlot(origen.slotId, origen.semana);
+    } else {
+      await loadPartidos();
+    }
     return true;
   }
 
@@ -569,7 +604,12 @@ export function usePartidos(currentUser) {
       .eq("pista_id", partidoId)
       .eq("jugador_id", jugadorId);
     if (updateError) return { ok: false, error: updateError.message };
-    await loadPartidos();
+    const partido = partidos.find((p) => p.id === partidoId);
+    if (partido?.slotId && partido?.semana) {
+      await loadPartidosForSlot(partido.slotId, partido.semana);
+    } else {
+      await loadPartidos();
+    }
     return { ok: true };
   }
 

@@ -1,0 +1,8 @@
+# Configuración mínima para `supabase db push` / migraciones remotas.
+# Enlazar proyecto: npx supabase link --project-ref <ref>
+# Aplicar: npx supabase db push
+
+project_id = "fulqczmbmmakdxylejgw"
+
+[db]
+major_version = 15
