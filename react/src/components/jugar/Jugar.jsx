@@ -25,35 +25,47 @@ export default function Jugar({ slots, currentUser, onApuntar, onBaja, backendNo
   const [selectedSlotId, setSelectedSlotId] = useState(slots[0]?.id ?? "");
   const [showLista, setShowLista] = useState(false);
 
-  const slotsActual = useMemo(() => slots.filter((s) => s.semana === "actual"), [slots]);
+  const diaActual = getDiaSemanaActual(new Date());
+
+  const slotsActual = useMemo(
+    () =>
+      slots.filter(
+        (s) => s.semana === "actual" && Number(s.diaSemana) >= diaActual
+      ),
+    [slots, diaActual]
+  );
   const slotsProxima = useMemo(() => {
-    const diaActual = getDiaSemanaActual(new Date());
     return slots.filter((s) => s.semana === "proxima" && s.diaSemana <= diaActual + 1);
-  }, [slots]);
+  }, [slots, diaActual]);
+
+  const slotsVisibles = useMemo(
+    () => [...slotsActual, ...slotsProxima],
+    [slotsActual, slotsProxima]
+  );
   const lunesActual = slotsActual[0]?.semanaObjetivo ?? "";
   const lunesProximo = slotsProxima[0]?.semanaObjetivo ?? "";
 
   useEffect(() => {
-    if (!slots.length) {
+    if (!slotsVisibles.length) {
       setSelectedSlotId("");
       setShowLista(false);
       return;
     }
-    if (!slots.some((s) => s.id === selectedSlotId)) {
-      setSelectedSlotId(slots[0].id);
+    if (!slotsVisibles.some((s) => s.id === selectedSlotId)) {
+      setSelectedSlotId(slotsVisibles[0].id);
       setShowLista(false);
     }
-  }, [slots, selectedSlotId]);
+  }, [slotsVisibles, selectedSlotId]);
 
   const selectedSlot = useMemo(
-    () => slots.find((s) => s.id === selectedSlotId) ?? slots[0],
-    [slots, selectedSlotId]
+    () => slotsVisibles.find((s) => s.id === selectedSlotId) ?? slotsVisibles[0],
+    [slotsVisibles, selectedSlotId]
   );
   const selectedEnrolled = Boolean(selectedSlot?.apuntado);
   const rivalSlot = useMemo(() => {
     if (!selectedSlot) return null;
     return (
-      slots.find(
+      slotsVisibles.find(
         (s) =>
           s.id !== selectedSlot.id &&
           sameDiaSemanaSlot(s, selectedSlot) &&
@@ -61,10 +73,10 @@ export default function Jugar({ slots, currentUser, onApuntar, onBaja, backendNo
           s.apuntado
       ) ?? null
     );
-  }, [slots, selectedSlot]);
+  }, [slotsVisibles, selectedSlot]);
 
   function renderSlotRow(slot) {
-    const rival = slots.find(
+    const rival = slotsVisibles.find(
       (s) =>
         s.id !== slot.id &&
         sameDiaSemanaSlot(s, slot) &&
@@ -115,7 +127,7 @@ export default function Jugar({ slots, currentUser, onApuntar, onBaja, backendNo
   return (
     <div>
       <h2 className="section-title">Jugar</h2>
-      {!slots.length ? (
+      {!slotsVisibles.length ? (
         <div className="card">
           <div className="slot-meta" style={{ textAlign: "center", padding: "1rem 0" }}>
             No hay slots disponibles.
@@ -124,7 +136,7 @@ export default function Jugar({ slots, currentUser, onApuntar, onBaja, backendNo
       ) : null}
       {backendNotice ? <p className="error-box">{backendNotice}</p> : null}
       {!showLista ? (
-        <div className="card" style={{ display: slots.length ? "block" : "none" }}>
+        <div className="card" style={{ display: slotsVisibles.length ? "block" : "none" }}>
           {slotsActual.length > 0 && (
             <>
               <div className="slot-week-header">Semana actual · {weekRangeLabel(lunesActual)}</div>
