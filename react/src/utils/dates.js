@@ -50,8 +50,57 @@ function addDaysLocal(fecha, n) {
   return startOfLocalDay(x);
 }
 
-function formatFechaLocal(d) {
+export function formatFechaLocal(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+export function hoyLocalStr(now = new Date()) {
+  return formatFechaLocal(startOfLocalDay(now));
+}
+
+export function ayerLocalStr(now = new Date()) {
+  return formatFechaLocal(addDaysLocal(startOfLocalDay(now), -1));
+}
+
+/** YYYY-MM-DD del día del partido (semana lunes + diaSemana 0=Lun). */
+export function fechaPartidoFromSlot(semanaObjetivo, diaSemana) {
+  const d = fechaSlotEnSemana(semanaObjetivo, diaSemana);
+  return d ? formatFechaLocal(d) : "";
+}
+
+/** Lunes–domingo de la semana calendario anterior. */
+export function getRangoSemanaPasada(now = new Date()) {
+  const today = startOfLocalDay(now);
+  const thisMonday = addDaysLocal(today, -getDiaSemanaLocal(today));
+  const lastMonday = addDaysLocal(thisMonday, -7);
+  const lastSunday = addDaysLocal(lastMonday, 6);
+  return { desde: formatFechaLocal(lastMonday), hasta: formatFechaLocal(lastSunday) };
+}
+
+/** Coordinador: semana pasada (lun–dom) + hoy; sin futuros. */
+export function enVentanaCoordResultados(fechaStr, now = new Date()) {
+  if (!fechaStr) return false;
+  const hoy = hoyLocalStr(now);
+  if (fechaStr > hoy) return false;
+  if (fechaStr === hoy) return true;
+  const { desde, hasta } = getRangoSemanaPasada(now);
+  return fechaStr >= desde && fechaStr <= hasta;
+}
+
+/** Días con partidos visibles en el dropdown de Resultados (orden cronológico). */
+export function getDiasDisponiblesResultados(partidos, isCoord, now = new Date()) {
+  const hoy = hoyLocalStr(now);
+  const fechas = new Set();
+  for (const p of partidos ?? []) {
+    const f = p.fechaPartido;
+    if (!f || f > hoy) continue;
+    if (isCoord) {
+      if (enVentanaCoordResultados(f, now)) fechas.add(f);
+    } else {
+      fechas.add(f);
+    }
+  }
+  return [...fechas].sort();
 }
 
 /** 0=Lun … 6=Dom (convención slots). */

@@ -1,11 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { createActivityLog, createNotifications } from "../lib/engagement";
+import { ayerLocalStr, enVentanaCoordResultados, hoyLocalStr } from "../utils/dates";
 import { isJugadorUuid } from "../utils/jugador";
-
-function todayStr() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 export function useResultados(partidos, currentUser, isCoord) {
   const [resultados, setResultados] = useState([]);
@@ -71,22 +68,46 @@ export function useResultados(partidos, currentUser, isCoord) {
     [resultados]
   );
 
+  function puedeGuardarPartido(partido, prev) {
+    const fecha = partido.fechaPartido;
+    if (!fecha) return { ok: false, error: "Fecha de partido no disponible." };
+
+    if (isCoord) {
+      if (!enVentanaCoordResultados(fecha)) {
+        return { ok: false, error: "Solo puedes gestionar resultados de la semana pasada y hoy." };
+      }
+      return { ok: true };
+    }
+
+    const esJugador = partido.jugadores.some((j) => String(j.jugadorId) === String(currentUser.id));
+    if (!esJugador) return { ok: false, error: "No puedes reportar este partido." };
+
+    const hoy = hoyLocalStr();
+    const ayer = ayerLocalStr();
+    if (fecha !== hoy && fecha !== ayer) {
+      return { ok: false, error: "Solo puedes introducir resultados de hoy o ayer." };
+    }
+    if (prev) {
+      return { ok: false, error: "No puedes modificar un resultado ya introducido." };
+    }
+    return { ok: true };
+  }
+
   async function guardarResultado(partidoId, fecha, sets) {
     if (!currentUser) return { ok: false, error: "Debes iniciar sesion." };
     const partido = partidos.find((p) => p.id === partidoId);
     if (!partido) return { ok: false, error: "Partido no encontrado." };
-    const esJugadorDelPartido = partido.jugadores.some((j) => j.jugadorId === currentUser.id);
-    if (!isCoord && !esJugadorDelPartido) return { ok: false, error: "No puedes reportar este partido." };
-    if (!isCoord && fecha !== todayStr()) {
-      return { ok: false, error: "Solo puedes introducir el marcador del partido del dia." };
-    }
+
+    const fechaPartido = partido.fechaPartido || fecha;
+    const prev = getResultado(partidoId, fechaPartido);
+    const perm = puedeGuardarPartido(partido, prev);
+    if (!perm.ok) return perm;
 
     if (useFallback) return { ok: true };
 
-    const prev = getResultado(partidoId, fecha);
     const payload = {
       pista_id: partidoId,
-      fecha,
+      fecha: fechaPartido,
       set1_p1: sets[0].p1,
       set1_p2: sets[0].p2,
       set2_p1: sets[1].p1,
@@ -104,20 +125,25 @@ export function useResultados(partidos, currentUser, isCoord) {
     }
     const { error: saveError } = await query;
     if (saveError) return { ok: false, error: saveError.message };
+
     await createActivityLog({
       jugadorId: currentUser.id,
       tipo: "resultados",
-      texto: `Introduce resultado en pista ${partidoId} (${fecha})`
+      texto: `${prev ? "Modifica" : "Introduce"} resultado en pista ${partidoId} (${fechaPartido})`
     });
-    const notifications = partido.jugadores
-      .filter((j) => j.jugadorId !== currentUser.id)
-      .map((j) => ({
-        jugadorId: j.jugadorId,
-        tipo: "resultados",
-        titulo: "Resultado pendiente de validacion",
-        texto: `Se ha subido un resultado en tu partido (${fecha}).`
-      }));
-    await createNotifications(notifications);
+
+    if (!isCoord) {
+      const notifications = partido.jugadores
+        .filter((j) => j.jugadorId !== currentUser.id)
+        .map((j) => ({
+          jugadorId: j.jugadorId,
+          tipo: "resultados",
+          titulo: "Resultado pendiente de validacion",
+          texto: `Se ha subido un resultado en tu partido (${fechaPartido}).`
+        }));
+      await createNotifications(notifications);
+    }
+
     await loadResultados();
     return { ok: true };
   }
@@ -126,14 +152,23 @@ export function useResultados(partidos, currentUser, isCoord) {
     if (!currentUser) return { ok: false, error: "Debes iniciar sesion." };
     const partido = partidos.find((p) => p.id === partidoId);
     if (!partido) return { ok: false, error: "Partido no encontrado." };
-    const esJugadorDelPartido = partido.jugadores.some((j) => j.jugadorId === currentUser.id);
-    if (!isCoord && !esJugadorDelPartido) return { ok: false, error: "No puedes validar este partido." };
 
-    const r = getResultado(partidoId, fecha);
+    const fechaPartido = partido.fechaPartido || fecha;
+    const r = getResultado(partidoId, fechaPartido);
     if (!r) return { ok: false, error: "No hay resultado para validar." };
-    if (r.introducido_por === currentUser.id) {
-      return { ok: false, error: "No puedes validar tu propio resultado." };
+
+    if (isCoord) {
+      if (!enVentanaCoordResultados(fechaPartido)) {
+        return { ok: false, error: "Fuera de la ventana de resultados del coordinador." };
+      }
+    } else {
+      const esJugador = partido.jugadores.some((j) => String(j.jugadorId) === String(currentUser.id));
+      if (!esJugador) return { ok: false, error: "No puedes validar este partido." };
+      if (String(r.introducido_por) === String(currentUser.id)) {
+        return { ok: false, error: "No puedes validar tu propio resultado." };
+      }
     }
+
     if (useFallback) return { ok: true };
 
     const { error: valError } = await supabase
@@ -150,15 +185,16 @@ export function useResultados(partidos, currentUser, isCoord) {
     await createActivityLog({
       jugadorId: currentUser.id,
       tipo: "resultados",
-      texto: `Valida resultado en pista ${partidoId} (${fecha})`
+      texto: `Valida resultado en pista ${partidoId} (${fechaPartido})`
     });
+
     const notifications = partido.jugadores
       .filter((j) => j.jugadorId !== currentUser.id)
       .map((j) => ({
         jugadorId: j.jugadorId,
         tipo: "resultados",
         titulo: "Resultado validado",
-        texto: `El resultado de tu partido (${fecha}) ya esta validado.`
+        texto: `El resultado de tu partido (${fechaPartido}) ya esta validado.`
       }));
     await createNotifications(notifications);
 

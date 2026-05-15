@@ -3,6 +3,7 @@ import { PARTIDOS_INICIALES } from "../utils/mockData";
 import { supabase } from "../lib/supabase";
 import { createActivityLog, createNotifications } from "../lib/engagement";
 import {
+  fechaPartidoFromSlot,
   formatHoraInput,
   getDiaSemanaLocal,
   getFechasVentanaPartidos,
@@ -62,6 +63,7 @@ function flattenPartidos(data) {
         club: pg.slots?.club ?? "",
         diaSemana: pg.slots?.dia_semana ?? null,
         semana: normalizeSemanaDate(pg.semana),
+        fechaPartido: fechaPartidoFromSlot(pg.semana, pg.slots?.dia_semana),
         numPistasGenerado: Number(pg.num_pistas ?? 0),
         numIndoorGenerado: Number(pg.num_indoor ?? 0),
         indoor: Boolean(pista.es_indoor),
@@ -156,6 +158,13 @@ async function rpcGetPartidosSlot(slotId, semanaNorm) {
   });
 }
 
+async function rpcGetPartidosGeneradosAll() {
+  return supabase.rpc("get_partidos_generados", {
+    p_slot_id: null,
+    p_semana: null
+  });
+}
+
 export function usePartidos(currentUser) {
   const [partidos, setPartidos] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -212,6 +221,15 @@ export function usePartidos(currentUser) {
       }
       flat.push(...flattenPartidos(rowsFromRpcPartidos(data)));
     }
+
+    const { data: historico, error: histErr } = await rpcGetPartidosGeneradosAll();
+    if (histErr) {
+      setLoading(false);
+      setError(histErr.message);
+      console.warn("[loadPartidos] error historico", histErr.message);
+      return { ok: false, error: histErr.message };
+    }
+    flat.push(...flattenPartidos(rowsFromRpcPartidos(historico)));
 
     flat = dedupePartidos(flat);
     setLoading(false);

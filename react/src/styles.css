@@ -1497,3 +1497,213 @@ select {
   color: var(--green-t);
   border-color: #c0dd97;
 }
+
+/* Resultados */
+.resultados-page .res-ventana-hint {
+  margin: -0.25rem 0 0.75rem;
+}
+
+.resultados-day-select {
+  font-size: 14px;
+  font-weight: 600;
+  height: 46px;
+  border: 0.5px solid var(--border2);
+  border-radius: var(--radius);
+  background: var(--bg);
+  width: 100%;
+  margin-bottom: 1rem;
+  padding: 0 12px;
+  color: var(--text);
+}
+
+.res-card {
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  border-left: 4px solid var(--text3);
+}
+
+.res-card--sin {
+  border-left-color: #9ca3af;
+  background: #f4f4f5;
+}
+
+.res-card--pendiente {
+  border-left-color: #ba7517;
+  background: #fff8ed;
+}
+
+.res-card--validado {
+  border-left-color: #27500a;
+  background: #f2f9e8;
+}
+
+.res-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 0.75rem;
+}
+
+.res-estado-badge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.res-estado-badge--sin {
+  background: #e8e8ea;
+  color: #6b7280;
+}
+
+.res-estado-badge--pendiente {
+  background: #fdecd8;
+  color: #ba7517;
+}
+
+.res-estado-badge--validado {
+  background: #e1f5ee;
+  color: #27500a;
+}
+
+.res-jugadores-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 0.75rem;
+}
+
+.res-chip-me {
+  border-color: var(--navy) !important;
+  background: var(--info-bg) !important;
+}
+
+.res-pos {
+  font-size: 10px;
+  color: var(--text2);
+  margin-right: 2px;
+}
+
+.res-rot-label {
+  font-size: 11px;
+  color: var(--text2);
+  margin: 0 0 0.5rem;
+}
+
+.score-card {
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.score-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.score-row-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.score-side {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.score-ctrl {
+  display: flex;
+  align-items: center;
+  border: 0.5px solid var(--border2);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg2);
+}
+
+.sc-btn {
+  width: 40px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  color: var(--text2);
+  cursor: pointer;
+}
+
+.sc-num {
+  width: 48px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+  border-left: 0.5px solid var(--border2);
+  border-right: 0.5px solid var(--border2);
+  background: var(--bg);
+}
+
+.sc-vs {
+  font-size: 13px;
+  color: var(--text2);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.rot-row {
+  display: grid;
+  grid-template-columns: 44px 1fr auto 1fr;
+  gap: 4px;
+  align-items: center;
+  font-size: 12px;
+  padding: 6px 0;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.rot-row:last-child {
+  border-bottom: none;
+}
+
+.rot-lbl {
+  font-weight: 600;
+  color: var(--text2);
+}
+
+.rot-side {
+  color: var(--text2);
+  font-size: 11px;
+}
+
+.rot-side-r {
+  text-align: right;
+}
+
+.rot-score {
+  font-weight: 600;
+  color: var(--text);
+  text-align: center;
+}
+
+.res-hint,
+.res-sin-resultado {
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+.res-validar-btn {
+  margin-top: 0.5rem;
+}

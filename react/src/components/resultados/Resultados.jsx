@@ -1,4 +1,12 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { ayerLocalStr, getDiasDisponiblesResultados, hoyLocalStr } from "../../utils/dates";
+import {
+  getEstadoLabel,
+  getPermisosResultado,
+  getRotacionesAmericano
+} from "../../utils/resultadosUtils";
+
+const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
 function emptySets() {
   return [
@@ -8,8 +16,155 @@ function emptySets() {
   ];
 }
 
-function todayStr() {
-  return new Date().toISOString().slice(0, 10);
+function formatDiaDropdown(fechaStr, hoy, ayer) {
+  const d = new Date(`${fechaStr}T12:00:00`);
+  const nombre = DIAS[(d.getDay() + 6) % 7];
+  const corta = d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+  let sufijo = "";
+  if (fechaStr === hoy) sufijo = " · hoy";
+  else if (fechaStr === ayer) sufijo = " · ayer";
+  return `${nombre} ${corta}${sufijo}`;
+}
+
+function PartidoResultadoCard({
+  partido,
+  resultado,
+  setsDraft,
+  onUpdateSet,
+  onGuardar,
+  onValidar,
+  currentUser,
+  isCoord,
+  mapSetsFromResultado
+}) {
+  const fecha = partido.fechaPartido;
+  const permisos = getPermisosResultado({ partido, resultado, currentUser, isCoord });
+  const rotaciones = getRotacionesAmericano(partido.jugadores);
+  const prefill = resultado ? mapSetsFromResultado(resultado) : null;
+  const sets = setsDraft ?? prefill ?? emptySets();
+  const estadoClass = `res-card res-card--${permisos.estado}`;
+
+  return (
+    <article className={estadoClass}>
+      <div className="res-card-head">
+        <div>
+          <strong>
+            {partido.slotLabel} · {partido.club}
+          </strong>
+          <p className="slot-meta">
+            Pista {partido.numeroPista}
+            {partido.hora ? ` · ${partido.hora}` : ""}
+            {partido.indoor ? " · Indoor" : ""}
+          </p>
+        </div>
+        <span className={`res-estado-badge res-estado-badge--${permisos.estado}`}>
+          {getEstadoLabel(permisos.estado)}
+        </span>
+      </div>
+
+      <div className="res-jugadores-chips">
+        {[...partido.jugadores]
+          .sort((a, b) => a.posicion - b.posicion)
+          .map((j) => (
+            <span
+              key={j.id}
+              className={`chip${String(j.jugadorId) === String(currentUser?.id) ? " res-chip-me" : ""}`}
+            >
+              <span className="res-pos">{j.posicion}º</span> {j.nombre}
+            </span>
+          ))}
+      </div>
+
+      {permisos.puedeEditar ? (
+        <div className="res-sets-edit">
+          {rotaciones.map((rot, idx) => (
+            <div key={idx} className="score-card">
+              <div className="score-card-title">Set {idx + 1}</div>
+              <p className="res-rot-label">{rot.label}</p>
+              <div className="score-row-ctrl">
+                <div className="score-side">
+                  <div className="score-ctrl">
+                    <button
+                      type="button"
+                      className="sc-btn"
+                      onClick={() => onUpdateSet(partido.id, idx, "p1", Math.max(0, sets[idx].p1 - 1))}
+                    >
+                      −
+                    </button>
+                    <div className="sc-num">{sets[idx].p1}</div>
+                    <button
+                      type="button"
+                      className="sc-btn"
+                      onClick={() => onUpdateSet(partido.id, idx, "p1", Math.min(7, sets[idx].p1 + 1))}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <div className="sc-vs">vs</div>
+                <div className="score-side">
+                  <div className="score-ctrl">
+                    <button
+                      type="button"
+                      className="sc-btn"
+                      onClick={() => onUpdateSet(partido.id, idx, "p2", Math.max(0, sets[idx].p2 - 1))}
+                    >
+                      −
+                    </button>
+                    <div className="sc-num">{sets[idx].p2}</div>
+                    <button
+                      type="button"
+                      className="sc-btn"
+                      onClick={() => onUpdateSet(partido.id, idx, "p2", Math.min(7, sets[idx].p2 + 1))}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+          <button type="button" className="btn btn-primary btn-sm btn-block" onClick={() => onGuardar(partido.id, sets)}>
+            {resultado ? "Guardar cambios" : "Guardar resultado"}
+          </button>
+          {!isCoord && !resultado ? (
+            <p className="slot-meta res-hint">Otro jugador del partido deberá validarlo</p>
+          ) : null}
+        </div>
+      ) : (
+        <div className="res-sets-view">
+          {resultado ? (
+            rotaciones.map((rot, idx) => {
+              const s = sets[idx];
+              const [izq, der] = rot.label.split(" vs ");
+              return (
+                <div key={idx} className="rot-row">
+                  <span className="rot-lbl">Set {idx + 1}</span>
+                  <span className="rot-side">{izq}</span>
+                  <span className="rot-score">
+                    {s.p1} – {s.p2}
+                  </span>
+                  <span className="rot-side rot-side-r">{der}</span>
+                </div>
+              );
+            })
+          ) : (
+            <p className="slot-meta res-sin-resultado">Aún no hay resultado registrado</p>
+          )}
+        </div>
+      )}
+
+      {permisos.puedeValidar ? (
+        <button type="button" className="btn btn-primary btn-sm btn-block res-validar-btn" onClick={() => onValidar(partido.id)}>
+          Validar resultado
+        </button>
+      ) : null}
+
+      {!permisos.puedeEditar && permisos.estado === "pendiente" && !permisos.puedeValidar ? (
+        <p className="slot-meta res-hint">Pendiente de validación por otro jugador o coordinador</p>
+      ) : null}
+    </article>
+  );
 }
 
 export default function Resultados({
@@ -21,91 +176,107 @@ export default function Resultados({
   getResultado,
   mapSetsFromResultado
 }) {
+  const hoy = hoyLocalStr();
+  const ayer = ayerLocalStr();
+  const diasDisponibles = useMemo(() => getDiasDisponiblesResultados(partidos, isCoord), [partidos, isCoord]);
+  const [fechaSel, setFechaSel] = useState("");
   const [setsDraft, setSetsDraft] = useState({});
-  const [fecha, setFecha] = useState(todayStr());
+
+  useEffect(() => {
+    if (!diasDisponibles.length) {
+      setFechaSel("");
+      return;
+    }
+    if (!fechaSel || !diasDisponibles.includes(fechaSel)) {
+      const preferido = diasDisponibles.includes(hoy) ? hoy : diasDisponibles[diasDisponibles.length - 1];
+      setFechaSel(preferido);
+    }
+  }, [diasDisponibles, fechaSel, hoy]);
+
+  const partidosDia = useMemo(
+    () =>
+      partidos
+        .filter((p) => p.fechaPartido === fechaSel)
+        .sort((a, b) => (a.numeroPista ?? 0) - (b.numeroPista ?? 0)),
+    [partidos, fechaSel]
+  );
 
   function updateSet(partidoId, setIndex, side, value) {
-    const base = setsDraft[partidoId] ?? emptySets();
-    const next = base.map((s, i) => (i === setIndex ? { ...s, [side]: Number(value) || 0 } : s));
+    const partido = partidos.find((p) => p.id === partidoId);
+    const resultado = getResultado?.(partidoId, partido?.fechaPartido);
+    const prefill = resultado ? mapSetsFromResultado(resultado) : null;
+    const base = setsDraft[partidoId] ?? prefill ?? emptySets();
+    const next = base.map((s, i) => (i === setIndex ? { ...s, [side]: value } : s));
     setSetsDraft((prev) => ({ ...prev, [partidoId]: next }));
   }
 
-  const partidosFiltrados = isCoord
-    ? partidos
-    : partidos.filter((p) => p.jugadores.some((j) => j.jugadorId === currentUser?.id));
+  function handleGuardar(partidoId, sets) {
+    const partido = partidos.find((p) => p.id === partidoId);
+    onGuardar(partidoId, partido?.fechaPartido ?? fechaSel, sets);
+  }
+
+  function handleValidar(partidoId) {
+    const partido = partidos.find((p) => p.id === partidoId);
+    onValidar(partidoId, partido?.fechaPartido ?? fechaSel);
+  }
 
   return (
-    <div>
+    <div className="resultados-page">
       <h2 className="section-title">Resultados</h2>
-      <div className="card">
-        {isCoord ? (
-          <label className="stack">
-            <span>Fecha</span>
-            <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
-          </label>
+
+      {isCoord ? (
+        <p className="slot-meta res-ventana-hint">Semana pasada y hoy · sin partidos futuros</p>
+      ) : (
+        <p className="slot-meta res-ventana-hint">
+          Puedes introducir resultados solo en tus partidos de hoy o ayer. Consulta cualquier día.
+        </p>
+      )}
+
+      <div id="resultados-days">
+        {diasDisponibles.length ? (
+          <select
+            value={fechaSel}
+            onChange={(e) => setFechaSel(e.target.value)}
+            className="resultados-day-select"
+          >
+            {diasDisponibles.map((f) => (
+              <option key={f} value={f}>
+                {formatDiaDropdown(f, hoy, ayer)}
+              </option>
+            ))}
+          </select>
         ) : (
-          <p className="slot-meta">Solo puedes introducir resultados de hoy: {todayStr()}</p>
+          <p className="slot-meta">No hay partidos con resultados en esta ventana</p>
         )}
       </div>
-      {partidosFiltrados.map((p) => {
-        const resultado = getResultado?.(p.id, fecha);
-        const prefill = resultado ? mapSetsFromResultado(resultado) : null;
-        const baseSets = setsDraft[p.id] ?? prefill ?? emptySets();
-        const canValidate =
-          currentUser &&
-          resultado &&
-          resultado.introducido_por !== currentUser.id &&
-          !resultado.validado_por &&
-          (isCoord || p.jugadores.some((j) => j.jugadorId === currentUser.id));
-        return (
-          <article className="card" key={p.id}>
-            <p>
-              <strong>
-                {p.slotLabel} · {p.club}
-              </strong>
-            </p>
-            <p className="slot-meta">Fecha resultado: {fecha}</p>
-            <p className="slot-meta">{p.jugadores.map((j) => j.nombre).join(", ")}</p>
-            <div className="grid-sets">
-              {[0, 1, 2].map((idx) => (
-                <div key={idx} className="set-box">
-                  <span>Set {idx + 1}</span>
-                  <input
-                    type="number"
-                    min="0"
-                    value={baseSets[idx].p1}
-                    onChange={(e) => updateSet(p.id, idx, "p1", e.target.value)}
-                  />
-                  <input
-                    type="number"
-                    min="0"
-                    value={baseSets[idx].p2}
-                    onChange={(e) => updateSet(p.id, idx, "p2", e.target.value)}
-                  />
-                </div>
-              ))}
-            </div>
-            <div className="slot-actions">
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={() => onGuardar(p.id, fecha, baseSets)}
-              >
-                Guardar resultado
-              </button>
-              {canValidate ? (
-                <button className="btn btn-sm" onClick={() => onValidar(p.id, fecha)}>
-                  Validar resultado
-                </button>
-              ) : null}
-            </div>
-            {resultado?.validado_por ? (
-              <p className="info-box">Resultado validado</p>
-            ) : resultado ? (
-              <p className="slot-meta">Pendiente de validacion</p>
-            ) : null}
-          </article>
-        );
-      })}
+
+      {!diasDisponibles.length ? (
+        <div className="card">
+          <div className="empty-state">Genera partidos en la pestaña Partidos para poder registrar resultados</div>
+        </div>
+      ) : !partidosDia.length ? (
+        <div className="card">
+          <div className="empty-state">No hay partidos este día</div>
+        </div>
+      ) : (
+        partidosDia.map((p) => {
+          const resultado = getResultado?.(p.id, p.fechaPartido);
+          return (
+            <PartidoResultadoCard
+              key={p.id}
+              partido={p}
+              resultado={resultado}
+              setsDraft={setsDraft[p.id]}
+              onUpdateSet={updateSet}
+              onGuardar={handleGuardar}
+              onValidar={handleValidar}
+              currentUser={currentUser}
+              isCoord={isCoord}
+              mapSetsFromResultado={mapSetsFromResultado}
+            />
+          );
+        })
+      )}
     </div>
   );
 }
