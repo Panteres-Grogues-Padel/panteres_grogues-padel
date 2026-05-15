@@ -218,8 +218,6 @@ export function usePartidos(currentUser) {
       setError("");
       const { data, error } = await rpcGetPartidosSlot(slotId, semanaNorm);
 
-      console.log("[partidos] RPC resultado:", JSON.stringify(data), "error:", error?.message);
-
       if (gen !== slotLoadGenRef.current) {
         return { ok: false, skipped: true };
       }
