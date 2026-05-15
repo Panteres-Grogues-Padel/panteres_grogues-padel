@@ -127,7 +127,9 @@ export function useResultados(partidos, currentUser, isCoord) {
       set2_p2: sets[1].p2,
       set3_p1: sets[2].p1,
       set3_p2: sets[2].p2,
-      introducido_por: currentUser.id
+      introducido_por: prev?.introducido_por ?? currentUser.id,
+      validado_por: null,
+      validado_at: null
     };
 
     let query;
@@ -215,9 +217,44 @@ export function useResultados(partidos, currentUser, isCoord) {
     return { ok: true };
   }
 
+  async function modificarResultado(partidoId, fecha) {
+    if (!currentUser) return { ok: false, error: "Debes iniciar sesion." };
+    if (!isCoord) return { ok: false, error: "Solo el coordinador puede modificar resultados validados." };
+
+    const partido = partidos.find((p) => p.id === partidoId);
+    if (!partido) return { ok: false, error: "Partido no encontrado." };
+
+    const fechaPartido = partido.fechaPartido || fecha;
+    if (!enVentanaCoordResultados(fechaPartido)) {
+      return { ok: false, error: "Fuera de la ventana de resultados del coordinador." };
+    }
+
+    const r = getResultado(partidoId, fechaPartido);
+    if (!r) return { ok: false, error: "No hay resultado para modificar." };
+    if (!r.validado_por) return { ok: true, yaPendiente: true };
+
+    if (useFallback) return { ok: true };
+
+    const { error: modError } = await supabase
+      .from("resultados")
+      .update({ validado_por: null, validado_at: null })
+      .eq("id", r.id);
+    if (modError) return { ok: false, error: modError.message };
+
+    await createActivityLog({
+      jugadorId: currentUser.id,
+      tipo: "resultados",
+      texto: `Desbloquea resultado en pista ${partidoId} (${fechaPartido}) para edicion`
+    });
+
+    await loadResultados();
+    return { ok: true };
+  }
+
   return {
     pendientesValidacion,
     guardarResultado,
+    modificarResultado,
     validarResultado,
     getResultado,
     mapSetsFromResultado,

@@ -38,6 +38,7 @@ export default function App() {
   );
   const {
     guardarResultado,
+    modificarResultado,
     validarResultado,
     getResultado,
     mapSetsFromResultado,
@@ -204,6 +205,11 @@ export default function App() {
                   const res = await validarResultado(id, fecha);
                   if (!res.ok) return showMessage(res.error);
                   showMessage("Resultado validado");
+                }}
+                onModificar={async (id, fecha) => {
+                  const res = await modificarResultado(id, fecha);
+                  if (!res.ok) return showMessage(res.error);
+                  showMessage("Resultado desbloqueado para edición");
                 }}
                 currentUser={auth.currentUser}
                 isCoord={isCoord}

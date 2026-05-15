@@ -33,6 +33,7 @@ function PartidoResultadoCard({
   onUpdateSet,
   onGuardar,
   onValidar,
+  onModificar,
   currentUser,
   isCoord,
   mapSetsFromResultado
@@ -154,6 +155,12 @@ function PartidoResultadoCard({
         </div>
       )}
 
+      {permisos.puedeModificar ? (
+        <button type="button" className="btn btn-sm btn-block res-modificar-btn" onClick={() => onModificar(partido.id)}>
+          Modificar resultado
+        </button>
+      ) : null}
+
       {permisos.puedeValidar ? (
         <button type="button" className="btn btn-primary btn-sm btn-block res-validar-btn" onClick={() => onValidar(partido.id)}>
           Validar resultado
@@ -171,6 +178,7 @@ export default function Resultados({
   partidos,
   onGuardar,
   onValidar,
+  onModificar,
   currentUser,
   isCoord,
   getResultado,
@@ -218,6 +226,18 @@ export default function Resultados({
   function handleValidar(partidoId) {
     const partido = partidos.find((p) => p.id === partidoId);
     onValidar(partidoId, partido?.fechaPartido ?? fechaSel);
+  }
+
+  function handleModificar(partidoId) {
+    const partido = partidos.find((p) => p.id === partidoId);
+    const resultado = getResultado?.(partidoId, partido?.fechaPartido);
+    if (resultado) {
+      setSetsDraft((prev) => ({
+        ...prev,
+        [partidoId]: mapSetsFromResultado(resultado)
+      }));
+    }
+    onModificar(partidoId, partido?.fechaPartido ?? fechaSel);
   }
 
   return (
@@ -270,6 +290,7 @@ export default function Resultados({
               onUpdateSet={updateSet}
               onGuardar={handleGuardar}
               onValidar={handleValidar}
+              onModificar={handleModificar}
               currentUser={currentUser}
               isCoord={isCoord}
               mapSetsFromResultado={mapSetsFromResultado}

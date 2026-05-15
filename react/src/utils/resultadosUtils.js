@@ -49,12 +49,13 @@ export function getPermisosResultado({ partido, resultado, currentUser, isCoord,
 
   if (isCoord) {
     const enVentana = enVentanaCoordResultados(fecha, now);
-    const puedeGuardar = enVentana;
+    const validado = estado === "validado";
     return {
       estado,
       puedeVer: enVentana,
-      puedeEditar: puedeGuardar,
-      puedeGuardar,
+      puedeEditar: enVentana && !validado,
+      puedeGuardar: enVentana && !validado,
+      puedeModificar: enVentana && validado,
       puedeValidar: enVentana && Boolean(resultado) && estado === "pendiente"
     };
   }
@@ -71,6 +72,7 @@ export function getPermisosResultado({ partido, resultado, currentUser, isCoord,
     puedeVer: true,
     puedeEditar: puedeIntroducir,
     puedeGuardar: puedeIntroducir,
+    puedeModificar: false,
     puedeValidar
   };
 }
