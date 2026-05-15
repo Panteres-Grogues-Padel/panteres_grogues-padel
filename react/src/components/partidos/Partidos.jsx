@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import PartidoCard from "./PartidoCard";
 import MoverJugador from "./MoverJugador";
 import { copyTextToClipboard } from "../../utils/clipboard";
-import { formatHoraInput, getLunesSemanaActual, normalizeSemanaDate } from "../../utils/dates";
+import { formatHoraInput, normalizeSemanaDate, resolverPartidoSlot } from "../../utils/dates";
+
+const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
 function jugadoresOrdenRanking(jugadores, rankingPosByJugador) {
   const copy = [...jugadores];
@@ -15,9 +17,15 @@ function jugadoresOrdenRanking(jugadores, rankingPosByJugador) {
   return copy;
 }
 
+function formatFechaPartido(d) {
+  if (!d) return "";
+  return d.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "short" });
+}
+
 export default function Partidos({
   partidos,
-  slots,
+  slotsCatalog,
+  slotsJugar,
   ranking,
   currentUser,
   onGenerar,
@@ -28,48 +36,88 @@ export default function Partidos({
   onConfirmar,
   isCoord
 }) {
-  const [slotId, setSlotId] = useState(slots[0]?.id ?? "");
+  const slotsOrdenados = useMemo(
+    () =>
+      [...(slotsCatalog ?? [])].sort((a, b) => {
+        const da = Number(a.diaSemana ?? 99);
+        const db = Number(b.diaSemana ?? 99);
+        if (da !== db) return da - db;
+        return String(a.label).localeCompare(String(b.label));
+      }),
+    [slotsCatalog]
+  );
+
+  const [slotId, setSlotId] = useState(slotsOrdenados[0]?.id ?? "");
   const [numPistas, setNumPistas] = useState(0);
   const [numIndoor, setNumIndoor] = useState(0);
   const [moverState, setMoverState] = useState({ open: false, origen: null, jugador: null });
 
-  const semanaActual = useMemo(() => getLunesSemanaActual(), []);
+  useEffect(() => {
+    if (!slotId && slotsOrdenados.length) setSlotId(slotsOrdenados[0].id);
+  }, [slotId, slotsOrdenados]);
+
+  const slotMeta = useMemo(
+    () => slotsOrdenados.find((s) => s.id === slotId),
+    [slotsOrdenados, slotId]
+  );
+
+  const partidoCtx = useMemo(
+    () => resolverPartidoSlot(slotMeta?.diaSemana),
+    [slotMeta?.diaSemana]
+  );
+
+  const semanaObjetivo = partidoCtx.semanaObjetivo;
+  const esPasado = partidoCtx.estado === "pasado";
+  const esActivo = partidoCtx.estado === "activo";
+
+  const jugadoresSlot = useMemo(() => {
+    if (!slotId || !semanaObjetivo) return [];
+    const entry = (slotsJugar ?? []).find(
+      (s) => (s.baseId ?? s.id) === slotId && normalizeSemanaDate(s.semanaObjetivo) === semanaObjetivo
+    );
+    return entry?.jugadores ?? [];
+  }, [slotsJugar, slotId, semanaObjetivo]);
+
+  const slotActual = useMemo(
+    () =>
+      slotMeta
+        ? {
+            ...slotMeta,
+            jugadores: jugadoresSlot
+          }
+        : null,
+    [slotMeta, jugadoresSlot]
+  );
 
   useEffect(() => {
-    if (!slotId && slots.length) setSlotId(slots[0].id);
-  }, [slotId, slots]);
-
-  useEffect(() => {
-    if (!slotId || !onLoadSlot) return;
-    void onLoadSlot(slotId, semanaActual);
-  }, [slotId, semanaActual, onLoadSlot]);
-
-  const slotActual = useMemo(() => slots.find((s) => s.id === slotId), [slots, slotId]);
-  const semNorm = normalizeSemanaDate(semanaActual);
+    if (!slotId || !onLoadSlot || !semanaObjetivo || esPasado) return;
+    void onLoadSlot(slotId, semanaObjetivo);
+  }, [slotId, semanaObjetivo, onLoadSlot, esPasado]);
 
   const partidosFiltrados = useMemo(() => {
+    if (!esActivo || !semanaObjetivo) return [];
     const sid = String(slotId);
+    const semNorm = normalizeSemanaDate(semanaObjetivo);
     const seen = new Map();
     for (const p of partidos) {
       if (String(p.slotId) !== sid) continue;
-      if (semNorm && normalizeSemanaDate(p.semana) !== semNorm) continue;
+      if (normalizeSemanaDate(p.semana) !== semNorm) continue;
       seen.set(String(p.pistaId ?? p.id), p);
     }
     return [...seen.values()];
-  }, [partidos, slotId, semNorm]);
+  }, [partidos, slotId, semanaObjetivo, esActivo]);
 
   useEffect(() => {
-    const slot = slots.find((s) => s.id === slotId);
-    if (!slot) return;
+    if (!slotActual || esPasado) return;
     if (partidosFiltrados.length > 0) {
       const generado = partidosFiltrados[0];
       setNumPistas(Number(generado.numPistasGenerado ?? partidosFiltrados.length));
       setNumIndoor(Number(generado.numIndoorGenerado ?? 0));
     } else {
-      setNumPistas(Number(slot.pistasDefault ?? slot.pistas ?? 0));
+      setNumPistas(Number(slotActual.pistasDefault ?? slotActual.pistas ?? 0));
       setNumIndoor(0);
     }
-  }, [slotId, slots, partidosFiltrados]);
+  }, [slotId, slotActual, partidosFiltrados, esPasado]);
 
   const rankingPosByJugador = useMemo(() => {
     const map = {};
@@ -83,12 +131,12 @@ export default function Partidos({
   const hayInscritos = (slotActual?.jugadores?.length ?? 0) > 0;
 
   function handleGenerarClick(regenerar) {
-    if (!slotId || !semanaActual) return;
+    if (!slotId || !semanaObjetivo || esPasado) return;
     if (regenerar) {
       const ok = window.confirm("¿Regenerar los partidos de esta semana?");
       if (!ok) return;
     }
-    onGenerar(slotId, semanaActual, { numPistas, numIndoor });
+    onGenerar(slotId, semanaObjetivo, { numPistas, numIndoor });
   }
 
   const reservas = useMemo(() => {
@@ -154,20 +202,26 @@ export default function Partidos({
             marginBottom: "1rem"
           }}
         >
-          {slots.map((slot) => (
+          {slotsOrdenados.map((slot) => (
             <option key={slot.id} value={slot.id}>
-              {slot.label} — {slot.club} ({slot.jugadores?.length ?? 0})
+              {DIAS[slot.diaSemana] ?? slot.label} — {slot.club}
             </option>
           ))}
         </select>
       </div>
 
-      {isCoord ? (
+      {esPasado ? (
+        <div className="card">
+          <div className="empty-state">Este partido ya ha pasado</div>
+        </div>
+      ) : null}
+
+      {esActivo && isCoord ? (
         <div className="coord-box">
           <div className="coord-box-title">
             <span className="coord-pill">Coord.</span> {slotActual?.label} — {slotActual?.club}
             <span style={{ display: "block", fontSize: "12px", fontWeight: 400, color: "var(--text2)", marginTop: "4px" }}>
-              Semana {semanaActual}
+              {formatFechaPartido(partidoCtx.fechaPartido)}
             </span>
           </div>
           <div className="pistas-row">
@@ -209,11 +263,13 @@ export default function Partidos({
         </div>
       ) : null}
 
-      {!partidosFiltrados.length ? (
+      {esActivo && !partidosFiltrados.length ? (
         <div className="card">
           <div className="empty-state">{slotActual?.jugadores?.length ? "Los partidos aún no se han generado" : "No hay nadie apuntado"}</div>
         </div>
-      ) : (
+      ) : null}
+
+      {esActivo && partidosFiltrados.length > 0 ? (
         <>
           {partidosFiltrados
             .sort((a, b) => (a.numeroPista ?? 0) - (b.numeroPista ?? 0))
@@ -251,7 +307,7 @@ export default function Partidos({
             <div className="wa-text">{buildWaText()}</div>
           </div>
         </>
-      )}
+      ) : null}
 
       <MoverJugador
         open={moverState.open}

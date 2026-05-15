@@ -25,7 +25,7 @@ export default function App() {
   const [flashMessage, setFlashMessage] = useState("");
   const [perfilJugador, setPerfilJugador] = useState(null);
   // useSlots corre al montar App (tras login), no al entrar en la pestaña Jugar; Jugar solo recibe props.
-  const { slots, slotsJugar, slotsNotice, apuntarEnSlot, bajaEnSlot } = useSlots(
+  const { slots, slotsJugar, rawSlots, slotsNotice, apuntarEnSlot, bajaEnSlot } = useSlots(
     auth.currentUser,
     auth.authEpoch
   );
@@ -163,6 +163,8 @@ export default function App() {
           {activeTab === "partidos" ? (
             <Partidos
               partidos={partidos}
+              slotsCatalog={rawSlots}
+              slotsJugar={slotsJugar}
               onGenerar={handleGenerar}
               onLoadSlot={loadPartidosForSlot}
               onHora={async (id, hora) => {
@@ -183,7 +185,6 @@ export default function App() {
                 if (!res.ok) showMessage(res.error);
               }}
               isCoord={isCoord}
-              slots={slots}
               ranking={ranking}
               currentUser={auth.currentUser}
             />

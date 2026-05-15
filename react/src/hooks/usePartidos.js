@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PARTIDOS_INICIALES } from "../utils/mockData";
 import { supabase } from "../lib/supabase";
 import { createActivityLog, createNotifications } from "../lib/engagement";
-import { formatHoraInput, getLunesSemanaActual, normalizeSemanaDate } from "../utils/dates";
+import { formatHoraInput, getVentanaPartidos, normalizeSemanaDate } from "../utils/dates";
 import { isJugadorUuid } from "../utils/jugador";
 
 function strId(id) {
@@ -166,11 +166,11 @@ export function usePartidos(currentUser) {
     if (useFallback) return { ok: false, skipped: true };
     setLoading(true);
     setError("");
-    const semanaNorm = getLunesSemanaActual();
+    const { lunesActual, lunesProximo } = getVentanaPartidos();
 
     const { data: slotsData, error: slotsErr } = await supabase
       .from("slots")
-      .select("id")
+      .select("id,dia_semana")
       .eq("activo", true);
 
     if (slotsErr) {
@@ -180,11 +180,10 @@ export function usePartidos(currentUser) {
       return { ok: false, error: slotsErr.message };
     }
 
-    const slotIds = (slotsData ?? []).map((s) => s.id).filter(Boolean);
     let flat = [];
 
-    for (const id of slotIds) {
-      const { data, error: rpcErr } = await rpcGetPartidosSlot(id, semanaNorm);
+    for (const s of slotsData ?? []) {
+      const { data, error: rpcErr } = await rpcGetPartidosSlot(s.id, lunesActual);
       if (rpcErr) {
         setLoading(false);
         setError(rpcErr.message);
@@ -192,6 +191,16 @@ export function usePartidos(currentUser) {
         return { ok: false, error: rpcErr.message };
       }
       flat.push(...flattenPartidos(rowsFromRpcPartidos(data)));
+
+      if (Number(s.dia_semana) <= 1) {
+        const { data: dataProx, error: errProx } = await rpcGetPartidosSlot(s.id, lunesProximo);
+        if (errProx) {
+          setLoading(false);
+          setError(errProx.message);
+          return { ok: false, error: errProx.message };
+        }
+        flat.push(...flattenPartidos(rowsFromRpcPartidos(dataProx)));
+      }
     }
 
     flat = dedupePartidos(flat);
