@@ -44,6 +44,106 @@ function startOfLocalDay(d = new Date()) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
+function addDaysLocal(fecha, n) {
+  const x = new Date(fecha);
+  x.setDate(x.getDate() + n);
+  return startOfLocalDay(x);
+}
+
+function formatFechaLocal(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** 0=Lun … 6=Dom (convención slots). */
+export function getDiaSemanaLocal(fecha) {
+  const d = startOfLocalDay(fecha);
+  const js = d.getDay();
+  return js === 0 ? 6 : js - 1;
+}
+
+/** Lunes de la semana local que contiene `fecha` (YYYY-MM-DD). */
+export function getLunesDeSemanaLocal(fecha) {
+  const d = startOfLocalDay(fecha);
+  const dow = getDiaSemanaLocal(d);
+  const monday = new Date(d);
+  monday.setDate(d.getDate() - dow);
+  return formatFechaLocal(monday);
+}
+
+/**
+ * Fechas de la ventana Partidos: ayer, hoy y los 2 próximos días calendario con slot.
+ */
+export function getFechasVentanaPartidos(slotsCatalog, now = new Date()) {
+  const slots = slotsCatalog ?? [];
+  const today = startOfLocalDay(now);
+  const yesterday = addDaysLocal(today, -1);
+  const fechas = [yesterday, today];
+
+  let cursor = addDaysLocal(today, 1);
+  while (fechas.filter((f) => f > today).length < 2) {
+    const ds = getDiaSemanaLocal(cursor);
+    if (slots.some((s) => Number(s.diaSemana) === ds)) {
+      fechas.push(new Date(cursor));
+    }
+    cursor = addDaysLocal(cursor, 1);
+    if ((cursor - today) / 86400000 > 21) break;
+  }
+
+  return fechas;
+}
+
+/**
+ * Opciones del dropdown Partidos: cada slot en ayer, hoy y próximos 2 días con slot.
+ * modo: 'ayer' (solo consulta) | 'hoy' | 'proximo'
+ */
+export function buildOpcionesDropdownPartidos(slotsCatalog, now = new Date()) {
+  const slots = [...(slotsCatalog ?? [])];
+  const today = startOfLocalDay(now);
+  const yesterday = addDaysLocal(today, -1);
+
+  const ventana = [
+    { fecha: yesterday, modo: "ayer" },
+    { fecha: today, modo: "hoy" }
+  ];
+
+  let cursor = addDaysLocal(today, 1);
+  while (ventana.filter((v) => v.modo === "proximo").length < 2) {
+    const ds = getDiaSemanaLocal(cursor);
+    if (slots.some((s) => Number(s.diaSemana) === ds)) {
+      ventana.push({ fecha: new Date(cursor), modo: "proximo" });
+    }
+    cursor = addDaysLocal(cursor, 1);
+    if ((cursor - today) / 86400000 > 21) break;
+  }
+
+  const opciones = [];
+  for (const { fecha, modo } of ventana) {
+    const ds = getDiaSemanaLocal(fecha);
+    const semanaObjetivo = getLunesDeSemanaLocal(fecha);
+    const fechaKey = formatFechaLocal(fecha);
+    for (const slot of slots) {
+      if (Number(slot.diaSemana) !== ds) continue;
+      opciones.push({
+        id: `${slot.id}:${fechaKey}`,
+        slotId: slot.id,
+        semanaObjetivo,
+        fechaPartido: startOfLocalDay(fecha),
+        modo,
+        slot,
+        diaSemana: ds
+      });
+    }
+  }
+
+  opciones.sort(
+    (a, b) =>
+      a.fechaPartido - b.fechaPartido ||
+      Number(a.diaSemana) - Number(b.diaSemana) ||
+      String(a.slot.club).localeCompare(String(b.slot.club))
+  );
+  return opciones;
+}
+
 /**
  * Ventana visible en Partidos: desde hoy hasta martes de la próxima semana (2 días).
  */

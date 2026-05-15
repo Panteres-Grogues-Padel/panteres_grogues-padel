@@ -2,7 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PARTIDOS_INICIALES } from "../utils/mockData";
 import { supabase } from "../lib/supabase";
 import { createActivityLog, createNotifications } from "../lib/engagement";
-import { formatHoraInput, getVentanaPartidos, normalizeSemanaDate } from "../utils/dates";
+import {
+  formatHoraInput,
+  getDiaSemanaLocal,
+  getFechasVentanaPartidos,
+  getLunesDeSemanaLocal,
+  normalizeSemanaDate
+} from "../utils/dates";
 import { isJugadorUuid } from "../utils/jugador";
 
 function strId(id) {
@@ -166,8 +172,6 @@ export function usePartidos(currentUser) {
     if (useFallback) return { ok: false, skipped: true };
     setLoading(true);
     setError("");
-    const { lunesActual, lunesProximo } = getVentanaPartidos();
-
     const { data: slotsData, error: slotsErr } = await supabase
       .from("slots")
       .select("id,dia_semana")
@@ -180,10 +184,26 @@ export function usePartidos(currentUser) {
       return { ok: false, error: slotsErr.message };
     }
 
+    const slotsCatalog = (slotsData ?? []).map((s) => ({
+      id: s.id,
+      diaSemana: Number(s.dia_semana)
+    }));
+    const fechasVentana = getFechasVentanaPartidos(slotsCatalog);
+    const cargas = new Map();
+
+    for (const fecha of fechasVentana) {
+      const ds = getDiaSemanaLocal(fecha);
+      const semanaObjetivo = getLunesDeSemanaLocal(fecha);
+      for (const s of slotsCatalog) {
+        if (s.diaSemana !== ds) continue;
+        cargas.set(`${s.id}:${semanaObjetivo}`, { slotId: s.id, semanaObjetivo });
+      }
+    }
+
     let flat = [];
 
-    for (const s of slotsData ?? []) {
-      const { data, error: rpcErr } = await rpcGetPartidosSlot(s.id, lunesActual);
+    for (const { slotId, semanaObjetivo } of cargas.values()) {
+      const { data, error: rpcErr } = await rpcGetPartidosSlot(slotId, semanaObjetivo);
       if (rpcErr) {
         setLoading(false);
         setError(rpcErr.message);
@@ -191,16 +211,6 @@ export function usePartidos(currentUser) {
         return { ok: false, error: rpcErr.message };
       }
       flat.push(...flattenPartidos(rowsFromRpcPartidos(data)));
-
-      if (Number(s.dia_semana) <= 1) {
-        const { data: dataProx, error: errProx } = await rpcGetPartidosSlot(s.id, lunesProximo);
-        if (errProx) {
-          setLoading(false);
-          setError(errProx.message);
-          return { ok: false, error: errProx.message };
-        }
-        flat.push(...flattenPartidos(rowsFromRpcPartidos(dataProx)));
-      }
     }
 
     flat = dedupePartidos(flat);

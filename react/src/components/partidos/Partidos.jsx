@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import PartidoCard from "./PartidoCard";
 import MoverJugador from "./MoverJugador";
 import { copyTextToClipboard } from "../../utils/clipboard";
-import { formatHoraInput, normalizeSemanaDate, resolverPartidoSlot } from "../../utils/dates";
+import { buildOpcionesDropdownPartidos, formatHoraInput, normalizeSemanaDate } from "../../utils/dates";
 
 const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
@@ -22,6 +22,11 @@ function formatFechaPartido(d) {
   return d.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "short" });
 }
 
+function etiquetaOpcion(o) {
+  const modoLabel = o.modo === "ayer" ? "ayer" : o.modo === "hoy" ? "hoy" : formatFechaPartido(o.fechaPartido);
+  return `${DIAS[o.diaSemana] ?? o.slot.label} — ${o.slot.club} (${modoLabel})`;
+}
+
 export default function Partidos({
   partidos,
   slotsCatalog,
@@ -36,39 +41,26 @@ export default function Partidos({
   onConfirmar,
   isCoord
 }) {
-  const slotsOrdenados = useMemo(
-    () =>
-      [...(slotsCatalog ?? [])].sort((a, b) => {
-        const da = Number(a.diaSemana ?? 99);
-        const db = Number(b.diaSemana ?? 99);
-        if (da !== db) return da - db;
-        return String(a.label).localeCompare(String(b.label));
-      }),
-    [slotsCatalog]
-  );
+  const opciones = useMemo(() => buildOpcionesDropdownPartidos(slotsCatalog), [slotsCatalog]);
 
-  const [slotId, setSlotId] = useState(slotsOrdenados[0]?.id ?? "");
+  const [opcionId, setOpcionId] = useState("");
   const [numPistas, setNumPistas] = useState(0);
   const [numIndoor, setNumIndoor] = useState(0);
   const [moverState, setMoverState] = useState({ open: false, origen: null, jugador: null });
 
   useEffect(() => {
-    if (!slotId && slotsOrdenados.length) setSlotId(slotsOrdenados[0].id);
-  }, [slotId, slotsOrdenados]);
+    if (!opcionId && opciones.length) setOpcionId(opciones[0].id);
+    if (opcionId && !opciones.some((o) => o.id === opcionId) && opciones.length) {
+      setOpcionId(opciones[0].id);
+    }
+  }, [opcionId, opciones]);
 
-  const slotMeta = useMemo(
-    () => slotsOrdenados.find((s) => s.id === slotId),
-    [slotsOrdenados, slotId]
-  );
+  const seleccion = useMemo(() => opciones.find((o) => o.id === opcionId), [opciones, opcionId]);
 
-  const partidoCtx = useMemo(
-    () => resolverPartidoSlot(slotMeta?.diaSemana),
-    [slotMeta?.diaSemana]
-  );
-
-  const semanaObjetivo = partidoCtx.semanaObjetivo;
-  const esPasado = partidoCtx.estado === "pasado";
-  const esActivo = partidoCtx.estado === "activo";
+  const slotId = seleccion?.slotId ?? "";
+  const semanaObjetivo = seleccion?.semanaObjetivo ?? null;
+  const esSoloConsulta = seleccion?.modo === "ayer";
+  const puedeGenerar = seleccion?.modo === "hoy" || seleccion?.modo === "proximo";
 
   const jugadoresSlot = useMemo(() => {
     if (!slotId || !semanaObjetivo) return [];
@@ -80,22 +72,22 @@ export default function Partidos({
 
   const slotActual = useMemo(
     () =>
-      slotMeta
+      seleccion?.slot
         ? {
-            ...slotMeta,
+            ...seleccion.slot,
             jugadores: jugadoresSlot
           }
         : null,
-    [slotMeta, jugadoresSlot]
+    [seleccion, jugadoresSlot]
   );
 
   useEffect(() => {
-    if (!slotId || !onLoadSlot || !semanaObjetivo || esPasado) return;
+    if (!slotId || !onLoadSlot || !semanaObjetivo) return;
     void onLoadSlot(slotId, semanaObjetivo);
-  }, [slotId, semanaObjetivo, onLoadSlot, esPasado]);
+  }, [slotId, semanaObjetivo, onLoadSlot]);
 
   const partidosFiltrados = useMemo(() => {
-    if (!esActivo || !semanaObjetivo) return [];
+    if (!semanaObjetivo || !slotId) return [];
     const sid = String(slotId);
     const semNorm = normalizeSemanaDate(semanaObjetivo);
     const seen = new Map();
@@ -105,10 +97,10 @@ export default function Partidos({
       seen.set(String(p.pistaId ?? p.id), p);
     }
     return [...seen.values()];
-  }, [partidos, slotId, semanaObjetivo, esActivo]);
+  }, [partidos, slotId, semanaObjetivo]);
 
   useEffect(() => {
-    if (!slotActual || esPasado) return;
+    if (!slotActual) return;
     if (partidosFiltrados.length > 0) {
       const generado = partidosFiltrados[0];
       setNumPistas(Number(generado.numPistasGenerado ?? partidosFiltrados.length));
@@ -117,7 +109,7 @@ export default function Partidos({
       setNumPistas(Number(slotActual.pistasDefault ?? slotActual.pistas ?? 0));
       setNumIndoor(0);
     }
-  }, [slotId, slotActual, partidosFiltrados, esPasado]);
+  }, [slotActual, partidosFiltrados]);
 
   const rankingPosByJugador = useMemo(() => {
     const map = {};
@@ -131,7 +123,7 @@ export default function Partidos({
   const hayInscritos = (slotActual?.jugadores?.length ?? 0) > 0;
 
   function handleGenerarClick(regenerar) {
-    if (!slotId || !semanaObjetivo || esPasado) return;
+    if (!slotId || !semanaObjetivo || !puedeGenerar) return;
     if (regenerar) {
       const ok = window.confirm("¿Regenerar los partidos de esta semana?");
       if (!ok) return;
@@ -140,13 +132,13 @@ export default function Partidos({
   }
 
   const reservas = useMemo(() => {
-    if (!slotActual) return [];
+    if (!slotActual || esSoloConsulta) return [];
     const idsAsignados = new Set(partidosFiltrados.flatMap((p) => p.jugadores.map((j) => j.jugadorId)));
     const candidates = (ranking ?? []).filter((r) =>
       slotActual.jugadores?.some((j) => j.nombre === r.nombre && !idsAsignados.has(r.id))
     );
     return candidates;
-  }, [slotActual, partidosFiltrados, ranking]);
+  }, [slotActual, partidosFiltrados, ranking, esSoloConsulta]);
 
   function buildWaText() {
     if (!slotActual || !partidosFiltrados.length) return "";
@@ -177,6 +169,7 @@ export default function Partidos({
   }
 
   function onOpenMover(origenPartido, jugador) {
+    if (esSoloConsulta) return;
     setMoverState({ open: true, origen: origenPartido, jugador });
   }
 
@@ -189,39 +182,43 @@ export default function Partidos({
     <div>
       <h2 className="section-title">Partidos</h2>
       <div id="partidos-days">
-        <select
-          value={slotId}
-          onChange={(e) => setSlotId(e.target.value)}
-          style={{
-            fontSize: "14px",
-            fontWeight: 600,
-            height: "46px",
-            borderColor: "var(--border2)",
-            background: "var(--bg)",
-            width: "100%",
-            marginBottom: "1rem"
-          }}
-        >
-          {slotsOrdenados.map((slot) => (
-            <option key={slot.id} value={slot.id}>
-              {DIAS[slot.diaSemana] ?? slot.label} — {slot.club}
-            </option>
-          ))}
-        </select>
+        {opciones.length ? (
+          <select
+            value={opcionId}
+            onChange={(e) => setOpcionId(e.target.value)}
+            style={{
+              fontSize: "14px",
+              fontWeight: 600,
+              height: "46px",
+              borderColor: "var(--border2)",
+              background: "var(--bg)",
+              width: "100%",
+              marginBottom: "1rem"
+            }}
+          >
+            {opciones.map((o) => (
+              <option key={o.id} value={o.id}>
+                {etiquetaOpcion(o)}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <p className="slot-meta">No hay slots en la ventana de estos días</p>
+        )}
       </div>
 
-      {esPasado ? (
-        <div className="card">
-          <div className="empty-state">Este partido ya ha pasado</div>
-        </div>
+      {esSoloConsulta && seleccion ? (
+        <p className="slot-meta" style={{ marginBottom: "1rem" }}>
+          Ayer · solo consulta (sin generar partidos)
+        </p>
       ) : null}
 
-      {esActivo && isCoord ? (
+      {puedeGenerar && isCoord ? (
         <div className="coord-box">
           <div className="coord-box-title">
             <span className="coord-pill">Coord.</span> {slotActual?.label} — {slotActual?.club}
             <span style={{ display: "block", fontSize: "12px", fontWeight: 400, color: "var(--text2)", marginTop: "4px" }}>
-              {formatFechaPartido(partidoCtx.fechaPartido)}
+              {formatFechaPartido(seleccion?.fechaPartido)}
             </span>
           </div>
           <div className="pistas-row">
@@ -263,13 +260,17 @@ export default function Partidos({
         </div>
       ) : null}
 
-      {esActivo && !partidosFiltrados.length ? (
+      {!partidosFiltrados.length ? (
         <div className="card">
-          <div className="empty-state">{slotActual?.jugadores?.length ? "Los partidos aún no se han generado" : "No hay nadie apuntado"}</div>
+          <div className="empty-state">
+            {esSoloConsulta
+              ? "No hay partidos generados para ayer"
+              : slotActual?.jugadores?.length
+                ? "Los partidos aún no se han generado"
+                : "No hay nadie apuntado"}
+          </div>
         </div>
-      ) : null}
-
-      {esActivo && partidosFiltrados.length > 0 ? (
+      ) : (
         <>
           {partidosFiltrados
             .sort((a, b) => (a.numeroPista ?? 0) - (b.numeroPista ?? 0))
@@ -278,17 +279,17 @@ export default function Partidos({
                 key={p.id}
                 partido={p}
                 index={i}
-                isCoord={isCoord}
+                isCoord={isCoord && !esSoloConsulta}
                 currentUser={currentUser}
                 onConfirmar={onConfirmar}
-                onHora={onHora}
-                onIndoor={onIndoor}
-                onOpenMover={onOpenMover}
+                onHora={esSoloConsulta ? undefined : onHora}
+                onIndoor={esSoloConsulta ? undefined : onIndoor}
+                onOpenMover={esSoloConsulta ? undefined : onOpenMover}
                 rankingPosByJugador={rankingPosByJugador}
               />
             ))}
 
-          {reservas.length ? (
+          {!esSoloConsulta && reservas.length ? (
             <div className="reserva-box">
               <div style={{ fontSize: "11px", fontWeight: 600, color: "#BA7517", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: "6px" }}>
                 Reserva ({reservas.length})
@@ -307,7 +308,7 @@ export default function Partidos({
             <div className="wa-text">{buildWaText()}</div>
           </div>
         </>
-      ) : null}
+      )}
 
       <MoverJugador
         open={moverState.open}
