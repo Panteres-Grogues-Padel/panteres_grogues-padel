@@ -165,6 +165,8 @@ export function useResultados(partidos, currentUser, isCoord) {
 
   async function validarResultado(partidoId, fecha) {
     if (!currentUser) return { ok: false, error: "Debes iniciar sesion." };
+    if (!isCoord) return { ok: false, error: "Solo el coordinador puede validar resultados." };
+
     const partido = partidos.find((p) => p.id === partidoId);
     if (!partido) return { ok: false, error: "Partido no encontrado." };
 
@@ -172,16 +174,8 @@ export function useResultados(partidos, currentUser, isCoord) {
     const r = getResultado(partidoId, fechaPartido);
     if (!r) return { ok: false, error: "No hay resultado para validar." };
 
-    if (isCoord) {
-      if (!enVentanaCoordResultados(fechaPartido)) {
-        return { ok: false, error: "Fuera de la ventana de resultados del coordinador." };
-      }
-    } else {
-      const esJugador = partido.jugadores.some((j) => String(j.jugadorId) === String(currentUser.id));
-      if (!esJugador) return { ok: false, error: "No puedes validar este partido." };
-      if (String(r.introducido_por) === String(currentUser.id)) {
-        return { ok: false, error: "No puedes validar tu propio resultado." };
-      }
+    if (!enVentanaCoordResultados(fechaPartido)) {
+      return { ok: false, error: "Fuera de la ventana de resultados del coordinador." };
     }
 
     if (useFallback) return { ok: true };

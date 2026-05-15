@@ -61,11 +61,6 @@ export function getPermisosResultado({ partido, resultado, currentUser, isCoord,
   }
 
   const puedeIntroducir = jugo && (fecha === hoy || fecha === ayer) && !resultado;
-  const puedeValidar =
-    jugo &&
-    resultado &&
-    estado === "pendiente" &&
-    String(resultado.introducido_por) !== String(currentUser?.id);
 
   return {
     estado,
@@ -73,6 +68,6 @@ export function getPermisosResultado({ partido, resultado, currentUser, isCoord,
     puedeEditar: puedeIntroducir,
     puedeGuardar: puedeIntroducir,
     puedeModificar: false,
-    puedeValidar
+    puedeValidar: false
   };
 }

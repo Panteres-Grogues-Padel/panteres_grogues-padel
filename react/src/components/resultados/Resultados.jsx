@@ -129,7 +129,7 @@ function PartidoResultadoCard({
             {resultado ? "Guardar cambios" : "Guardar resultado"}
           </button>
           {!isCoord && !resultado ? (
-            <p className="slot-meta res-hint">Otro jugador del partido deberá validarlo</p>
+            <p className="slot-meta res-hint">El coordinador deberá validarlo</p>
           ) : null}
         </div>
       ) : (
@@ -161,14 +161,14 @@ function PartidoResultadoCard({
         </button>
       ) : null}
 
-      {permisos.puedeValidar ? (
+      {isCoord && permisos.puedeValidar ? (
         <button type="button" className="btn btn-primary btn-sm btn-block res-validar-btn" onClick={() => onValidar(partido.id)}>
           Validar resultado
         </button>
       ) : null}
 
-      {!permisos.puedeEditar && permisos.estado === "pendiente" && !permisos.puedeValidar ? (
-        <p className="slot-meta res-hint">Pendiente de validación por otro jugador o coordinador</p>
+      {!isCoord && permisos.estado === "pendiente" ? (
+        <p className="slot-meta res-hint">Pendiente de validación por el coordinador</p>
       ) : null}
     </article>
   );
