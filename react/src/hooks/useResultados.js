@@ -4,6 +4,17 @@ import { createActivityLog, createNotifications } from "../lib/engagement";
 import { ayerLocalStr, enVentanaCoordResultados, hoyLocalStr } from "../utils/dates";
 import { isJugadorUuid } from "../utils/jugador";
 
+function rowsFromRpcResultados(data) {
+  if (data == null) return [];
+  return Array.isArray(data) ? data : [data];
+}
+
+function normalizeFechaResultado(fecha) {
+  if (fecha == null) return "";
+  if (typeof fecha === "string") return fecha.slice(0, 10);
+  return String(fecha).slice(0, 10);
+}
+
 export function useResultados(partidos, currentUser, isCoord) {
   const [resultados, setResultados] = useState([]);
   const [error, setError] = useState("");
@@ -23,17 +34,19 @@ export function useResultados(partidos, currentUser, isCoord) {
     setLoading(true);
     setError("");
     const pistaIds = partidos.map((p) => p.id);
-    const { data, error: fetchError } = await supabase
-      .from("resultados")
-      .select("id,pista_id,fecha,set1_p1,set1_p2,set2_p1,set2_p2,set3_p1,set3_p2,introducido_por,validado_por")
-      .in("pista_id", pistaIds)
-      .order("fecha", { ascending: false });
+    const { data, error: fetchError } = await supabase.rpc("get_resultados", {
+      p_pista_ids: pistaIds
+    });
     setLoading(false);
     if (fetchError) {
       setError(fetchError.message);
       return;
     }
-    setResultados(data ?? []);
+    const rows = rowsFromRpcResultados(data).map((r) => ({
+      ...r,
+      fecha: normalizeFechaResultado(r.fecha)
+    }));
+    setResultados(rows);
   }
 
   useEffect(() => {
