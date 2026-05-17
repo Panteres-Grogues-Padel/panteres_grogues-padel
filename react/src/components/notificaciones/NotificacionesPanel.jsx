@@ -56,7 +56,7 @@ export default function NotificacionesPanel({
             <button
               key={n.id}
               type="button"
-              className={`notif-item ${n.leida ? "" : "notif-item--unread"}`}
+              className={`notif-item ${n.leida ? "notif-item--read" : "notif-item--unread"}`}
               onClick={() => handleClick(n)}
             >
               <span className="notif-item-icon" aria-hidden>

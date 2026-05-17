@@ -1888,6 +1888,17 @@ select {
 
 .notif-item--unread {
   background: var(--info-bg);
+  border-left: 3px solid #e40303;
+  padding-left: 7px;
+}
+
+.notif-item--read {
+  background: #fff;
+  opacity: 0.92;
+}
+
+.notif-item--read .notif-item-text {
+  color: var(--text3);
 }
 
 .notif-item-icon {

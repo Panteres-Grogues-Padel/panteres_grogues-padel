@@ -20,12 +20,20 @@ function mapNotificacionRow(row) {
   };
 }
 
+const NOTIF_RETENCION_DIAS = 14;
+
 function sortNotificaciones(list) {
   return [...list].sort((a, b) => {
     const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
     const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
     return tb - ta;
   });
+}
+
+function cutoffNotificacionesAntiguas(dias = NOTIF_RETENCION_DIAS) {
+  const d = new Date();
+  d.setDate(d.getDate() - dias);
+  return d.toISOString();
 }
 
 /** Pestaña BottomNav asociada a cada tipo de notificación. */
@@ -106,6 +114,27 @@ export function useNotificaciones(currentUser) {
     [jugadorId]
   );
 
+  const purgeNotificacionesAntiguas = useCallback(async () => {
+    if (useFallback) return { ok: true, deleted: 0 };
+    const cutoff = cutoffNotificacionesAntiguas();
+    const { data, error: delError } = await supabase
+      .from("notificaciones")
+      .delete()
+      .eq("jugador_id", jugadorId)
+      .lt("created_at", cutoff)
+      .select("id");
+    if (delError) {
+      console.warn("[useNotificaciones] purge:", delError.message);
+      return { ok: false, error: delError.message };
+    }
+    const deleted = data?.length ?? 0;
+    if (deleted > 0) {
+      const deletedIds = new Set(data.map((r) => r.id));
+      setNotificaciones((prev) => prev.filter((n) => !deletedIds.has(n.id)));
+    }
+    return { ok: true, deleted };
+  }, [useFallback, jugadorId]);
+
   const fetchNotificaciones = useCallback(
     async ({ showLoading = false } = {}) => {
       if (useFallback) {
@@ -183,7 +212,10 @@ export function useNotificaciones(currentUser) {
 
     let cancelled = false;
 
-    void fetchNotificaciones({ showLoading: true });
+    void (async () => {
+      await purgeNotificacionesAntiguas();
+      if (!cancelled) await fetchNotificaciones({ showLoading: true });
+    })();
 
     void (async () => {
       const {
@@ -206,7 +238,14 @@ export function useNotificaciones(currentUser) {
       subscription.unsubscribe();
       void removeRealtimeChannel();
     };
-  }, [useFallback, jugadorId, fetchNotificaciones, subscribeRealtime, removeRealtimeChannel]);
+  }, [
+    useFallback,
+    jugadorId,
+    fetchNotificaciones,
+    purgeNotificacionesAntiguas,
+    subscribeRealtime,
+    removeRealtimeChannel
+  ]);
 
   const noLeidas = useMemo(
     () => notificaciones.filter((n) => !n.leida).length,
@@ -246,7 +285,10 @@ export function useNotificaciones(currentUser) {
     loading,
     error,
     noLeidas,
-    loadNotificaciones: () => fetchNotificaciones({ showLoading: true }),
+    loadNotificaciones: async () => {
+      await purgeNotificacionesAntiguas();
+      return fetchNotificaciones({ showLoading: true });
+    },
     marcarLeida,
     marcarTodasLeidas
   };
