@@ -15,6 +15,8 @@ AS $$
       r.score AS score_ord,
       jsonb_build_object(
         'jugador_id', r.jugador_id,
+        'nombre', j.nombre,
+        'nombre_completo', j.nombre_completo,
         'partidos_jugados', r.partidos_jugados,
         'partidos_ganados', r.partidos_ganados,
         'juegos_jugados', r.juegos_jugados,

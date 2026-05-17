@@ -1,4 +1,3 @@
-import { nombreCorto } from "../../utils/nombres";
 import { jugadoresCoinciden } from "../../utils/jugador";
 
 function pct(value, decimals = 1) {
@@ -37,7 +36,7 @@ export default function Ranking({ ranking = [], currentUser, onSelect }) {
                   onClick={() => onSelect?.(jugador)}
                 >
                   <td>{index + 1}</td>
-                  <td>{nombreCorto(jugador.nombreCompleto ?? jugador.nombre) || jugador.nombre || "—"}</td>
+                  <td>{jugador.nombre || "—"}</td>
                   <td>{jugador.pj}</td>
                   <td>{jugador.pg}</td>
                   <td>{jugador.jj}</td>
