@@ -2,10 +2,14 @@ import { nombreCorto } from "../../utils/nombres";
 import { jugadoresCoinciden } from "../../utils/jugador";
 
 function pct(value, decimals = 1) {
-  return `${(Number(value ?? 0) * 100).toFixed(decimals)}%`;
+  const n = Number(value);
+  const safe = Number.isFinite(n) ? n : 0;
+  return `${(safe * 100).toFixed(decimals)}%`;
 }
 
-export default function Ranking({ ranking, currentUser, onSelect }) {
+export default function Ranking({ ranking = [], currentUser, onSelect }) {
+  const filas = Array.isArray(ranking) ? ranking : [];
+
   return (
     <div>
       <h2 className="section-title">Ranking</h2>
@@ -26,14 +30,14 @@ export default function Ranking({ ranking, currentUser, onSelect }) {
               </tr>
             </thead>
             <tbody>
-              {ranking.map((jugador, index) => (
+              {filas.map((jugador, index) => (
                 <tr
-                  key={jugador.id}
+                  key={jugador.id ?? index}
                   className={currentUser && jugadoresCoinciden(currentUser.id, jugador.id) ? "me" : ""}
-                  onClick={() => onSelect(jugador)}
+                  onClick={() => onSelect?.(jugador)}
                 >
                   <td>{index + 1}</td>
-                  <td>{nombreCorto(jugador.nombreCompleto ?? jugador.nombre)}</td>
+                  <td>{nombreCorto(jugador.nombreCompleto ?? jugador.nombre) || jugador.nombre || "—"}</td>
                   <td>{jugador.pj}</td>
                   <td>{jugador.pg}</td>
                   <td>{jugador.jj}</td>

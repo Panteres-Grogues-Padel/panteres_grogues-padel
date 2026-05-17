@@ -5,15 +5,26 @@ import { rankearJugadores } from "../utils/ranking";
 
 function rowsFromRpc(data) {
   if (data == null) return [];
-  return Array.isArray(data) ? data : [];
+  if (Array.isArray(data)) return data;
+  if (typeof data === "object") return [data];
+  return [];
+}
+
+function numRanking(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
 }
 
 function mapRankingRow(row) {
+  if (!row) return null;
   const j = row.jugadores ?? {};
+  const id = j.id ?? row.jugador_id;
+  if (!id) return null;
+  const nombre = j.nombre ?? "Jugador";
   return {
-    id: j.id ?? row.jugador_id,
-    nombre: j.nombre,
-    nombreCompleto: j.nombre_completo,
+    id,
+    nombre,
+    nombreCompleto: j.nombre_completo ?? nombre,
     telefono: j.telefono ?? "",
     instagram: j.instagram ?? "",
     foto_url: j.foto_url ?? null,
@@ -23,9 +34,9 @@ function mapRankingRow(row) {
     pg: row.partidos_ganados ?? 0,
     jj: row.juegos_jugados ?? 0,
     jg: row.juegos_ganados ?? 0,
-    eficacia: Number(row.eficacia ?? 0),
-    penalizacion: Number(row.penalizacion ?? 0),
-    score: Number(row.score ?? 0)
+    eficacia: numRanking(row.eficacia),
+    penalizacion: numRanking(row.penalizacion),
+    score: numRanking(row.score)
   };
 }
 
@@ -48,21 +59,28 @@ export function useRanking() {
         return;
       }
 
-      const { data, error: fetchError } = await supabase.rpc("get_ranking");
+      try {
+        const { data, error: fetchError } = await supabase.rpc("get_ranking");
 
-      if (!mounted) return;
-      if (fetchError) {
-        setError(fetchError.message);
+        if (!mounted) return;
+        if (fetchError) {
+          setError(fetchError.message);
+          setRanking(rankearJugadores(JUGADORES_INICIALES));
+          return;
+        }
+
+        const rows = rowsFromRpc(data).map(mapRankingRow).filter(Boolean);
+        setRanking(rows.length ? rows : rankearJugadores(JUGADORES_INICIALES));
+      } catch (err) {
+        if (!mounted) return;
+        setError(err?.message ?? String(err));
         setRanking(rankearJugadores(JUGADORES_INICIALES));
-        setLoading(false);
-        return;
+      } finally {
+        if (mounted) setLoading(false);
       }
-
-      setRanking(rowsFromRpc(data).map(mapRankingRow));
-      setLoading(false);
     }
 
-    loadRanking();
+    void loadRanking();
 
     let channel;
     if (supabase) {
