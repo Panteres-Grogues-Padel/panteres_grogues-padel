@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PARTIDOS_INICIALES } from "../utils/mockData";
 import { supabase } from "../lib/supabase";
-import { createActivityLog, createNotifications } from "../lib/engagement";
+import { createActivityLog, createNotifications, notificacionDuplicada } from "../lib/engagement";
 import {
   fechaPartidoFromSlot,
+  formatDiaPartidoLabel,
   formatHoraInput,
   getDiaSemanaLocal,
   getFechasVentanaPartidos,
@@ -170,7 +171,7 @@ export function usePartidos(currentUser) {
     !currentUser?.id ||
     currentUser.fromFallback === true ||
     !isJugadorUuid(currentUser.id);
-  const remindersSentRef = useRef(new Set());
+  const pistaCompletaSentRef = useRef(new Set());
   const slotLoadGenRef = useRef(0);
 
   const loadPartidos = useCallback(async () => {
@@ -277,29 +278,6 @@ export function usePartidos(currentUser) {
     }
     void loadPartidos();
   }, [loadPartidos, useFallback]);
-
-  useEffect(() => {
-    if (useFallback || !currentUser?.es_coordinador) return;
-    const today = new Date().toISOString().slice(0, 10);
-    partidos.forEach((p) => {
-      const fechaPartido = getFechaPartido(p.semana, p.diaSemana);
-      if (!fechaPartido) return;
-      const diffDays = Math.floor(
-        (new Date(`${fechaPartido}T00:00:00`) - new Date(`${today}T00:00:00`)) / (1000 * 60 * 60 * 24)
-      );
-      if (diffDays !== 2) return;
-      const key = `${p.id}:${fechaPartido}`;
-      if (remindersSentRef.current.has(key)) return;
-      remindersSentRef.current.add(key);
-      const notifications = p.jugadores.map((j) => ({
-        jugadorId: j.jugadorId,
-        tipo: "partidos",
-        titulo: "Recordatorio de partido en 2 dias",
-        texto: `${p.slotLabel} · ${p.club} · ${fechaPartido}`
-      }));
-      createNotifications(notifications);
-    });
-  }, [partidos, useFallback, currentUser?.es_coordinador]);
 
   useEffect(() => {
     if (useFallback) return undefined;
@@ -622,7 +600,38 @@ export function usePartidos(currentUser) {
     return true;
   }
 
+  async function notificarPistaCompleta(partido) {
+    if (!partido?.jugadores?.length || partido.jugadores.length !== 4) return;
+    if (pistaCompletaSentRef.current.has(partido.id)) return;
+
+    const diaLabel = formatDiaPartidoLabel(partido.fechaPartido);
+    const titulo = "¡Pista completa!";
+    const texto = `Los 4 jugadores de tu pista han confirmado asistencia para el ${diaLabel} en ${partido.club}.`;
+
+    const pending = [];
+    for (const j of partido.jugadores) {
+      if (!isJugadorUuid(j.jugadorId)) continue;
+      const duplicada = await notificacionDuplicada({
+        jugadorId: j.jugadorId,
+        tipo: "partidos",
+        titulo,
+        texto
+      });
+      if (!duplicada) {
+        pending.push({ jugadorId: j.jugadorId, tipo: "partidos", titulo, texto });
+      }
+    }
+    if (pending.length) await createNotifications(pending);
+    pistaCompletaSentRef.current.add(partido.id);
+  }
+
   async function confirmarAsistencia(partidoId, jugadorId, confirmado) {
+    const partido = partidos.find((p) => p.id === partidoId);
+    const seraPistaCompleta =
+      Boolean(confirmado) &&
+      partido?.jugadores?.length === 4 &&
+      partido.jugadores.every((j) => (j.jugadorId === jugadorId ? true : j.confirmado));
+
     if (useFallback) {
       setPartidos((prev) =>
         prev.map((p) =>
@@ -636,6 +645,15 @@ export function usePartidos(currentUser) {
             : p
         )
       );
+      if (seraPistaCompleta && partido) {
+        const actualizado = {
+          ...partido,
+          jugadores: partido.jugadores.map((j) =>
+            j.jugadorId === jugadorId ? { ...j, confirmado: true } : j
+          )
+        };
+        await notificarPistaCompleta(actualizado);
+      }
       return { ok: true };
     }
     const { error: updateError } = await supabase
@@ -647,7 +665,17 @@ export function usePartidos(currentUser) {
       .eq("pista_id", partidoId)
       .eq("jugador_id", jugadorId);
     if (updateError) return { ok: false, error: updateError.message };
-    const partido = partidos.find((p) => p.id === partidoId);
+
+    if (seraPistaCompleta && partido) {
+      const actualizado = {
+        ...partido,
+        jugadores: partido.jugadores.map((j) =>
+          j.jugadorId === jugadorId ? { ...j, confirmado: true } : j
+        )
+      };
+      await notificarPistaCompleta(actualizado);
+    }
+
     if (partido?.slotId && partido?.semana) {
       await loadPartidosForSlot(partido.slotId, partido.semana);
     } else {

@@ -1,6 +1,21 @@
 import { supabase } from "./supabase";
 import { isJugadorUuid } from "../utils/jugador";
 
+export async function notificacionDuplicada({ jugadorId, tipo, titulo, texto }) {
+  if (!supabase || !isJugadorUuid(jugadorId)) return false;
+  const { data, error } = await supabase.rpc("notificacion_duplicada", {
+    p_jugador_id: jugadorId,
+    p_tipo: tipo,
+    p_titulo: titulo,
+    p_texto: texto
+  });
+  if (error) {
+    console.warn("[notificacionDuplicada]", error.message);
+    return false;
+  }
+  return Boolean(data);
+}
+
 export async function createNotifications(notifications) {
   if (!supabase || !notifications?.length) return { ok: true };
   const payload = notifications

@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SLOTS_INICIALES } from "../utils/mockData";
 import { isBajaWarning, isNextWeekSlotOpen, isSlotOpen, sameDiaSemanaSlot } from "../utils/slots";
 import { supabase } from "../lib/supabase";
-import { createActivityLog } from "../lib/engagement";
+import { createActivityLog, createNotifications, notificacionDuplicada } from "../lib/engagement";
 import { isJugadorUuid, jugadoresCoinciden, normalizeJugadorUuid } from "../utils/jugador";
+import { fechaPartidoFromSlot, formatDiaPartidoLabel, hoyLocalStr } from "../utils/dates";
 
 // --- Utilidades de fecha UTC ---
 
@@ -58,11 +59,18 @@ async function cargarNombres(rows) {
 
 // --- Hook ---
 
+function diffDiasHasta(fechaStr, hoyStr = hoyLocalStr()) {
+  const t0 = new Date(`${hoyStr}T00:00:00`).getTime();
+  const t1 = new Date(`${fechaStr}T00:00:00`).getTime();
+  return Math.floor((t1 - t0) / (1000 * 60 * 60 * 24));
+}
+
 export function useSlots(currentUser, authEpoch = 0) {
   const [slots, setSlots] = useState([]);
   const [inscripciones, setInscripciones] = useState([]);
   const [loading, setLoading] = useState(false);
   const [slotsNotice, setSlotsNotice] = useState("");
+  const recordatoriosInscRef = useRef(new Set());
 
   const userId = currentUser?.id ? normalizeJugadorUuid(currentUser.id) : "";
 
@@ -156,6 +164,53 @@ export function useSlots(currentUser, authEpoch = 0) {
 
     return () => listener.subscription.unsubscribe();
   }, [userId, authEpoch]);
+
+  useEffect(() => {
+    if (!supabase || !isJugadorUuid(userId) || loading || !slots.length) return undefined;
+
+    let cancelled = false;
+
+    (async () => {
+      const misInscripciones = inscripciones.filter((i) => jugadorCoincide(i.jugador_id, userId));
+
+      for (const ins of misInscripciones) {
+        if (cancelled) return;
+        const slot = slots.find((s) => s.id === ins.slot_id);
+        if (!slot) continue;
+
+        const semana = normalizeSemana(ins.semana);
+        const fechaPartido = fechaPartidoFromSlot(semana, slot.diaSemana);
+        if (!fechaPartido || diffDiasHasta(fechaPartido) !== 2) continue;
+
+        const dedupeKey = `${userId}:${ins.slot_id}:${semana}`;
+        if (recordatoriosInscRef.current.has(dedupeKey)) continue;
+
+        const diaLabel = formatDiaPartidoLabel(fechaPartido);
+        const texto = `Tienes partido el ${diaLabel} en ${slot.club}. ¡Recuerda estar pendiente!`;
+        const titulo = "Recordatorio de partido";
+
+        const duplicada = await notificacionDuplicada({
+          jugadorId: userId,
+          tipo: "jugar",
+          titulo,
+          texto
+        });
+        if (duplicada) {
+          recordatoriosInscRef.current.add(dedupeKey);
+          continue;
+        }
+
+        const res = await createNotifications([
+          { jugadorId: userId, tipo: "jugar", titulo, texto }
+        ]);
+        if (res.ok) recordatoriosInscRef.current.add(dedupeKey);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, slots, inscripciones, loading]);
 
   // --- Helpers compartidos entre memos ---
 
@@ -318,6 +373,14 @@ export function useSlots(currentUser, authEpoch = 0) {
       tipo: "jugar",
       texto: `Se apunta a ${slot.label} · ${slot.club} (${semana})`
     });
+    void createNotifications([
+      {
+        jugadorId,
+        tipo: "jugar",
+        titulo: "¡Apuntado!",
+        texto: "Recuerda estar pendiente del horario."
+      }
+    ]);
     return { ok: true };
   }
 
@@ -361,6 +424,14 @@ export function useSlots(currentUser, authEpoch = 0) {
       tipo: "jugar",
       texto: `Se da de baja de ${slot.label} · ${slot.club} (${slot.semanaObjetivo})`
     });
+    void createNotifications([
+      {
+        jugadorId,
+        tipo: "jugar",
+        titulo: "Baja confirmada",
+        texto: "¡Hasta la próxima!"
+      }
+    ]);
 
     if (slot.semana === "actual" && isBajaWarning({ diaSemana: slot.diaSemana })) {
       return { ok: true, warning: "Si te das de baja hoy, por favor busca un@ sustitut@." };

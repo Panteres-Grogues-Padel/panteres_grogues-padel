@@ -68,6 +68,15 @@ export function fechaPartidoFromSlot(semanaObjetivo, diaSemana) {
   return d ? formatFechaLocal(d) : "";
 }
 
+/** Nombre del día en español (ej. "martes") para textos de notificación. */
+export function formatDiaPartidoLabel(fechaStr) {
+  if (!fechaStr) return "";
+  const d = new Date(`${fechaStr}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return fechaStr;
+  const label = d.toLocaleDateString("es-ES", { weekday: "long" });
+  return label.charAt(0).toLowerCase() + label.slice(1);
+}
+
 /** Lunes–domingo de la semana calendario anterior. */
 export function getRangoSemanaPasada(now = new Date()) {
   const today = startOfLocalDay(now);
