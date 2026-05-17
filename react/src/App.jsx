@@ -111,8 +111,7 @@ export default function App() {
       slotId,
       semana: semana || slot.semanaObjetivo,
       currentUserId: auth.currentUser.id,
-      numPistas: options.numPistas,
-      numIndoor: options.numIndoor,
+      franjas: options.franjas,
       slotMeta: { label: slot.label, club: slot.club, diaSemana: slot.diaSemana }
     });
     if (!res.ok) return showMessage(res.error);

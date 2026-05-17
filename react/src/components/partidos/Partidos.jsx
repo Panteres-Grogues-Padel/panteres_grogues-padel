@@ -8,6 +8,11 @@ import {
   formatHoraInput,
   normalizeSemanaDate
 } from "../../utils/dates";
+import {
+  createFranjaInicial,
+  franjasFromPartidos,
+  resumenFranjas
+} from "../../utils/franjasPartidos";
 
 const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
@@ -49,8 +54,7 @@ export default function Partidos({
   const opciones = useMemo(() => buildOpcionesDropdownPartidos(slotsCatalog), [slotsCatalog]);
 
   const [opcionId, setOpcionId] = useState("");
-  const [numPistas, setNumPistas] = useState(0);
-  const [numIndoor, setNumIndoor] = useState(0);
+  const [franjas, setFranjas] = useState(() => [createFranjaInicial()]);
   const [moverState, setMoverState] = useState({ open: false, origen: null, jugador: null });
 
   useEffect(() => {
@@ -114,14 +118,29 @@ export default function Partidos({
   useEffect(() => {
     if (!slotActual) return;
     if (partidosFiltrados.length > 0) {
-      const generado = partidosFiltrados[0];
-      setNumPistas(Number(generado.numPistasGenerado ?? partidosFiltrados.length));
-      setNumIndoor(Number(generado.numIndoorGenerado ?? 0));
+      setFranjas(franjasFromPartidos(partidosFiltrados));
     } else {
-      setNumPistas(Number(slotActual.pistasDefault ?? slotActual.pistas ?? 0));
-      setNumIndoor(0);
+      const def = Number(slotActual.pistasDefault ?? slotActual.pistas ?? 2);
+      setFranjas([createFranjaInicial({ outdoor: def, indoor: 0 })]);
     }
   }, [slotActual, partidosFiltrados]);
+
+  const resumen = useMemo(
+    () => resumenFranjas(franjas, slotActual?.jugadores?.length ?? 0),
+    [franjas, slotActual]
+  );
+
+  function updateFranja(id, patch) {
+    setFranjas((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)));
+  }
+
+  function addFranja() {
+    setFranjas((prev) => [...prev, createFranjaInicial({ outdoor: 1, indoor: 0 })]);
+  }
+
+  function removeFranja(id) {
+    setFranjas((prev) => (prev.length <= 1 ? prev : prev.filter((f) => f.id !== id)));
+  }
 
   const rankingPosByJugador = useMemo(() => {
     const map = {};
@@ -142,7 +161,7 @@ export default function Partidos({
       const ok = window.confirm("¿Regenerar los partidos de esta semana?");
       if (!ok) return;
     }
-    onGenerar(slotId, semanaObjetivo, { numPistas, numIndoor });
+    onGenerar(slotId, semanaObjetivo, { franjas });
   }
 
   const reservas = useMemo(() => {
@@ -156,7 +175,11 @@ export default function Partidos({
 
   function buildWaText() {
     if (!slotActual || !partidosFiltrados.length) return "";
-    const ordenados = [...partidosFiltrados].sort((a, b) => (a.numeroPista ?? 0) - (b.numeroPista ?? 0));
+    const ordenados = [...partidosFiltrados].sort(
+      (a, b) =>
+        (formatHoraInput(a.hora) || "99:99").localeCompare(formatHoraInput(b.hora) || "99:99") ||
+        (a.numeroPista ?? 0) - (b.numeroPista ?? 0)
+    );
     const n = ordenados.length;
     let wa = `🎾 *${slotActual.label} — ${slotActual.club}*\n`;
     wa += `Partidos: ${n} · Jugadores: ${n * 4}\n`;
@@ -235,32 +258,82 @@ export default function Partidos({
               {formatFechaPartido(seleccion?.fechaPartido)}
             </span>
           </div>
-          <div className="pistas-row">
-            <span style={{ flex: 1, fontSize: "13px", color: "var(--text2)" }}>
-              Pistas
-              <br />
-              <span style={{ fontSize: "12px" }}>
-                <strong>{(slotActual?.jugadores?.length ?? 0) > numPistas * 4 ? numPistas * 4 : slotActual?.jugadores?.length ?? 0}</strong> titulares ·{" "}
-                <strong>{Math.max(0, (slotActual?.jugadores?.length ?? 0) - numPistas * 4)}</strong> reserva
-              </span>
-            </span>
-            <div className="pistas-ctrl">
-              <button className="pistas-btn" onClick={() => setNumPistas((v) => Math.max(0, v - 1))}>−</button>
-              <span className="pistas-num">{numPistas}</span>
-              <button className="pistas-btn" onClick={() => setNumPistas((v) => Math.min(15, v + 1))}>+</button>
-            </div>
+          <div className="franjas-list">
+            {franjas.map((f, idx) => (
+              <div key={f.id} className="franja-card">
+                <div className="franja-card-head">
+                  <span className="franja-card-title">Franja {idx + 1}</span>
+                  {franjas.length > 1 ? (
+                    <button
+                      type="button"
+                      className="franja-remove"
+                      onClick={() => removeFranja(f.id)}
+                      aria-label="Eliminar franja"
+                    >
+                      ×
+                    </button>
+                  ) : null}
+                </div>
+                <label className="franja-field">
+                  <span className="franja-label">Hora</span>
+                  <input
+                    type="time"
+                    className="franja-hora"
+                    value={formatHoraInput(f.hora) || "20:00"}
+                    onChange={(e) => updateFranja(f.id, { hora: e.target.value })}
+                  />
+                </label>
+                <div className="franja-counters">
+                  <div className="franja-counter">
+                    <span className="franja-label">Outdoor</span>
+                    <div className="pistas-ctrl">
+                      <button
+                        type="button"
+                        className="pistas-btn"
+                        onClick={() => updateFranja(f.id, { outdoor: Math.max(0, (f.outdoor ?? 0) - 1) })}
+                      >
+                        −
+                      </button>
+                      <span className="pistas-num">{f.outdoor ?? 0}</span>
+                      <button
+                        type="button"
+                        className="pistas-btn"
+                        onClick={() => updateFranja(f.id, { outdoor: Math.min(15, (f.outdoor ?? 0) + 1) })}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                  <div className="franja-counter">
+                    <span className="franja-label">Indoor</span>
+                    <div className="pistas-ctrl">
+                      <button
+                        type="button"
+                        className="pistas-btn"
+                        onClick={() => updateFranja(f.id, { indoor: Math.max(0, (f.indoor ?? 0) - 1) })}
+                      >
+                        −
+                      </button>
+                      <span className="pistas-num">{f.indoor ?? 0}</span>
+                      <button
+                        type="button"
+                        className="pistas-btn"
+                        onClick={() => updateFranja(f.id, { indoor: Math.min(15, (f.indoor ?? 0) + 1) })}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="pistas-row" style={{ marginBottom: ".75rem" }}>
-            <span style={{ flex: 1, fontSize: "13px", color: "var(--text2)" }}>
-              Pistas indoor
-              <br />
-              <span style={{ fontSize: "11px" }}>Lotería aleatoria</span>
-            </span>
-            <div className="pistas-ctrl">
-              <button className="pistas-btn" onClick={() => setNumIndoor((v) => Math.max(0, v - 1))}>−</button>
-              <span className="pistas-num">{numIndoor}</span>
-              <button className="pistas-btn" onClick={() => setNumIndoor((v) => Math.min(numPistas, v + 1))}>+</button>
-            </div>
+          <button type="button" className="btn btn-sm btn-block franja-add-btn" onClick={addFranja}>
+            + Añadir franja horaria
+          </button>
+          <div className="franjas-resumen">
+            <strong>{resumen.totalPistas}</strong> pistas ({resumen.totalIndoor} indoor) ·{" "}
+            <strong>{resumen.titulares}</strong> titulares · <strong>{resumen.reserva}</strong> reserva
           </div>
           {mostrarRegenerar ? (
             <button type="button" className="btn btn-primary btn-sm btn-block" onClick={() => handleGenerarClick(true)}>
@@ -287,7 +360,11 @@ export default function Partidos({
       ) : (
         <>
           {partidosFiltrados
-            .sort((a, b) => (a.numeroPista ?? 0) - (b.numeroPista ?? 0))
+            .sort(
+              (a, b) =>
+                (formatHoraInput(a.hora) || "99:99").localeCompare(formatHoraInput(b.hora) || "99:99") ||
+                (a.numeroPista ?? 0) - (b.numeroPista ?? 0)
+            )
             .map((p, i) => (
               <PartidoCard
                 key={p.id}

@@ -10,6 +10,7 @@ import {
   getLunesDeSemanaLocal,
   normalizeSemanaDate
 } from "../utils/dates";
+import { expandFranjasToPistas, validarFranjas } from "../utils/franjasPartidos";
 import { isJugadorUuid } from "../utils/jugador";
 
 function strId(id) {
@@ -91,23 +92,16 @@ function groupsOf4(jugadoresOrdenados) {
 }
 
 async function borrarPartidosGeneradosSlotSemana(slotId, semanaNorm) {
-  const { data: existingRows, error: fetchErr } = await supabase
-    .from("partidos_generados")
-    .select("id")
-    .eq("slot_id", slotId)
-    .eq("semana", semanaNorm);
+  const { data, error: fetchErr } = await rpcGetPartidosSlot(slotId, semanaNorm);
   if (fetchErr) return { ok: false, error: fetchErr.message };
-  if (!existingRows?.length) return { ok: true, deleted: false };
 
-  const partidoGeneradoIds = existingRows.map((r) => r.id).filter(Boolean);
+  const partidosSlot = flattenPartidos(rowsFromRpcPartidos(data));
+  if (!partidosSlot.length) return { ok: true, deleted: false };
 
-  const { data: pistas, error: pistasErr } = await supabase
-    .from("pistas_partido")
-    .select("id")
-    .in("partido_generado_id", partidoGeneradoIds);
-  if (pistasErr) return { ok: false, error: pistasErr.message };
-
-  const pistaIds = (pistas ?? []).map((p) => p.id).filter(Boolean);
+  const pistaIds = partidosSlot.map((p) => p.pistaId ?? p.id).filter(Boolean);
+  const partidoGeneradoIds = [
+    ...new Set(partidosSlot.map((p) => p.partidoGeneradoId).filter(Boolean))
+  ];
 
   if (pistaIds.length) {
     const { error: resErr } = await supabase.from("resultados").delete().in("pista_id", pistaIds);
@@ -334,33 +328,40 @@ export function usePartidos(currentUser) {
     slotId,
     semana,
     currentUserId,
-    numPistas,
-    numIndoor,
+    franjas,
     slotMeta
   }) {
+    const val = validarFranjas(franjas);
+    if (!val.ok) return val;
+
+    const pistasPlan = expandFranjasToPistas(franjas);
+
     console.log("Generando partidos...");
     if (useFallback) {
-      const maxTit = Math.max(0, Number(numPistas || 0)) * 4;
+      const maxTit = pistasPlan.length * 4;
       const titulares = maxTit > 0 ? jugadoresRanking.slice(0, maxTit) : jugadoresRanking;
-      const generados = groupsOf4(titulares).map((g, idx) => ({
-        id: `${Date.now()}-${idx}`,
-        pistaId: `${Date.now()}-${idx}`,
-        numeroPista: idx + 1,
-        partidoGeneradoId: `pg-${Date.now()}`,
-        slotId,
-        slotLabel: slotId,
-        club: "",
-        semana,
-        indoor: false,
-        hora: "",
-        jugadores: g.map((j, i) => ({
-          jugadorId: j.id,
-          nombre: j.nombre,
-          nombreCompleto: j.nombreCompleto,
-          posicion: i + 1,
-          confirmado: false
-        }))
-      }));
+      const generados = groupsOf4(titulares).map((g, idx) => {
+        const slot = pistasPlan[idx] ?? { hora: "", esIndoor: false };
+        return {
+          id: `${Date.now()}-${idx}`,
+          pistaId: `${Date.now()}-${idx}`,
+          numeroPista: idx + 1,
+          partidoGeneradoId: `pg-${Date.now()}`,
+          slotId,
+          slotLabel: slotId,
+          club: "",
+          semana,
+          indoor: slot.esIndoor,
+          hora: slot.hora,
+          jugadores: g.map((j, i) => ({
+            jugadorId: j.id,
+            nombre: j.nombre,
+            nombreCompleto: j.nombreCompleto,
+            posicion: i + 1,
+            confirmado: false
+          }))
+        };
+      });
       setPartidos((prev) => [...generados, ...prev]);
       return { ok: true, cantidad: generados.length };
     }
@@ -411,13 +412,23 @@ export function usePartidos(currentUser) {
       muestraNombres: candidatos.slice(0, 12).map((c) => c.nombre)
     });
 
-    const maxTit = Math.max(0, Number(numPistas || 0)) * 4;
+    const maxTit = pistasPlan.length * 4;
     const titulares = maxTit > 0 ? candidatos.slice(0, maxTit) : candidatos;
     const grupos = groupsOf4(titulares);
-    if (!grupos.length) return { ok: false, error: "No hay suficientes jugadores para generar pistas de 4." };
+    if (!grupos.length) {
+      return { ok: false, error: "No hay suficientes jugadores para generar pistas de 4." };
+    }
+    if (grupos.length > pistasPlan.length) {
+      return {
+        ok: false,
+        error: `Hay ${grupos.length} partidos posibles pero solo ${pistasPlan.length} pistas en las franjas. Añade más pistas.`
+      };
+    }
 
     const delRes = await borrarPartidosGeneradosSlotSemana(slotId, semanaNorm);
     if (!delRes.ok) return { ok: false, error: delRes.error };
+
+    const numIndoorCreadas = pistasPlan.slice(0, grupos.length).filter((s) => s.esIndoor).length;
 
     const { data: inserted, error: pgError } = await supabase
       .from("partidos_generados")
@@ -425,7 +436,7 @@ export function usePartidos(currentUser) {
         slot_id: slotId,
         semana: semanaNorm,
         num_pistas: grupos.length,
-        num_indoor: Math.max(0, Math.min(Number(numIndoor || 0), grupos.length)),
+        num_indoor: numIndoorCreadas,
         generado_por: currentUserId
       })
       .select("id")
@@ -433,23 +444,17 @@ export function usePartidos(currentUser) {
     if (pgError) return { ok: false, error: pgError.message };
 
     const partidoGeneradoId = inserted.id;
-
-    const indoorCount = Math.max(0, Math.min(Number(numIndoor || 0), grupos.length));
-    const indexes = [...Array(grupos.length).keys()];
-    for (let i = indexes.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [indexes[i], indexes[j]] = [indexes[j], indexes[i]];
-    }
-    const indoorSet = new Set(indexes.slice(0, indoorCount));
     const pistasCreadas = [];
 
     for (let i = 0; i < grupos.length; i += 1) {
+      const plan = pistasPlan[i];
       const { data: pista, error: pistaError } = await supabase
         .from("pistas_partido")
         .insert({
           partido_generado_id: partidoGeneradoId,
           numero_pista: i + 1,
-          es_indoor: indoorSet.has(i)
+          es_indoor: plan.esIndoor,
+          hora: plan.hora || null
         })
         .select("id")
         .single();
@@ -467,7 +472,8 @@ export function usePartidos(currentUser) {
       pistasCreadas.push({
         pistaId: pista.id,
         numeroPista: i + 1,
-        esIndoor: indoorSet.has(i),
+        esIndoor: plan.esIndoor,
+        hora: plan.hora,
         grupo: grupos[i]
       });
     }
@@ -483,9 +489,9 @@ export function usePartidos(currentUser) {
       diaSemana: slotMeta?.diaSemana ?? null,
       semana: semanaNorm,
       numPistasGenerado: grupos.length,
-      numIndoorGenerado: indoorCount,
+      numIndoorGenerado: numIndoorCreadas,
       indoor: pc.esIndoor,
-      hora: "",
+      hora: pc.hora,
       jugadores: pc.grupo.map((j, idx) => ({
         id: `${pc.pistaId}-jp-${idx}`,
         jugadorId: j.id,
