@@ -1,99 +1,77 @@
-# Bugs resueltos — Panteres Grogues Pàdel
+# Bugs resueltos e implementaciones — Panteres Grogues Pàdel
 
-Registro de incidencias corregidas en la app React + Supabase.
-
----
-
-## Inscripciones no visibles tras logout y nuevo login
-
-**Síntoma:** El usuario se inscribe correctamente (la fila existe en Supabase), pero tras cerrar sesión y volver a entrar la UI no muestra la inscripción. En modo incógnito funcionaba.
-
-**Causa:** En `useSlots.js`, el efecto de carga vaciaba `inscripciones` y luego abortaba si `getSession()` devolvía `null` (carrera entre `currentUser` en React y la sesión de Supabase en navegadores con `localStorage` previo). No había reintento.
-
-**Solución:**
-- Eliminada la guarda de `getSession()` en la lectura de inscripciones.
-- Añadido `authEpoch` en `useAuth.js` (incrementa en login/logout/restauración de sesión) como dependencia de recarga en `useSlots`.
-- Listener `onAuthStateChange` para recargar inscripciones en `SIGNED_IN`, `INITIAL_SESSION` y `TOKEN_REFRESHED`.
-- Commit: `be1f4bb`
+Registro de incidencias corregidas y funcionalidades entregadas en la app React + Supabase.
 
 ---
 
-## Caché de PostgREST devolviendo inscripciones obsoletas
+## Bugs resueltos
 
-**Síntoma:** Tras login, el SELECT de inscripciones podía devolver datos cacheados incorrectos en el navegador normal.
-
-**Causa:** PostgREST cacheaba respuestas del SELECT directo sobre `inscripciones`.
-
-**Solución:**
-- Sustituido el SELECT directo por la RPC `get_inscripciones` con `p_desde` y `p_hasta` (carga inicial y `reloadInscripciones`).
-- Commit: `12f114f`
-
----
-
-## Estado de inscripciones no se limpiaba al cambiar de usuario / logout
-
-**Síntoma:** Tras logout o cambio de sesión, la UI mostraba inscripciones del usuario anterior aunque Supabase no tuviera filas para el usuario actual.
-
-**Causa:** Estado de React en memoria sin reset completo entre sesiones.
-
-**Solución:**
-- `setInscripciones([])` inmediato al detectar cambio de usuario en `useSlots`.
-- En `App.jsx`, `window.location.reload()` tras `logout()` para resetear todo el árbol de React.
-- Commits relacionados: `de74204`, `d9c79f8`, `2368109`
+- **Inscripciones no persistían entre sesiones** — Causa: caché PostgREST en SELECT directo. Solución: RPC `get_inscripciones`.
+- **Baja de slot no actualizaba UI** — Causa: race condition con `void` sin esperar recarga. Solución: `await reloadInscripciones()` tras `borrar_inscripcion`.
+- **Partidos no persistían tras logout** — Causa: caché PostgREST. Solución: RPC `get_partidos_slot` / `get_partidos_generados`.
+- **Resultados no persistían al cambiar pestaña** — Causa: caché PostgREST y vaciado transitorio de `partidos`. Solución: RPC `get_resultados` + mantener estado en hooks durante recargas.
+- **Error 403 al crear notificaciones** — Causa: política RLS sin INSERT para coordinadores. Solución: política `Coordinador inserta notificaciones`.
+- **Días pasados aparecían en pestaña Jugar** — Solucionado: filtro por semana actual desde el día de hoy (`diaSemana >= diaActual`).
+- **Inscripciones no visibles tras logout/login** — Carrera `getSession()` vs estado React. Solución: `authEpoch`, `onAuthStateChange`, sin guarda que aborte la carga.
+- **Estado de inscripciones del usuario anterior** — Solución: `setInscripciones([])` al cambiar usuario + `reload` tras logout.
+- **Coordinador aparecía apuntado sin fila en BD** — Solución: comparación estricta por UUID en `DetalleSlot`.
+- **Coordinador podía apuntarse a dos slots del mismo día** — Solución: comprobación en servidor antes del INSERT.
+- **Notificaciones tardaban ~30 s en la UI** — Causa: tabla fuera de publicación Realtime + recarga RPC lenta. Solución: `supabase_realtime` + actualización optimista en `postgres_changes`.
 
 ---
 
-## Coordinador aparecía apuntado sin inscripción en BD
+## Funcionalidades implementadas
 
-**Síntoma:** El coordinador (`10000000-0000-4000-b000-000000000001`) veía “apuntado” en slots donde no tenía fila en `inscripciones`.
-
-**Causa:** Comparación débil por nombre en `DetalleSlot.jsx` y lógica de coincidencia de IDs insuficientemente estricta.
-
-**Solución:**
-- `jugadorIdCoincide` exige UUID exacto en ambos lados.
-- `DetalleSlot.jsx`: sin fallback por nombre cuando existe `jugadorId` UUID.
-
----
-
-## Exclusividad por día no aplicada al coordinador
-
-**Síntoma:** El coordinador podía apuntarse a dos slots del mismo día.
-
-**Causa:** La comprobación dependía solo del estado local; no había lectura previa fiable en Supabase.
-
-**Solución:**
-- `leerInscripcionesJugadorSemana()` consulta por `jugador_id` + `semana` antes del INSERT, sin excepción por rol.
+- Sistema de inscripciones con cierre por hora (`hora_cierre` en tabla `slots`)
+- Generación de partidos con franjas horarias (outdoor/indoor por franja)
+- Regeneración de partidos (borra anteriores: resultados → jugadores_pista → pistas → partidos_generados)
+- Resultados con parejas por set (americano: pos1+4 vs 2+3, etc.)
+- Validación de resultados solo por coordinador
+- Sistema de notificaciones completo (campana, badge, panel con Realtime)
+- Notificaciones: apuntarse, baja, recordatorio 2 días (por inscripción), pista completa, resultado introducido, resultado validado, partidos generados/regenerados
+- Borrado automático de notificaciones con más de 14 días al cargar `useNotificaciones`
+- Panel de notificaciones: todas (leídas y no leídas), ordenadas de más reciente a más antigua; no leídas destacadas visualmente
+- Pestaña Partidos: dropdown solo día de hoy; coordinador genera/regenera solo hoy
+- Pestaña Resultados: ventanas por rol (coordinador vs jugador), modificar resultado validado
+- Log de actividad en Bienvenida
 
 ---
 
-## Cierre de inscripción por día y hora
+## RPCs creadas en Supabase
 
-**Síntoma:** Las listas de la semana actual permanecían abiertas aunque el día del slot ya hubiera pasado o fuera el mismo día pasada la hora de cierre.
+| RPC | Parámetros | Uso |
+|-----|------------|-----|
+| `get_inscripciones` | `p_desde`, `p_hasta` | Lectura de inscripciones sin caché PostgREST |
+| `get_partidos_slot` | `p_slot_id`, `p_semana` | Partidos generados de un slot/semana |
+| `get_partidos_generados` | `p_slot_id`, `p_semana` | Listado histórico de partidos generados |
+| `get_resultados` | `p_pista_ids` | Resultados por pistas |
+| `get_notificaciones` | `p_jugador_id` | Notificaciones del jugador autenticado |
+| `notificacion_duplicada` | `p_jugador_id`, `p_tipo`, `p_titulo`, `p_texto` | Evitar envíos duplicados (recordatorios, pista completa) |
+| `borrar_inscripcion` | `p_jugador_id`, `p_slot_id`, `p_semana` | Baja de inscripción |
 
-**Solución:**
-- `isSlotOpen` en `slots.js` con reglas:
-  - Día del slot ya pasado (en `semanaObjetivo`) → cerrado
-  - Día del slot es hoy → cerrado si hora actual ≥ `hora_cierre`
-  - Día futuro, semana próxima → apertura 7 días antes a las 19:00 (`isNextWeekSlotOpen`)
-  - Día futuro, semana actual → abierto
-- Carga de `hora_cierre` desde la tabla `slots`.
-- Commit: `bd2b20a`
-
----
-
-## Resultados a 0 al cambiar de pestaña (coordinador)
-
-**Síntoma:** Tras guardar un resultado y navegar entre pestañas, Resultados mostraba todo a 0.
-
-**Causa:** Al desmontar `Resultados`, `partidos` llegaba vacío momentáneamente; `useResultados` hacía `setResultados([])`.
-
-**Solución:**
-- `usePartidos` mantiene el último listado válido durante recargas transitorias.
-- `useResultados` no borra resultados cuando `partidos` está vacío de forma transitoria.
-- Commit: `0d8187e` (posteriormente hubo revert parcial del rediseño de Resultados en `6cb194d`; el fix de persistencia en hooks puede convivir con la UI revertida según el estado actual de `main`).
+Otras funciones relacionadas: `actualizar_ranking`, `es_coordinador()` (RLS).
 
 ---
 
-## Limpieza
+## Detalle histórico (referencia)
 
-- Eliminados `console.log` temporales con prefijo `[debug]` en `useSlots.js` — commit `46948ec`.
+### Caché PostgREST — inscripciones
+
+Sustituido SELECT directo por `get_inscripciones` con rango de fechas (-2 / +4 semanas desde el lunes actual). Commit: `12f114f`.
+
+### Cierre de inscripción por día y hora
+
+`isSlotOpen` en `slots.js`: día pasado → cerrado; hoy tras `hora_cierre` → cerrado; semana próxima → apertura 7 días antes a las 19:00. Commit: `bd2b20a`.
+
+### Resultados a 0 al cambiar pestaña
+
+`usePartidos` mantiene listado válido en recargas; `useResultados` no vacía si `partidos` está transitoriamente vacío. Commit: `0d8187e`.
+
+### Migraciones Supabase relevantes
+
+- `20250515130500_get_partidos_slot.sql`
+- `20250515140000_get_resultados.sql`
+- `20250515150000_coord_borra_resultados.sql`
+- `20250516120000_get_notificaciones.sql`
+- `20250516130000_notificacion_duplicada.sql`
+- `20250516140000_notificaciones_realtime.sql`
