@@ -1,17 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
-import { formatDateTimeMadrid, getHourMadrid } from "../../utils/datetime";
 
 function saludoPorHora() {
-  const h = getHourMadrid();
+  const h = new Date().getHours();
   if (h < 12) return "Buenos días";
   if (h < 19) return "Buenas tardes";
   return "Buenas noches";
 }
 
 function formatActivityTs(value) {
-  return formatDateTimeMadrid(value, {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString("es-ES", {
     day: "2-digit",
     month: "2-digit",
     hour: "2-digit",

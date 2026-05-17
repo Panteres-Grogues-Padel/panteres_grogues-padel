@@ -1,24 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
 import DetalleSlot from "./DetalleSlot";
-import { addDaysYmd, formatDateMadrid } from "../../utils/datetime";
-import { fechaPartidoFromSlot } from "../../utils/dates";
 import { getDiaSemanaActual, sameDiaSemanaSlot } from "../../utils/slots";
+
+const MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
 
 function slotFechaLabel(slot) {
   if (!slot.semanaObjetivo || slot.diaSemana === undefined) return "";
-  const ymd = fechaPartidoFromSlot(slot.semanaObjetivo, slot.diaSemana);
-  return formatDateMadrid(`${ymd}T12:00:00`, { day: "numeric", month: "short" });
+  const lun = new Date(slot.semanaObjetivo + "T00:00:00Z");
+  lun.setUTCDate(lun.getUTCDate() + slot.diaSemana);
+  return `${lun.getUTCDate()} ${MESES[lun.getUTCMonth()]}`;
 }
 
 function weekRangeLabel(lunesDate) {
   if (!lunesDate) return "";
-  const domYmd = addDaysYmd(lunesDate, 6);
-  const lunFmt = formatDateMadrid(`${lunesDate}T12:00:00`, { day: "numeric", month: "short" });
-  const domFmt = formatDateMadrid(`${domYmd}T12:00:00`, { day: "numeric", month: "short" });
-  const lM = lunFmt.split(" ").pop();
-  const dM = domFmt.split(" ").pop();
-  const lD = lunFmt.split(" ")[0];
-  const dD = domFmt.split(" ")[0];
+  const lun = new Date(lunesDate + "T00:00:00Z");
+  const dom = new Date(lun);
+  dom.setUTCDate(dom.getUTCDate() + 6);
+  const lD = lun.getUTCDate(), dD = dom.getUTCDate();
+  const lM = MESES[lun.getUTCMonth()], dM = MESES[dom.getUTCMonth()];
   return lM === dM ? `${lD}–${dD} ${lM}` : `${lD} ${lM}–${dD} ${dM}`;
 }
 

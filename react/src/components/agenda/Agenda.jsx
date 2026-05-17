@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { hoyMadridStr } from "../../utils/datetime";
 import { jugadoresCoinciden } from "../../utils/jugador";
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
 
@@ -91,7 +90,7 @@ export default function Agenda({
   const last = new Date(calYear, calMonth + 1, 0);
   let startDow = first.getDay() - 1;
   if (startDow < 0) startDow = 6;
-  const tod = hoyMadridStr(now);
+  const tod = now.toISOString().slice(0, 10);
 
   return (
     <div>

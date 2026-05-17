@@ -1,10 +1,8 @@
-import { formatDateMadrid, formatYmdMadrid, hoyMadridStr } from "./datetime";
-
 /** Fecha de semana (lunes) como YYYY-MM-DD, alineado con Postgres `date` y useSlots. */
 export function normalizeSemanaDate(s) {
   if (s == null || s === "") return "";
   if (s instanceof Date && !Number.isNaN(s.getTime())) {
-    return formatYmdMadrid(s);
+    return s.toISOString().slice(0, 10);
   }
   const m = String(s).match(/^(\d{4}-\d{2}-\d{2})/);
   return m ? m[1] : String(s).slice(0, 10);
@@ -27,9 +25,9 @@ function addDaysUtc(d, n) {
   return x;
 }
 
-/** Lunes de la semana actual en calendario de Madrid. */
+/** Lunes de la semana actual (misma convención que useSlots). */
 export function getLunesSemanaActual(date = new Date()) {
-  return getLunesDeSemanaLocal(hoyMadridStr(date));
+  return formatDateUTC(getMondayUtc(date));
 }
 
 /** Fecha calendario local del día del slot (lunes semanaObjetivo + diaSemana 0=Lun). */
@@ -57,7 +55,7 @@ export function formatFechaLocal(d) {
 }
 
 export function hoyLocalStr(now = new Date()) {
-  return hoyMadridStr(now);
+  return formatFechaLocal(startOfLocalDay(now));
 }
 
 export function ayerLocalStr(now = new Date()) {
@@ -73,8 +71,9 @@ export function fechaPartidoFromSlot(semanaObjetivo, diaSemana) {
 /** Nombre del día en español (ej. "martes") para textos de notificación. */
 export function formatDiaPartidoLabel(fechaStr) {
   if (!fechaStr) return "";
-  const label = formatDateMadrid(`${fechaStr}T12:00:00`, { weekday: "long" });
-  if (!label) return fechaStr;
+  const d = new Date(`${fechaStr}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return fechaStr;
+  const label = d.toLocaleDateString("es-ES", { weekday: "long" });
   return label.charAt(0).toLowerCase() + label.slice(1);
 }
 

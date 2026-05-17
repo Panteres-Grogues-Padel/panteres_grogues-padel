@@ -78,7 +78,10 @@ function flattenPartidos(data) {
 }
 
 function getFechaPartido(semana, diaSemana) {
-  return fechaPartidoFromSlot(semana, diaSemana);
+  if (!semana || diaSemana === null || diaSemana === undefined) return "";
+  const d = new Date(`${semana}T00:00:00`);
+  d.setDate(d.getDate() + Number(diaSemana));
+  return d.toISOString().slice(0, 10);
 }
 
 function groupsOf4(jugadoresOrdenados) {

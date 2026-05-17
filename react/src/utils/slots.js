@@ -1,8 +1,6 @@
-import { getDiaSemanaMadrid, getHourMadrid, getMinuteMadrid, hoyMadridStr } from "./datetime";
-import { fechaPartidoFromSlot } from "./dates";
-
 export function getDiaSemanaActual(date = new Date()) {
-  return getDiaSemanaMadrid(date);
+  const today = date.getDay();
+  return today === 0 ? 6 : today - 1;
 }
 
 /** 0=Lun … 6=Dom; unifica string/number desde PostgREST o mock. */
@@ -45,7 +43,7 @@ function dateFromSemanaObjetivo(semanaObjetivo, diaSemana) {
 function isPastHoraCierre(horaCierre, now) {
   const closeMins = parseHoraCierreMinutos(horaCierre);
   if (closeMins == null) return false;
-  const nowMins = getHourMadrid(now) * 60 + getMinuteMadrid(now);
+  const nowMins = now.getHours() * 60 + now.getMinutes();
   return nowMins >= closeMins;
 }
 
@@ -59,7 +57,7 @@ export function isNextWeekSlotOpen(slot, now = new Date()) {
   if (ds == null) return true;
 
   if (diaActual > ds) return true;
-  if (diaActual === ds && getHourMadrid(now) >= 19) return true;
+  if (diaActual === ds && now.getHours() >= 19) return true;
   return false;
 }
 
@@ -79,11 +77,11 @@ export function isSlotOpen(slot, options = {}) {
   const semanaObjetivo = options.semanaObjetivo;
 
   if (semanaObjetivo) {
-    const slotDayYmd = fechaPartidoFromSlot(semanaObjetivo, ds);
-    const todayYmd = hoyMadridStr(now);
+    const slotDay = dateFromSemanaObjetivo(semanaObjetivo, ds);
+    const today = startOfLocalDay(now);
 
-    if (todayYmd > slotDayYmd) return false;
-    if (todayYmd === slotDayYmd) {
+    if (today > slotDay) return false;
+    if (today.getTime() === slotDay.getTime()) {
       return !isPastHoraCierre(horaCierre, now);
     }
     if (options.semana === "proxima") return isNextWeekSlotOpen(slot, now);
@@ -97,5 +95,5 @@ export function isSlotOpen(slot, options = {}) {
 export function isBajaWarning(slot) {
   const ahora = new Date();
   const diaActual = getDiaSemanaActual(ahora);
-  return diaActual === slot.diaSemana && getHourMadrid(ahora) >= 7;
+  return diaActual === slot.diaSemana && ahora.getHours() >= 7;
 }

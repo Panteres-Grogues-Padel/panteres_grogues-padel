@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { isJugadorUuid, jugadoresCoinciden } from "../../utils/jugador";
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
-import { addDaysYmd, formatDateMadrid } from "../../utils/datetime";
-import { fechaPartidoFromSlot } from "../../utils/dates";
 
 const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+const MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
 
 function dayOpenLabel(slot) {
   if (!slot) return "";
@@ -12,9 +11,10 @@ function dayOpenLabel(slot) {
   if (slot.abierto) return "Abierta · semana próxima";
   const dow = slot.diaSemana;
   if (dow !== undefined && slot.semanaObjetivo) {
-    const openYmd = addDaysYmd(fechaPartidoFromSlot(slot.semanaObjetivo, dow), -7);
-    const fechaFmt = formatDateMadrid(`${openYmd}T12:00:00`, { day: "numeric", month: "short" });
-    return `Cerrada · abre el ${DIAS[dow]} ${fechaFmt} a las 19:00`;
+    const targetLun = new Date(slot.semanaObjetivo + "T00:00:00Z");
+    const openDate = new Date(targetLun);
+    openDate.setUTCDate(openDate.getUTCDate() - 7 + dow);
+    return `Cerrada · abre el ${DIAS[dow]} ${openDate.getUTCDate()} ${MESES[openDate.getUTCMonth()]} a las 19:00`;
   }
   return "Cerrada";
 }
