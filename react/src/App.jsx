@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import NotificacionesPanel from "./components/notificaciones/NotificacionesPanel";
 import LoginScreen from "./components/auth/LoginScreen";
 import Bienvenida from "./components/bienvenida/Bienvenida";
 import Ranking from "./components/ranking/Ranking";
@@ -15,6 +16,7 @@ import { useRanking } from "./hooks/useRanking";
 import { usePartidos } from "./hooks/usePartidos";
 import { useEventos } from "./hooks/useEventos";
 import { useResultados } from "./hooks/useResultados";
+import { useNotificaciones } from "./hooks/useNotificaciones";
 import { isJugadorUuid, jugadoresCoinciden } from "./utils/jugador";
 import PerfilJugador from "./components/ranking/PerfilJugador";
 
@@ -24,6 +26,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("bienvenida");
   const [flashMessage, setFlashMessage] = useState("");
   const [perfilJugador, setPerfilJugador] = useState(null);
+  const [notifOpen, setNotifOpen] = useState(false);
   // useSlots corre al montar App (tras login), no al entrar en la pestaña Jugar; Jugar solo recibe props.
   const { slots, slotsJugar, rawSlots, slotsNotice, apuntarEnSlot, bajaEnSlot } = useSlots(
     auth.currentUser,
@@ -54,6 +57,14 @@ export default function App() {
     loading: eventosLoading,
     error: eventosError
   } = useEventos(auth.currentUser, isCoord);
+  const {
+    notificaciones,
+    loading: notifLoading,
+    error: notifError,
+    noLeidas,
+    marcarLeida,
+    marcarTodasLeidas
+  } = useNotificaciones(auth.currentUser);
 
   if (!auth.currentUser) return <LoginScreen auth={auth} />;
 
@@ -124,6 +135,8 @@ export default function App() {
         <Topbar
           currentUser={auth.currentUser}
           setActiveTab={setActiveTab}
+          noLeidas={noLeidas}
+          onOpenNotificaciones={() => setNotifOpen(true)}
           onLogout={async () => {
             await auth.logout();
             window.location.reload();
@@ -265,6 +278,17 @@ export default function App() {
             auth.patchCurrentUser(patch);
           }
         }}
+      />
+
+      <NotificacionesPanel
+        open={notifOpen}
+        onClose={() => setNotifOpen(false)}
+        notificaciones={notificaciones}
+        loading={notifLoading}
+        error={notifError}
+        onMarcarLeida={marcarLeida}
+        onMarcarTodasLeidas={marcarTodasLeidas}
+        onNavigate={setActiveTab}
       />
 
     </div>

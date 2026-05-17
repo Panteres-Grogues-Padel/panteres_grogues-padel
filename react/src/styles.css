@@ -1794,3 +1794,147 @@ select {
 .res-modificar-btn {
   margin-top: 0.5rem;
 }
+
+/* Notificaciones */
+.topbar-actions {
+  align-items: center;
+}
+
+.notif-btn {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notif-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background: #e40303;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  border-radius: 8px;
+  border: 1.5px solid var(--bg3);
+  transform: translate(25%, -25%);
+}
+
+.notif-sheet {
+  max-height: 85vh;
+}
+
+.notif-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.notif-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.notif-mark-all {
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.notif-empty {
+  text-align: center;
+  padding: 2rem 0;
+  color: var(--text2);
+  font-size: 14px;
+}
+
+.notif-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 1rem;
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 10px;
+  margin: 0;
+  border: none;
+  border-bottom: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+}
+
+.notif-item--unread {
+  background: var(--info-bg);
+}
+
+.notif-item-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.notif-item-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.notif-item-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.notif-item--unread .notif-item-title {
+  font-weight: 600;
+}
+
+.notif-item:not(.notif-item--unread) .notif-item-title {
+  font-weight: 400;
+}
+
+.notif-item-text {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.4;
+}
+
+.notif-item-ts {
+  font-size: 10px;
+  color: var(--text3);
+  margin-top: 3px;
+}
+
+.notif-item-dot {
+  width: 8px;
+  height: 8px;
+  background: #e40303;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4px;
+}

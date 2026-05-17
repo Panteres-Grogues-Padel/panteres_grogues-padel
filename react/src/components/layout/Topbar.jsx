@@ -11,8 +11,28 @@ function nombreCorto(nombreCompleto) {
   return nombre + (aps ? ` ${aps}` : "");
 }
 
-export default function Topbar({ currentUser, setActiveTab, onLogout }) {
+function IconBell() {
+  return (
+    <svg
+      width={22}
+      height={22}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+    </svg>
+  );
+}
+
+export default function Topbar({ currentUser, setActiveTab, onLogout, noLeidas = 0, onOpenNotificaciones }) {
   const irBienvenida = () => setActiveTab("bienvenida");
+  const badgeLabel = noLeidas > 99 ? "99+" : String(noLeidas);
 
   return (
     <header className="topbar">
@@ -27,7 +47,20 @@ export default function Topbar({ currentUser, setActiveTab, onLogout }) {
           <div className="topbar-name-sub">{nombreCorto(currentUser?.nombreCompleto)}</div>
         </div>
       </div>
-      <div className="row-gap">
+      <div className="row-gap topbar-actions">
+        <button
+          type="button"
+          className="notif-btn"
+          onClick={onOpenNotificaciones}
+          aria-label={noLeidas ? `${noLeidas} notificaciones sin leer` : "Notificaciones"}
+        >
+          <IconBell />
+          {noLeidas > 0 ? (
+            <span className="notif-badge" aria-hidden>
+              {badgeLabel}
+            </span>
+          ) : null}
+        </button>
         <button
           type="button"
           className="logout-btn"
