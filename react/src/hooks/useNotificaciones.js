@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { isJugadorUuid, normalizeJugadorUuid } from "../utils/jugador";
 
@@ -8,6 +8,7 @@ function rowsFromRpc(data) {
 }
 
 function mapNotificacionRow(row) {
+  if (!row?.id) return null;
   return {
     id: row.id,
     jugadorId: row.jugador_id,
@@ -17,6 +18,14 @@ function mapNotificacionRow(row) {
     leida: Boolean(row.leida),
     createdAt: row.created_at
   };
+}
+
+function sortNotificaciones(list) {
+  return [...list].sort((a, b) => {
+    const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return tb - ta;
+  });
 }
 
 /** Pestaña BottomNav asociada a cada tipo de notificación. */
@@ -57,6 +66,7 @@ export function useNotificaciones(currentUser) {
   const [notificaciones, setNotificaciones] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const channelRef = useRef(null);
 
   const jugadorId = normalizeJugadorUuid(currentUser?.id);
   const useFallback =
@@ -65,50 +75,138 @@ export function useNotificaciones(currentUser) {
     currentUser.fromFallback === true ||
     !isJugadorUuid(jugadorId);
 
-  const loadNotificaciones = useCallback(async () => {
+  const applyRealtimePayload = useCallback(
+    (payload) => {
+      const rowJugador = normalizeJugadorUuid(payload.new?.jugador_id ?? payload.old?.jugador_id);
+      if (rowJugador !== jugadorId) return;
+
+      if (payload.eventType === "INSERT") {
+        const row = mapNotificacionRow(payload.new);
+        if (!row) return;
+        setNotificaciones((prev) => {
+          if (prev.some((n) => n.id === row.id)) return prev;
+          return sortNotificaciones([row, ...prev]);
+        });
+        return;
+      }
+
+      if (payload.eventType === "UPDATE") {
+        const row = mapNotificacionRow(payload.new);
+        if (!row) return;
+        setNotificaciones((prev) => sortNotificaciones(prev.map((n) => (n.id === row.id ? row : n))));
+        return;
+      }
+
+      if (payload.eventType === "DELETE") {
+        const id = payload.old?.id;
+        if (!id) return;
+        setNotificaciones((prev) => prev.filter((n) => n.id !== id));
+      }
+    },
+    [jugadorId]
+  );
+
+  const fetchNotificaciones = useCallback(
+    async ({ showLoading = false } = {}) => {
+      if (useFallback) {
+        setNotificaciones([]);
+        setError("");
+        return;
+      }
+      if (showLoading) setLoading(true);
+      setError("");
+      const { data, error: fetchError } = await supabase.rpc("get_notificaciones", {
+        p_jugador_id: jugadorId
+      });
+      if (showLoading) setLoading(false);
+      if (fetchError) {
+        setError(fetchError.message);
+        return;
+      }
+      setNotificaciones(sortNotificaciones(rowsFromRpc(data).map(mapNotificacionRow).filter(Boolean)));
+    },
+    [useFallback, jugadorId]
+  );
+
+  const removeRealtimeChannel = useCallback(async () => {
+    const ch = channelRef.current;
+    channelRef.current = null;
+    if (ch) await supabase.removeChannel(ch);
+  }, []);
+
+  const subscribeRealtime = useCallback(async () => {
+    if (useFallback || !supabase) return;
+
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
+    if (!session) return;
+
+    await removeRealtimeChannel();
+
+    const filter = `jugador_id=eq.${jugadorId}`;
+    const channel = supabase
+      .channel(`notificaciones:${jugadorId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "notificaciones", filter },
+        applyRealtimePayload
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "notificaciones", filter },
+        applyRealtimePayload
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "notificaciones", filter },
+        applyRealtimePayload
+      )
+      .subscribe((status, err) => {
+        if (status === "SUBSCRIBED") return;
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          console.warn("[useNotificaciones] Realtime:", status, err?.message ?? err);
+          void fetchNotificaciones({ showLoading: false });
+        }
+      });
+
+    channelRef.current = channel;
+  }, [useFallback, jugadorId, applyRealtimePayload, removeRealtimeChannel, fetchNotificaciones]);
+
+  useEffect(() => {
     if (useFallback) {
       setNotificaciones([]);
       setError("");
-      return;
+      void removeRealtimeChannel();
+      return undefined;
     }
-    setLoading(true);
-    setError("");
-    const { data, error: fetchError } = await supabase.rpc("get_notificaciones", {
-      p_jugador_id: jugadorId
+
+    let cancelled = false;
+
+    void fetchNotificaciones({ showLoading: true });
+
+    void (async () => {
+      const {
+        data: { session }
+      } = await supabase.auth.getSession();
+      if (session && !cancelled) await subscribeRealtime();
+    })();
+
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session || cancelled) return;
+      if (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        void subscribeRealtime();
+      }
     });
-    setLoading(false);
-    if (fetchError) {
-      setError(fetchError.message);
-      return;
-    }
-    setNotificaciones(rowsFromRpc(data).map(mapNotificacionRow));
-  }, [useFallback, jugadorId]);
 
-  useEffect(() => {
-    loadNotificaciones();
-  }, [loadNotificaciones]);
-
-  useEffect(() => {
-    if (useFallback) return undefined;
-    const channel = supabase
-      .channel(`notificaciones_${jugadorId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "notificaciones",
-          filter: `jugador_id=eq.${jugadorId}`
-        },
-        () => {
-          void loadNotificaciones();
-        }
-      )
-      .subscribe();
     return () => {
-      supabase.removeChannel(channel);
+      cancelled = true;
+      subscription.unsubscribe();
+      void removeRealtimeChannel();
     };
-  }, [useFallback, jugadorId, loadNotificaciones]);
+  }, [useFallback, jugadorId, fetchNotificaciones, subscribeRealtime, removeRealtimeChannel]);
 
   const noLeidas = useMemo(
     () => notificaciones.filter((n) => !n.leida).length,
@@ -120,7 +218,7 @@ export function useNotificaciones(currentUser) {
     setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
     const { error: upError } = await supabase.from("notificaciones").update({ leida: true }).eq("id", id);
     if (upError) {
-      await loadNotificaciones();
+      await fetchNotificaciones({ showLoading: false });
       return { ok: false, error: upError.message };
     }
     return { ok: true };
@@ -137,7 +235,7 @@ export function useNotificaciones(currentUser) {
       .eq("jugador_id", jugadorId)
       .eq("leida", false);
     if (upError) {
-      await loadNotificaciones();
+      await fetchNotificaciones({ showLoading: false });
       return { ok: false, error: upError.message };
     }
     return { ok: true };
@@ -148,7 +246,7 @@ export function useNotificaciones(currentUser) {
     loading,
     error,
     noLeidas,
-    loadNotificaciones,
+    loadNotificaciones: () => fetchNotificaciones({ showLoading: true }),
     marcarLeida,
     marcarTodasLeidas
   };
