@@ -3,10 +3,15 @@ import { supabase } from "../lib/supabase";
 import { JUGADORES_INICIALES } from "../utils/mockData";
 import { rankearJugadores } from "../utils/ranking";
 
+function rowsFromRpc(data) {
+  if (data == null) return [];
+  return Array.isArray(data) ? data : [];
+}
+
 function mapRankingRow(row) {
-  const j = row.jugadores;
+  const j = row.jugadores ?? {};
   return {
-    id: j.id,
+    id: j.id ?? row.jugador_id,
     nombre: j.nombre,
     nombreCompleto: j.nombre_completo,
     telefono: j.telefono ?? "",
@@ -43,12 +48,7 @@ export function useRanking() {
         return;
       }
 
-      const { data, error: fetchError } = await supabase
-        .from("ranking")
-        .select(
-          "partidos_jugados,partidos_ganados,juegos_jugados,juegos_ganados,eficacia,penalizacion,score,jugadores!inner(id,nombre,nombre_completo,telefono,instagram,foto_url,mostrar_telefono,autoriza_instagram)"
-        )
-        .order("score", { ascending: false });
+      const { data, error: fetchError } = await supabase.rpc("get_ranking");
 
       if (!mounted) return;
       if (fetchError) {
@@ -58,7 +58,7 @@ export function useRanking() {
         return;
       }
 
-      setRanking((data ?? []).map(mapRankingRow));
+      setRanking(rowsFromRpc(data).map(mapRankingRow));
       setLoading(false);
     }
 
