@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { formatDateMadrid } from "../../utils/datetime";
 import { ayerLocalStr, getDiasDisponiblesResultados, hoyLocalStr } from "../../utils/dates";
 import {
   getEstadoLabel,
@@ -17,9 +18,9 @@ function emptySets() {
 }
 
 function formatDiaDropdown(fechaStr, hoy, ayer) {
-  const d = new Date(`${fechaStr}T12:00:00`);
-  const nombre = DIAS[(d.getDay() + 6) % 7];
-  const corta = d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+  const nombreRaw = formatDateMadrid(`${fechaStr}T12:00:00`, { weekday: "long" });
+  const nombre = nombreRaw ? nombreRaw.charAt(0).toUpperCase() + nombreRaw.slice(1) : "";
+  const corta = formatDateMadrid(`${fechaStr}T12:00:00`, { day: "numeric", month: "short" });
   let sufijo = "";
   if (fechaStr === hoy) sufijo = " · hoy";
   else if (fechaStr === ayer) sufijo = " · ayer";

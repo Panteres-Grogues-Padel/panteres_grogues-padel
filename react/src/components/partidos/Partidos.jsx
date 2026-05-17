@@ -13,6 +13,7 @@ import {
   franjasFromPartidos,
   resumenFranjas
 } from "../../utils/franjasPartidos";
+import { formatDateMadrid } from "../../utils/datetime";
 
 const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
@@ -29,7 +30,11 @@ function jugadoresOrdenRanking(jugadores, rankingPosByJugador) {
 
 function formatFechaPartido(d) {
   if (!d) return "";
-  return d.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "short" });
+  if (d instanceof Date) {
+    return formatDateMadrid(d, { weekday: "long", day: "numeric", month: "short" });
+  }
+  const ymd = String(d).slice(0, 10);
+  return formatDateMadrid(`${ymd}T12:00:00`, { weekday: "long", day: "numeric", month: "short" });
 }
 
 function etiquetaOpcion(o) {

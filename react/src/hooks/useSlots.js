@@ -4,26 +4,13 @@ import { isBajaWarning, isNextWeekSlotOpen, isSlotOpen, sameDiaSemanaSlot } from
 import { supabase } from "../lib/supabase";
 import { createActivityLog, createNotifications, notificacionDuplicada } from "../lib/engagement";
 import { isJugadorUuid, jugadoresCoinciden, normalizeJugadorUuid } from "../utils/jugador";
-import { fechaPartidoFromSlot, formatDiaPartidoLabel, hoyLocalStr } from "../utils/dates";
-
-// --- Utilidades de fecha UTC ---
-
-function getMondayUtc(date = new Date()) {
-  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-  const dow = d.getUTCDay();
-  d.setUTCDate(d.getUTCDate() + (dow === 0 ? -6 : 1 - dow));
-  return d;
-}
-
-function formatDateUTC(d) {
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
-}
-
-function addDaysUtc(d, n) {
-  const x = new Date(d.getTime());
-  x.setUTCDate(x.getUTCDate() + n);
-  return x;
-}
+import { addDaysYmd, formatTimeMadrid } from "../utils/datetime";
+import {
+  fechaPartidoFromSlot,
+  formatDiaPartidoLabel,
+  getLunesSemanaActual,
+  hoyLocalStr
+} from "../utils/dates";
 
 /** Extrae YYYY-MM-DD de cualquier valor que devuelva Supabase para columnas `date`. */
 function normalizeSemana(v) {
@@ -33,8 +20,7 @@ function normalizeSemana(v) {
 }
 
 function formatTsStr(isoTs) {
-  if (!isoTs) return "";
-  return new Date(isoTs).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+  return formatTimeMadrid(isoTs);
 }
 
 function jugadorCoincide(insJugadorId, userId) {
@@ -123,9 +109,9 @@ export function useSlots(currentUser, authEpoch = 0) {
         }
 
         // Cargar inscripciones: rango de -2 a +4 semanas desde el lunes actual
-        const lunes = getMondayUtc(new Date());
-        const desde = formatDateUTC(addDaysUtc(lunes, -14));
-        const hasta = formatDateUTC(addDaysUtc(lunes, 28));
+        const lunes = getLunesSemanaActual();
+        const desde = addDaysYmd(lunes, -14);
+        const hasta = addDaysYmd(lunes, 28);
 
         const { data: inscData, error: inscErr } = await supabase.rpc("get_inscripciones", {
           p_desde: desde,
@@ -240,9 +226,8 @@ export function useSlots(currentUser, authEpoch = 0) {
   // Una entrada por slot — para Partidos
   const slotsConEstado = useMemo(() => {
     const now = new Date();
-    const lunes = getMondayUtc(now);
-    const lunesActual = formatDateUTC(lunes);
-    const lunesProximo = formatDateUTC(addDaysUtc(lunes, 7));
+    const lunesActual = getLunesSemanaActual(now);
+    const lunesProximo = addDaysYmd(lunesActual, 7);
 
     return slots.map((slot) => {
       const esProxima = isNextWeekSlotOpen({ diaSemana: slot.diaSemana }, now);
@@ -263,9 +248,8 @@ export function useSlots(currentUser, authEpoch = 0) {
   // Dos entradas por slot (actual + próxima) — para Jugar
   const slotsJugar = useMemo(() => {
     const now = new Date();
-    const lunes = getMondayUtc(now);
-    const lunesActual = formatDateUTC(lunes);
-    const lunesProximo = formatDateUTC(addDaysUtc(lunes, 7));
+    const lunesActual = getLunesSemanaActual(now);
+    const lunesProximo = addDaysYmd(lunesActual, 7);
     const result = [];
 
     for (const slot of slots) {
@@ -304,9 +288,9 @@ export function useSlots(currentUser, authEpoch = 0) {
 
   async function reloadInscripciones() {
     if (!supabase || !isJugadorUuid(userId)) return;
-    const lunes = getMondayUtc(new Date());
-    const desde = formatDateUTC(addDaysUtc(lunes, -14));
-    const hasta = formatDateUTC(addDaysUtc(lunes, 28));
+    const lunes = getLunesSemanaActual();
+    const desde = addDaysYmd(lunes, -14);
+    const hasta = addDaysYmd(lunes, 28);
     const { data, error } = await supabase.rpc("get_inscripciones", {
       p_desde: desde,
       p_hasta: hasta
