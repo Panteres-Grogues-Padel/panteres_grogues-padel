@@ -550,16 +550,33 @@ select {
   color: var(--bg3);
 }
 
-.bienvenida-utilidades-btn,
-.bienvenida-padrinos-btn,
+.bienvenida-utilidades-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  text-align: left;
+  background: var(--bg);
+  margin-top: 8px;
+}
+
+.bienvenida-padrinos-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  text-align: left;
+  background: var(--bg);
+  margin-top: 8px;
+}
+
 .bienvenida-actividad-btn {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 10px 14px;
   text-align: left;
-  background: #fff;
-  border: 1.5px solid #fde047;
+  background: var(--bg);
   margin-top: 8px;
 }
 
@@ -669,8 +686,8 @@ select {
 }
 
 .quick-card {
-  background: #fff;
-  border: 1.5px solid #fde047;
+  background: var(--bg);
+  border: 0.5px solid var(--border);
   border-radius: var(--radius);
   padding: 0.75rem;
   text-align: center;
