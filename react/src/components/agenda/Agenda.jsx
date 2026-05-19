@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { jugadoresCoinciden } from "../../utils/jugador";
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
+import { formatHoraInput } from "../../utils/dates";
 
 const DS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 const MESES = [
@@ -43,6 +44,14 @@ function tiposEnMes(eventos, year, month) {
   return tipos;
 }
 
+const FORM_CREAR_INICIAL = {
+  titulo: "",
+  fecha: "",
+  hora: "",
+  descripcion: "",
+  aforoMaximo: ""
+};
+
 export default function Agenda({
   eventos,
   currentUser,
@@ -50,7 +59,8 @@ export default function Agenda({
   onApuntarse,
   onBaja,
   onValidarPago,
-  onSeleccionarPareja
+  onSeleccionarPareja,
+  onCrearEvento
 }) {
   const now = useMemo(() => new Date(), []);
   const calYear = now.getFullYear();
@@ -60,6 +70,10 @@ export default function Agenda({
   const [calMonth, setCalMonth] = useState(mesActual);
   const [openDetailId, setOpenDetailId] = useState(null);
   const [listaEventoId, setListaEventoId] = useState(null);
+  const [crearOpen, setCrearOpen] = useState(false);
+  const [formCrear, setFormCrear] = useState(FORM_CREAR_INICIAL);
+  const [formError, setFormError] = useState("");
+  const [guardando, setGuardando] = useState(false);
   const listaEvento = listaEventoId != null ? eventos.find((x) => x.id === listaEventoId) ?? null : null;
 
   const evsMes = useMemo(() => eventosEnMes(eventos, calYear, calMonth), [eventos, calYear, calMonth]);
@@ -88,9 +102,43 @@ export default function Agenda({
     setOpenDetailId(null);
   }
 
+  function abrirCrearEvento() {
+    setFormCrear(FORM_CREAR_INICIAL);
+    setFormError("");
+    setCrearOpen(true);
+  }
+
+  async function handleGuardarEvento(ev) {
+    ev.preventDefault();
+    if (!onCrearEvento) return;
+    setFormError("");
+    setGuardando(true);
+    const res = await onCrearEvento(formCrear);
+    setGuardando(false);
+    if (!res.ok) {
+      setFormError(res.error ?? "No se pudo crear el evento.");
+      return;
+    }
+    const fechaGuardada = formCrear.fecha;
+    setCrearOpen(false);
+    setFormCrear(FORM_CREAR_INICIAL);
+    const d = fechaGuardada ? new Date(`${fechaGuardada}T12:00:00`) : null;
+    if (d && !Number.isNaN(d.getTime())) {
+      setCalMonth(d.getMonth());
+      setVista("mes");
+    }
+  }
+
   return (
     <div>
-      <h2 className="section-title">Agenda</h2>
+      <div className="agenda-title-row">
+        <h2 className="section-title">Agenda</h2>
+        {isCoord ? (
+          <button type="button" className="btn btn-primary btn-sm" onClick={abrirCrearEvento}>
+            Crear evento
+          </button>
+        ) : null}
+      </div>
 
       {vista === "año" ? (
         <>
@@ -197,6 +245,82 @@ export default function Agenda({
         </>
       )}
 
+      {crearOpen ? (
+        <div
+          className="profile-overlay open"
+          onClick={(ev) => {
+            if (ev.target === ev.currentTarget && !guardando) setCrearOpen(false);
+          }}
+        >
+          <div className="profile-sheet" onClick={(ev) => ev.stopPropagation()}>
+            <div className="profile-handle" />
+            <div className="agenda-form-title">Crear evento</div>
+            <form className="agenda-form" onSubmit={handleGuardarEvento}>
+              <label className="agenda-field">
+                <span className="agenda-field__label">Título *</span>
+                <input
+                  type="text"
+                  required
+                  maxLength={100}
+                  value={formCrear.titulo}
+                  onChange={(ev) => setFormCrear((f) => ({ ...f, titulo: ev.target.value }))}
+                  placeholder="Nombre del evento"
+                />
+              </label>
+              <label className="agenda-field">
+                <span className="agenda-field__label">Fecha *</span>
+                <input
+                  type="date"
+                  required
+                  value={formCrear.fecha}
+                  onChange={(ev) => setFormCrear((f) => ({ ...f, fecha: ev.target.value }))}
+                />
+              </label>
+              <label className="agenda-field">
+                <span className="agenda-field__label">Hora</span>
+                <input
+                  type="time"
+                  value={formCrear.hora}
+                  onChange={(ev) => setFormCrear((f) => ({ ...f, hora: ev.target.value }))}
+                />
+              </label>
+              <label className="agenda-field">
+                <span className="agenda-field__label">Descripción</span>
+                <textarea
+                  rows={3}
+                  value={formCrear.descripcion}
+                  onChange={(ev) => setFormCrear((f) => ({ ...f, descripcion: ev.target.value }))}
+                  placeholder="Detalles del evento (opcional)"
+                />
+              </label>
+              <label className="agenda-field">
+                <span className="agenda-field__label">Aforo máximo</span>
+                <input
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={formCrear.aforoMaximo}
+                  onChange={(ev) => setFormCrear((f) => ({ ...f, aforoMaximo: ev.target.value }))}
+                  placeholder="Sin límite"
+                />
+              </label>
+              {formError ? <p className="agenda-form-error">{formError}</p> : null}
+              <button type="submit" className="btn btn-primary btn-block" disabled={guardando}>
+                {guardando ? "Guardando…" : "Guardar evento"}
+              </button>
+              <button
+                type="button"
+                className="close-btn"
+                disabled={guardando}
+                onClick={() => setCrearOpen(false)}
+              >
+                Cancelar
+              </button>
+            </form>
+          </div>
+        </div>
+      ) : null}
+
       {listaEvento ? (
         <div
           className="profile-overlay open"
@@ -279,6 +403,10 @@ function EventoCard({
   const miIns = e.miInscripcion ?? null;
   const haPagado = Boolean(miIns?.pagoConfirmado);
   const esTorneo = e.tipo === "torneo";
+  const horaLabel = formatHoraInput(e.hora);
+  const aforoMax = e.aforoMaximo;
+  const inscritosCount = e.inscritos?.length ?? 0;
+  const completo = aforoMax != null && inscritosCount >= aforoMax;
   const candidatosPareja = e.inscritos.filter((i) => !jugadoresCoinciden(i.jugadorId, currentUser?.id));
 
   return (
@@ -308,6 +436,14 @@ function EventoCard({
           <span className={`ev-type et-${e.tipo}`} style={{ marginTop: 0 }}>
             {TIPO_LABEL[e.tipo] ?? e.tipo}
           </span>
+          {horaLabel ? (
+            <span style={{ fontSize: 10, color: "var(--text2)" }}>{horaLabel}</span>
+          ) : null}
+          {aforoMax != null ? (
+            <span style={{ fontSize: 10, color: completo ? "#BA7517" : "var(--text2)" }}>
+              {inscritosCount}/{aforoMax} plazas
+            </span>
+          ) : null}
           {e.precio > 0 ? (
             <span style={{ fontSize: 10, fontWeight: 600, color: "var(--text2)" }}>{e.precio}€</span>
           ) : null}
@@ -386,6 +522,8 @@ function EventoCard({
                   Darme de baja
                 </button>
               </div>
+            ) : completo ? (
+              <p style={{ marginTop: 8, fontSize: 12, color: "#BA7517" }}>Evento completo (aforo máximo alcanzado).</p>
             ) : (
               <div style={{ marginTop: 8 }}>
                 <button type="button" className="btn btn-primary btn-sm btn-block" style={{ fontSize: 13 }} onClick={() => onApuntarse()}>

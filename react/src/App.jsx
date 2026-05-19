@@ -54,6 +54,7 @@ export default function App() {
     setParejaTorneo,
     bajaEvento,
     validarPago,
+    crearEvento,
     loading: eventosLoading,
     error: eventosError
   } = useEventos(auth.currentUser, isCoord);
@@ -257,6 +258,11 @@ export default function App() {
                   const res = await validarPago(eventoId, inscripcionId);
                   if (!res.ok) return showMessage(res.error);
                   showMessage("Pago validado");
+                }}
+                onCrearEvento={async (form) => {
+                  const res = await crearEvento(form);
+                  if (res.ok) showMessage("Evento creado");
+                  return res;
                 }}
               />
             </>

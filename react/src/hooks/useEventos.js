@@ -25,7 +25,7 @@ export function useEventos(currentUser, isCoord) {
     setError("");
     const { data: eventosData, error: eventosError } = await supabase
       .from("eventos")
-      .select("id,titulo,descripcion,tipo,fecha,precio")
+      .select("id,titulo,descripcion,tipo,fecha,precio,hora,aforo_maximo")
       .order("fecha", { ascending: true });
     if (eventosError) {
       setLoading(false);
@@ -64,6 +64,8 @@ export function useEventos(currentUser, isCoord) {
           desc: e.descripcion ?? "",
           tipo: e.tipo,
           fecha: e.fecha,
+          hora: e.hora ?? null,
+          aforoMaximo: e.aforo_maximo != null ? Number(e.aforo_maximo) : null,
           precio: Number(e.precio ?? 0),
           inscritos,
           totalInscritos: inscritos.length,
@@ -95,11 +97,74 @@ export function useEventos(currentUser, isCoord) {
     });
   }, [eventos, currentUser]);
 
+  async function crearEvento({ titulo, fecha, hora, descripcion, aforoMaximo }) {
+    if (!isCoord) return { ok: false, error: "Solo coordinación." };
+    const tituloTrim = String(titulo ?? "").trim();
+    if (!tituloTrim) return { ok: false, error: "El título es obligatorio." };
+    if (!fecha) return { ok: false, error: "La fecha es obligatoria." };
+
+    let aforo = null;
+    if (aforoMaximo !== "" && aforoMaximo != null) {
+      aforo = Number(aforoMaximo);
+      if (!Number.isInteger(aforo) || aforo < 1) {
+        return { ok: false, error: "El aforo debe ser un número entero mayor que 0." };
+      }
+    }
+
+    const horaVal = hora ? String(hora).trim() : null;
+
+    if (useFallback) {
+      setEventos((prev) => [
+        ...prev,
+        {
+          id: `tmp-${Date.now()}`,
+          titulo: tituloTrim,
+          desc: String(descripcion ?? "").trim(),
+          tipo: "otro",
+          fecha,
+          hora: horaVal,
+          aforoMaximo: aforo,
+          precio: 0,
+          inscritos: [],
+          totalInscritos: 0,
+          totalPagados: 0,
+          miInscripcion: null
+        }
+      ]);
+      return { ok: true };
+    }
+
+    const uid = normalizeJugadorUuid(currentUser.id);
+    const { error: insError } = await supabase.from("eventos").insert({
+      titulo: tituloTrim,
+      fecha,
+      descripcion: String(descripcion ?? "").trim() || null,
+      tipo: "otro",
+      precio: 0,
+      hora: horaVal,
+      aforo_maximo: aforo,
+      creado_por: uid
+    });
+    if (insError) return { ok: false, error: insError.message };
+
+    await createActivityLog({
+      jugadorId: uid,
+      tipo: "agenda",
+      texto: `Crea evento: ${tituloTrim} (${fecha})`
+    });
+    await loadEventos();
+    return { ok: true };
+  }
+
   /** Inscripción individual: sin pareja en el alta (torneos y resto). */
   async function apuntarseEvento(eventoId) {
     if (!currentUser) return { ok: false, error: "Debes iniciar sesion." };
     const evento = eventos.find((e) => e.id === eventoId);
     if (!evento) return { ok: false, error: "Evento no encontrado." };
+
+    if (evento.aforoMaximo != null && (evento.inscritos?.length ?? 0) >= evento.aforoMaximo) {
+      return { ok: false, error: "El evento está completo (aforo máximo alcanzado)." };
+    }
 
     if (useFallback) {
       setEventos((prev) =>
@@ -257,6 +322,7 @@ export function useEventos(currentUser, isCoord) {
 
   return {
     eventos: eventosOrdenados,
+    crearEvento,
     apuntarseEvento,
     setParejaTorneo,
     bajaEvento,

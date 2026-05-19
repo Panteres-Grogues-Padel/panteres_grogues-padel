@@ -1389,6 +1389,55 @@ select {
 }
 
 /* Agenda */
+.agenda-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 0.5rem;
+}
+
+.agenda-title-row .section-title {
+  margin-bottom: 0;
+}
+
+.agenda-form-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+
+.agenda-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.agenda-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.agenda-field__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+}
+
+.agenda-field input,
+.agenda-field textarea {
+  width: 100%;
+  font-size: 14px;
+}
+
+.agenda-form-error {
+  font-size: 12px;
+  color: var(--danger);
+  margin: 0;
+}
+
 .agenda-year-label {
   font-size: 22px;
   font-weight: 600;
