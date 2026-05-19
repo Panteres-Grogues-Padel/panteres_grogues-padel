@@ -9,6 +9,7 @@ import {
   getDiaSemanaLocal,
   getFechasVentanaPartidos,
   getLunesDeSemanaLocal,
+  getLunesSemanaActual,
   normalizeSemanaDate
 } from "../utils/dates";
 import { expandFranjasToPistas, validarFranjas } from "../utils/franjasPartidos";
@@ -344,7 +345,8 @@ export function usePartidos(currentUser) {
       return { ok: true, cantidad: generados.length };
     }
 
-    const semanaNorm = normalizeSemanaDate(semana);
+    // Misma clave que useSlots (lunes UTC de la semana actual), no la fecha del día del slot.
+    const semanaNorm = getLunesSemanaActual();
 
     if (!isJugadorUuid(currentUserId)) {
       return { ok: false, error: "Tu perfil no tiene un id de jugador válido para Supabase." };
@@ -381,7 +383,7 @@ export function usePartidos(currentUser) {
 
     console.log("[generarPartidos] inscritos y candidatos", {
       slotId,
-      semanaUi: semana,
+      semanaParam: semana,
       semanaQuery: semanaNorm,
       filasInscripciones: inscripciones?.length ?? 0,
       candidatos: candidatos.length,
