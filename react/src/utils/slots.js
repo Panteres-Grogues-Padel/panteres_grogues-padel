@@ -97,3 +97,15 @@ export function isBajaWarning(slot) {
   const diaActual = getDiaSemanaActual(ahora);
   return diaActual === slot.diaSemana && ahora.getHours() >= 7;
 }
+
+/** Ventana 19:00–19:04 en la que abre la lista de la semana próxima. */
+export function isVentanaAperturaLista(now = new Date()) {
+  return now.getHours() === 19 && now.getMinutes() < 5;
+}
+
+/** Hoy es el día de apertura (mismo día de la semana) de la lista de semana próxima. */
+export function esAperturaListaProximaHoy(slot, now = new Date()) {
+  const ds = normalizeDiaSemana(slot);
+  if (ds == null) return false;
+  return getDiaSemanaActual(now) === ds && isVentanaAperturaLista(now);
+}

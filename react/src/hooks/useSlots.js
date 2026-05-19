@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SLOTS_INICIALES } from "../utils/mockData";
-import { isBajaWarning, isNextWeekSlotOpen, isSlotOpen, sameDiaSemanaSlot } from "../utils/slots";
+import {
+  esAperturaListaProximaHoy,
+  isBajaWarning,
+  isNextWeekSlotOpen,
+  isSlotOpen,
+  sameDiaSemanaSlot
+} from "../utils/slots";
 import { supabase } from "../lib/supabase";
 import { createActivityLog, createNotifications, notificacionDuplicada } from "../lib/engagement";
 import { isJugadorUuid, jugadoresCoinciden, normalizeJugadorUuid } from "../utils/jugador";
@@ -71,6 +77,7 @@ export function useSlots(currentUser, authEpoch = 0) {
   const [loading, setLoading] = useState(false);
   const [slotsNotice, setSlotsNotice] = useState("");
   const recordatoriosInscRef = useRef(new Set());
+  const aperturaListaNotifRef = useRef(new Set());
 
   const userId = currentUser?.id ? normalizeJugadorUuid(currentUser.id) : "";
 
@@ -211,6 +218,55 @@ export function useSlots(currentUser, authEpoch = 0) {
       cancelled = true;
     };
   }, [userId, slots, inscripciones, loading]);
+
+  useEffect(() => {
+    if (!supabase || !isJugadorUuid(userId) || loading || !slots.length) return undefined;
+
+    let cancelled = false;
+
+    void (async () => {
+      const now = new Date();
+      const lunes = getMondayUtc(now);
+      const lunesProximo = formatDateUTC(addDaysUtc(lunes, 7));
+      const titulo = "¡Ya puedes apuntarte!";
+
+      for (const slot of slots) {
+        if (cancelled) return;
+        if (!esAperturaListaProximaHoy(slot, now)) continue;
+
+        const semanaObjetivo = lunesProximo;
+        const abierto = isSlotOpen(slot, { semana: "proxima", semanaObjetivo, now });
+        if (!abierto) continue;
+
+        const diaLabel =
+          formatDiaPartidoLabel(fechaPartidoFromSlot(semanaObjetivo, slot.diaSemana)) ||
+          slot.label ||
+          "tu día";
+        const texto = `Se ha abierto la lista para ${diaLabel} en ${slot.club}. ¡Corre a apuntarte!`;
+
+        const dedupeKey = `${userId}:apertura:${slot.id}:${semanaObjetivo}`;
+        if (aperturaListaNotifRef.current.has(dedupeKey)) continue;
+
+        const duplicada = await notificacionDuplicada({
+          jugadorId: userId,
+          tipo: "jugar",
+          titulo,
+          texto
+        });
+        if (duplicada) {
+          aperturaListaNotifRef.current.add(dedupeKey);
+          continue;
+        }
+
+        const res = await createNotifications([{ jugadorId: userId, tipo: "jugar", titulo, texto }]);
+        if (res.ok) aperturaListaNotifRef.current.add(dedupeKey);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, slots, loading, authEpoch]);
 
   // --- Helpers compartidos entre memos ---
 
