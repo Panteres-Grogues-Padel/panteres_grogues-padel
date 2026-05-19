@@ -37,7 +37,7 @@ export function usePadrinos(currentUser) {
 
     setLoading(true);
     setError("");
-    const { data, error: rpcError } = await supabase.rpc("get_jugadores");
+    const { data, error: rpcError } = await supabase.rpc("get_jugadores", {});
     setLoading(false);
 
     if (rpcError) {
