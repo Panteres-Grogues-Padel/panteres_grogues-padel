@@ -61,6 +61,8 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 | `get_eventos` | — | Eventos de agenda (sin caché PostgREST) |
 | `get_inscripciones_eventos` | `p_evento_id` (opcional) | Inscripciones a eventos + `pago_confirmado` + nombres |
 | `notificacion_duplicada` | `p_jugador_id`, `p_tipo`, `p_titulo`, `p_texto` | Evitar notificaciones duplicadas |
+| `get_slots_apertura_hoy` | — | Slots que abren inscripción hoy (19h Madrid) |
+| `get_jugadores_activos` | — | Jugadores activos (cron notificaciones) |
 | `borrar_inscripcion` | `p_jugador_id`, `p_slot_id`, `p_semana` | Baja de inscripción a slot |
 | `marcar_pago_inscripcion_evento` | `p_inscripcion_id`, `p_pagado` | Marcar/desmarcar pago (coordinador) |
 | `actualizar_ranking` | `p_resultado_id` | Recalcular ranking tras validar resultado |
@@ -71,7 +73,7 @@ Funciones auxiliares en BD: `es_coordinador()` (RLS).
 
 ## Pendientes
 
-- Notificación slot abierto a las 19h — implementado Opción A (solo si la app está abierta)
+- ~~Notificación slot abierto a las 19h~~ — Edge Function `cron-slot-abierto` + pg_cron 17:00 UTC (ver `CONTEXT.md`)
 - Horarios aleatorios — pendiente probar con 8+ jugadores
 - Sistema de padrinos/ahijados
 - Google OAuth
