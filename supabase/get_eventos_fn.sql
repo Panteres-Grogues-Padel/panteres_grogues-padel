@@ -19,6 +19,7 @@ AS $$
         'descripcion', e.descripcion,
         'tipo', e.tipo,
         'fecha', e.fecha,
+        'fecha_fin', COALESCE(e.fecha_fin, e.fecha),
         'precio', e.precio,
         'hora', e.hora,
         'aforo_maximo', e.aforo_maximo,

@@ -27,13 +27,30 @@ function parejaNombre(parejaRef, inscritos) {
   return hit?.nombre ?? String(parejaRef);
 }
 
+function eventoEnMes(e, year, month) {
+  const start = e.fecha;
+  const end = e.fechaFin ?? e.fecha;
+  if (!start) return false;
+  const monthStart = `${year}-${String(month + 1).padStart(2, "0")}-01`;
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  const monthEnd = `${year}-${String(month + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+  return start <= monthEnd && end >= monthStart;
+}
+
 function eventosEnMes(eventos, year, month) {
   return eventos
-    .filter((e) => {
-      const d = new Date(`${e.fecha}T12:00:00`);
-      return d.getFullYear() === year && d.getMonth() === month;
-    })
+    .filter((e) => eventoEnMes(e, year, month))
     .sort((a, b) => a.fecha.localeCompare(b.fecha));
+}
+
+function formatRangoFechas(fecha, fechaFin) {
+  if (!fecha) return "";
+  const fin = fechaFin ?? fecha;
+  const opts = { day: "numeric", month: "short" };
+  const d0 = new Date(`${fecha}T12:00:00`);
+  if (fin === fecha) return d0.toLocaleDateString("es-ES", opts);
+  const d1 = new Date(`${fin}T12:00:00`);
+  return `${d0.toLocaleDateString("es-ES", opts)} – ${d1.toLocaleDateString("es-ES", opts)}`;
 }
 
 function tiposEnMes(eventos, year, month) {
@@ -46,7 +63,8 @@ function tiposEnMes(eventos, year, month) {
 
 const FORM_CREAR_INICIAL = {
   titulo: "",
-  fecha: "",
+  fechaInicio: "",
+  fechaFin: "",
   hora: "",
   descripcion: "",
   aforoMaximo: ""
@@ -60,7 +78,8 @@ export default function Agenda({
   onBaja,
   onValidarPago,
   onSeleccionarPareja,
-  onCrearEvento
+  onCrearEvento,
+  onBorrarEvento
 }) {
   const now = useMemo(() => new Date(), []);
   const calYear = now.getFullYear();
@@ -119,7 +138,7 @@ export default function Agenda({
       setFormError(res.error ?? "No se pudo crear el evento.");
       return;
     }
-    const fechaGuardada = formCrear.fecha;
+    const fechaGuardada = formCrear.fechaInicio;
     setCrearOpen(false);
     setFormCrear(FORM_CREAR_INICIAL);
     const d = fechaGuardada ? new Date(`${fechaGuardada}T12:00:00`) : null;
@@ -238,6 +257,7 @@ export default function Agenda({
                   onValidarPago={(inscripcionId) => onValidarPago(e.id, inscripcionId)}
                   onSeleccionarPareja={(parejaJugadorId) => onSeleccionarPareja(e.id, parejaJugadorId)}
                   onAbrirLista={() => setListaEventoId(e.id)}
+                  onBorrar={() => onBorrarEvento(e.id)}
                 />
               ))
             )}
@@ -268,12 +288,29 @@ export default function Agenda({
                 />
               </label>
               <label className="agenda-field">
-                <span className="agenda-field__label">Fecha *</span>
+                <span className="agenda-field__label">Fecha inicio *</span>
                 <input
                   type="date"
                   required
-                  value={formCrear.fecha}
-                  onChange={(ev) => setFormCrear((f) => ({ ...f, fecha: ev.target.value }))}
+                  value={formCrear.fechaInicio}
+                  onChange={(ev) =>
+                    setFormCrear((f) => {
+                      const inicio = ev.target.value;
+                      let fin = f.fechaFin || inicio;
+                      if (fin < inicio) fin = inicio;
+                      return { ...f, fechaInicio: inicio, fechaFin: fin };
+                    })
+                  }
+                />
+              </label>
+              <label className="agenda-field">
+                <span className="agenda-field__label">Fecha fin *</span>
+                <input
+                  type="date"
+                  required
+                  min={formCrear.fechaInicio || undefined}
+                  value={formCrear.fechaFin}
+                  onChange={(ev) => setFormCrear((f) => ({ ...f, fechaFin: ev.target.value }))}
                 />
               </label>
               <label className="agenda-field">
@@ -360,18 +397,27 @@ export default function Agenda({
                       </div>
                     ) : null}
                   </div>
-                  {pagado ? (
+                  {isCoord ? (
+                    <label
+                      className="agenda-pago-check"
+                      onClick={(ev) => ev.stopPropagation()}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={pagado}
+                        disabled={pagado}
+                        onChange={async (ev) => {
+                          if (!ev.target.checked || pagado) return;
+                          const res = await onValidarPago(listaEvento.id, ins.id);
+                          if (!res?.ok) ev.target.checked = false;
+                        }}
+                      />
+                      <span>Pagado</span>
+                    </label>
+                  ) : pagado ? (
                     <span style={{ fontSize: 12, color: "#27500A", fontWeight: 600 }}>✅ Pagado</span>
                   ) : (
-                    <button
-                      type="button"
-                      className="btn btn-sm agenda-btn-pago"
-                      onClick={async () => {
-                        await onValidarPago(listaEvento.id, ins.id);
-                      }}
-                    >
-                      Marcar pago
-                    </button>
+                    <span style={{ fontSize: 12, color: "var(--text2)" }}>Pendiente</span>
                   )}
                 </div>
               );
@@ -396,7 +442,8 @@ function EventoCard({
   onBaja,
   onValidarPago,
   onSeleccionarPareja,
-  onAbrirLista
+  onAbrirLista,
+  onBorrar
 }) {
   const d = new Date(`${e.fecha}T12:00:00`);
   const dow = DS[(d.getDay() + 6) % 7].slice(0, 3);
@@ -443,6 +490,9 @@ function EventoCard({
             <span style={{ fontSize: 10, color: completo ? "#BA7517" : "var(--text2)" }}>
               {inscritosCount}/{aforoMax} plazas
             </span>
+          ) : null}
+          {(e.fechaFin ?? e.fecha) !== e.fecha ? (
+            <span style={{ fontSize: 10, color: "var(--text2)" }}>{formatRangoFechas(e.fecha, e.fechaFin)}</span>
           ) : null}
           {e.precio > 0 ? (
             <span style={{ fontSize: 10, fontWeight: 600, color: "var(--text2)" }}>{e.precio}€</span>
@@ -531,18 +581,34 @@ function EventoCard({
                 </button>
               </div>
             )}
-            {isCoord && e.inscritos.length ? (
-              <button
-                type="button"
-                className="btn btn-sm"
-                style={{ marginTop: 8, width: "100%", fontSize: 12 }}
-                onClick={(ev) => {
-                  ev.stopPropagation();
-                  onAbrirLista();
-                }}
-              >
-                Ver inscritos ({e.inscritos.length}) · {e.totalPagados ?? e.inscritos.filter((i) => i.pagoConfirmado).length} pagados ↑
-              </button>
+            {isCoord ? (
+              <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
+                {e.inscritos.length ? (
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    style={{ width: "100%", fontSize: 12 }}
+                    onClick={(ev) => {
+                      ev.stopPropagation();
+                      onAbrirLista();
+                    }}
+                  >
+                    Ver inscritos ({e.inscritos.length}) ·{" "}
+                    {e.totalPagados ?? e.inscritos.filter((i) => i.pagoConfirmado).length} pagados ↑
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="btn btn-danger btn-sm"
+                  style={{ width: "100%", fontSize: 12 }}
+                  onClick={(ev) => {
+                    ev.stopPropagation();
+                    if (window.confirm("¿Seguro que quieres borrar este evento?")) onBorrar();
+                  }}
+                >
+                  Borrar
+                </button>
+              </div>
             ) : e.inscritos.length ? (
               <div style={{ fontSize: 12, color: "var(--text2)", marginTop: 6 }}>
                 {e.inscritos.length} inscrito{e.inscritos.length !== 1 ? "s" : ""}

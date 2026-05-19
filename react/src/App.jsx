@@ -55,6 +55,7 @@ export default function App() {
     bajaEvento,
     validarPago,
     crearEvento,
+    borrarEvento,
     loading: eventosLoading,
     error: eventosError
   } = useEventos(auth.currentUser, isCoord);
@@ -256,12 +257,25 @@ export default function App() {
                 }}
                 onValidarPago={async (eventoId, inscripcionId) => {
                   const res = await validarPago(eventoId, inscripcionId);
-                  if (!res.ok) return showMessage(res.error);
+                  if (!res.ok) {
+                    showMessage(res.error);
+                    return res;
+                  }
                   showMessage("Pago validado");
+                  return res;
                 }}
                 onCrearEvento={async (form) => {
                   const res = await crearEvento(form);
                   if (res.ok) showMessage("Evento creado");
+                  return res;
+                }}
+                onBorrarEvento={async (eventoId) => {
+                  const res = await borrarEvento(eventoId);
+                  if (!res.ok) {
+                    showMessage(res.error);
+                    return res;
+                  }
+                  showMessage("Evento eliminado");
                   return res;
                 }}
               />

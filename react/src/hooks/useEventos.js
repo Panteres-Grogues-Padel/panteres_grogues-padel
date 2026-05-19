@@ -62,6 +62,7 @@ export function useEventos(currentUser, isCoord) {
           desc: e.descripcion ?? "",
           tipo: e.tipo,
           fecha: e.fecha,
+          fechaFin: e.fecha_fin ?? e.fecha,
           hora: e.hora ?? null,
           aforoMaximo: e.aforo_maximo != null ? Number(e.aforo_maximo) : null,
           precio: Number(e.precio ?? 0),
@@ -95,11 +96,15 @@ export function useEventos(currentUser, isCoord) {
     });
   }, [eventos, currentUser]);
 
-  async function crearEvento({ titulo, fecha, hora, descripcion, aforoMaximo }) {
+  async function crearEvento({ titulo, fechaInicio, fechaFin, hora, descripcion, aforoMaximo }) {
     if (!isCoord) return { ok: false, error: "Solo coordinación." };
     const tituloTrim = String(titulo ?? "").trim();
     if (!tituloTrim) return { ok: false, error: "El título es obligatorio." };
-    if (!fecha) return { ok: false, error: "La fecha es obligatoria." };
+    const fecha = fechaInicio;
+    const fin = fechaFin || fechaInicio;
+    if (!fecha) return { ok: false, error: "La fecha de inicio es obligatoria." };
+    if (!fin) return { ok: false, error: "La fecha de fin es obligatoria." };
+    if (fin < fecha) return { ok: false, error: "La fecha de fin no puede ser anterior a la de inicio." };
 
     let aforo = null;
     if (aforoMaximo !== "" && aforoMaximo != null) {
@@ -120,6 +125,7 @@ export function useEventos(currentUser, isCoord) {
           desc: String(descripcion ?? "").trim(),
           tipo: "otro",
           fecha,
+          fechaFin: fin,
           hora: horaVal,
           aforoMaximo: aforo,
           precio: 0,
@@ -136,6 +142,7 @@ export function useEventos(currentUser, isCoord) {
     const { error: insError } = await supabase.from("eventos").insert({
       titulo: tituloTrim,
       fecha,
+      fecha_fin: fin,
       descripcion: String(descripcion ?? "").trim() || null,
       tipo: "otro",
       precio: 0,
@@ -148,7 +155,7 @@ export function useEventos(currentUser, isCoord) {
     await createActivityLog({
       jugadorId: uid,
       tipo: "agenda",
-      texto: `Crea evento: ${tituloTrim} (${fecha})`
+      texto: `Crea evento: ${tituloTrim} (${fecha}${fin !== fecha ? ` – ${fin}` : ""})`
     });
     await loadEventos();
     return { ok: true };
@@ -286,9 +293,32 @@ export function useEventos(currentUser, isCoord) {
     return { ok: true };
   }
 
-  /** Igual que `validarPago` en index.html: marca pago del inscrito (coordinador). */
+  async function borrarEvento(eventoId) {
+    if (!isCoord) return { ok: false, error: "Solo coordinación." };
+    const evento = eventos.find((e) => e.id === eventoId);
+
+    if (useFallback) {
+      setEventos((prev) => prev.filter((e) => e.id !== eventoId));
+      return { ok: true };
+    }
+
+    const { error: delError } = await supabase.from("eventos").delete().eq("id", eventoId);
+    if (delError) return { ok: false, error: delError.message };
+
+    await createActivityLog({
+      jugadorId: normalizeJugadorUuid(currentUser.id),
+      tipo: "agenda",
+      texto: `Elimina evento: ${evento?.titulo ?? eventoId}`
+    });
+    await loadEventos();
+    return { ok: true };
+  }
+
+  /** Marca pago del inscrito (coordinador) vía RPC. */
   async function validarPago(eventoId, inscripcionId) {
     if (!isCoord) return { ok: false, error: "Solo coordinacion." };
+    if (!inscripcionId) return { ok: false, error: "Inscripción no válida." };
+
     if (useFallback) {
       setEventos((prev) =>
         prev.map((e) =>
@@ -296,7 +326,7 @@ export function useEventos(currentUser, isCoord) {
             ? {
                 ...e,
                 inscritos: e.inscritos.map((i) =>
-                  i.id === inscripcionId ? { ...i, pagoConfirmado: true } : i
+                  String(i.id) === String(inscripcionId) ? { ...i, pagoConfirmado: true } : i
                 )
               }
             : e
@@ -305,15 +335,16 @@ export function useEventos(currentUser, isCoord) {
       return { ok: true };
     }
 
-    const { error: valError } = await supabase
-      .from("inscripciones_eventos")
-      .update({
-        pago_confirmado: true,
-        pago_confirmado_por: normalizeJugadorUuid(currentUser.id),
-        pago_confirmado_at: new Date().toISOString()
-      })
-      .eq("id", inscripcionId);
-    if (valError) return { ok: false, error: valError.message };
+    const { data, error: rpcError } = await supabase.rpc("marcar_pago_inscripcion_evento", {
+      p_inscripcion_id: inscripcionId
+    });
+    if (rpcError) return { ok: false, error: rpcError.message };
+
+    const payload = data && typeof data === "object" && !Array.isArray(data) ? data : {};
+    if (payload.ok === false) {
+      return { ok: false, error: payload.error ?? "No se pudo marcar el pago." };
+    }
+
     await loadEventos();
     return { ok: true };
   }
@@ -321,6 +352,7 @@ export function useEventos(currentUser, isCoord) {
   return {
     eventos: eventosOrdenados,
     crearEvento,
+    borrarEvento,
     apuntarseEvento,
     setParejaTorneo,
     bajaEvento,
