@@ -107,3 +107,4 @@ Las escrituras (INSERT, UPDATE, DELETE) pueden usar la API de tabla con RLS; las
 - `20250519170000_eventos_fecha_fin_y_pago.sql`
 - `20250519180000_marcar_pago_pagado_param.sql`
 - `20250519190000_get_inscripciones_eventos_pago.sql`
+- `20250520190000_cron_slot_abierto.sql`
