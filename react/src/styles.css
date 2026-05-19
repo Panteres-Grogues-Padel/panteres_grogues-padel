@@ -1388,7 +1388,100 @@ select {
   padding: 2.5rem 0;
 }
 
-/* Agenda (alineado con index.html) */
+/* Agenda */
+.agenda-year-label {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+
+.agenda-legend-compact {
+  margin-bottom: 1rem;
+}
+
+.agenda-year-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 1rem;
+}
+
+.agenda-month-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 6px;
+  background: var(--bg2);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.agenda-month-card:hover {
+  background: var(--bg3);
+}
+
+.agenda-month-card--current {
+  border-color: var(--navy);
+  background: var(--info-bg);
+  box-shadow: 0 0 0 1px var(--navy);
+}
+
+.agenda-month-card--current .agenda-month-card__name {
+  color: var(--navy);
+}
+
+.agenda-month-card__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.agenda-month-card__count {
+  font-size: 10px;
+  color: var(--text2);
+  line-height: 1.2;
+}
+
+.agenda-month-card__count--empty {
+  color: var(--text3);
+}
+
+.agenda-month-card__dots {
+  display: flex;
+  gap: 3px;
+  margin-top: 2px;
+  justify-content: center;
+}
+
+.agenda-month-card__dots .ev-dot {
+  width: 5px;
+  height: 5px;
+}
+
+.agenda-month-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0.75rem;
+}
+
+.agenda-month-header__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  flex: 1;
+}
+
+.agenda-back-btn {
+  flex-shrink: 0;
+}
+
 .cal-nav {
   display: flex;
   align-items: center;

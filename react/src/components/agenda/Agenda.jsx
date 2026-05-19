@@ -17,13 +17,30 @@ const MESES = [
   "Noviembre",
   "Diciembre"
 ];
-const DSH = ["Lu", "Ma", "Mi", "Ju", "Vi", "Sá", "Do"];
+const MESES_CORTO = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 const TIPO_LABEL = { torneo: "Torneo", social: "Social", otro: "Actividad" };
 
 function parejaNombre(parejaRef, inscritos) {
   if (!parejaRef) return "";
   const hit = inscritos.find((i) => jugadoresCoinciden(i.jugadorId, parejaRef));
   return hit?.nombre ?? String(parejaRef);
+}
+
+function eventosEnMes(eventos, year, month) {
+  return eventos
+    .filter((e) => {
+      const d = new Date(`${e.fecha}T12:00:00`);
+      return d.getFullYear() === year && d.getMonth() === month;
+    })
+    .sort((a, b) => a.fecha.localeCompare(b.fecha));
+}
+
+function tiposEnMes(eventos, year, month) {
+  const tipos = new Set();
+  for (const e of eventosEnMes(eventos, year, month)) {
+    tipos.add(e.tipo);
+  }
+  return tipos;
 }
 
 export default function Agenda({
@@ -36,159 +53,149 @@ export default function Agenda({
   onSeleccionarPareja
 }) {
   const now = useMemo(() => new Date(), []);
-  const [calYear, setCalYear] = useState(now.getFullYear());
-  const [calMonth, setCalMonth] = useState(now.getMonth());
-  const [selDateStr, setSelDateStr] = useState(null);
+  const calYear = now.getFullYear();
+  const mesActual = now.getMonth();
+
+  const [vista, setVista] = useState("año");
+  const [calMonth, setCalMonth] = useState(mesActual);
   const [openDetailId, setOpenDetailId] = useState(null);
   const [listaEventoId, setListaEventoId] = useState(null);
   const listaEvento = listaEventoId != null ? eventos.find((x) => x.id === listaEventoId) ?? null : null;
 
-  const evByDate = useMemo(() => {
-    const m = new Map();
-    for (const e of eventos) {
-      const arr = m.get(e.fecha) ?? [];
-      arr.push(e);
-      m.set(e.fecha, arr);
-    }
-    return m;
-  }, [eventos]);
+  const evsMes = useMemo(() => eventosEnMes(eventos, calYear, calMonth), [eventos, calYear, calMonth]);
 
-  const evsMes = useMemo(() => {
-    if (selDateStr) return eventos.filter((e) => e.fecha === selDateStr);
-    return eventos
-      .filter((e) => {
-        const d = new Date(`${e.fecha}T12:00:00`);
-        return d.getFullYear() === calYear && d.getMonth() === calMonth;
-      })
-      .sort((a, b) => a.fecha.localeCompare(b.fecha));
-  }, [eventos, calYear, calMonth, selDateStr]);
+  const resumenMeses = useMemo(() => {
+    return MESES.map((nombre, month) => {
+      const delMes = eventosEnMes(eventos, calYear, month);
+      return {
+        month,
+        nombre,
+        corto: MESES_CORTO[month],
+        count: delMes.length,
+        tipos: tiposEnMes(eventos, calYear, month)
+      };
+    });
+  }, [eventos, calYear]);
 
-  const listTitle = selDateStr
-    ? (() => {
-        const d = new Date(`${selDateStr}T12:00:00`);
-        return `${d.getDate()} de ${MESES[d.getMonth()]}`;
-      })()
-    : `Eventos de ${MESES[calMonth]}`;
-
-  function changeMonth(delta) {
-    let m = calMonth + delta;
-    let y = calYear;
-    if (m > 11) {
-      m = 0;
-      y += 1;
-    }
-    if (m < 0) {
-      m = 11;
-      y -= 1;
-    }
-    setCalMonth(m);
-    setCalYear(y);
-    setSelDateStr(null);
+  function abrirMes(month) {
+    setCalMonth(month);
+    setVista("mes");
+    setOpenDetailId(null);
   }
 
-  const first = new Date(calYear, calMonth, 1);
-  const last = new Date(calYear, calMonth + 1, 0);
-  let startDow = first.getDay() - 1;
-  if (startDow < 0) startDow = 6;
-  const tod = now.toISOString().slice(0, 10);
+  function volverAAno() {
+    setVista("año");
+    setOpenDetailId(null);
+  }
 
   return (
     <div>
       <h2 className="section-title">Agenda</h2>
 
-      <div className="cal-nav">
-        <button type="button" className="btn btn-sm" onClick={() => changeMonth(-1)}>
-          ←
-        </button>
-        <span className="cal-month">
-          {MESES[calMonth]} {calYear}
-        </span>
-        <button type="button" className="btn btn-sm" onClick={() => changeMonth(1)}>
-          →
-        </button>
-      </div>
-
-      <div className="legend">
-        <div className="leg-item">
-          <div className="ev-dot dot-torneo" />
-          Torneo
-        </div>
-        <div className="leg-item">
-          <div className="ev-dot dot-social" />
-          Social
-        </div>
-        <div className="leg-item">
-          <div className="ev-dot dot-otro" />
-          Otro
-        </div>
-      </div>
-
-      <div className="cal-grid">
-        {DSH.map((d) => (
-          <div key={d} className="cal-dow">
-            {d}
+      {vista === "año" ? (
+        <>
+          <div className="agenda-year-label">{calYear}</div>
+          <div className="legend agenda-legend-compact">
+            <div className="leg-item">
+              <div className="ev-dot dot-torneo" />
+              Torneo
+            </div>
+            <div className="leg-item">
+              <div className="ev-dot dot-social" />
+              Social
+            </div>
+            <div className="leg-item">
+              <div className="ev-dot dot-otro" />
+              Otro
+            </div>
           </div>
-        ))}
-        {Array.from({ length: startDow }, (_, i) => {
-          const pd = new Date(calYear, calMonth, -startDow + i + 1);
-          return (
-            <div key={`pad-${i}`} className="cal-day other-m">
-              <span className="cal-num">{pd.getDate()}</span>
-            </div>
-          );
-        })}
-        {Array.from({ length: last.getDate() }, (_, idx) => {
-          const d = idx + 1;
-          const ds = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-          const evs = evByDate.get(ds) ?? [];
-          const isT = ds === tod;
-          const isSel = ds === selDateStr;
-          const hasEv = evs.length > 0;
-          const cls = ["cal-day", isT ? "today" : "", hasEv ? "has-ev" : "", isSel ? "sel-date" : ""]
-            .filter(Boolean)
-            .join(" ");
-          return (
-            <div
-              key={ds}
-              className={cls}
-              onClick={hasEv ? () => setSelDateStr((prev) => (prev === ds ? null : ds)) : undefined}
-            >
-              <span className="cal-num">{d}</span>
-              {hasEv ? (
-                <div className="ev-dots">
-                  {evs.map((e) => (
-                    <div key={e.id} className={`ev-dot dot-${e.tipo}`} />
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          );
-        })}
-      </div>
+          <div className="agenda-year-grid">
+            {resumenMeses.map((m) => {
+              const esActual = m.month === mesActual;
+              const cls = [
+                "agenda-month-card",
+                esActual ? "agenda-month-card--current" : "",
+                m.count > 0 ? "agenda-month-card--has-events" : ""
+              ]
+                .filter(Boolean)
+                .join(" ");
+              return (
+                <button
+                  key={m.month}
+                  type="button"
+                  className={cls}
+                  onClick={() => abrirMes(m.month)}
+                  aria-current={esActual ? "date" : undefined}
+                >
+                  <span className="agenda-month-card__name">{m.corto}</span>
+                  {m.count > 0 ? (
+                    <span className="agenda-month-card__count">
+                      {m.count} evento{m.count !== 1 ? "s" : ""}
+                    </span>
+                  ) : (
+                    <span className="agenda-month-card__count agenda-month-card__count--empty">—</span>
+                  )}
+                  {m.count > 0 ? (
+                    <div className="agenda-month-card__dots" aria-hidden>
+                      {[...m.tipos].map((t) => (
+                        <span key={t} className={`ev-dot dot-${t}`} />
+                      ))}
+                    </div>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="agenda-month-header">
+            <button type="button" className="btn btn-sm agenda-back-btn" onClick={volverAAno}>
+              ← Año
+            </button>
+            <span className="agenda-month-header__title">
+              {MESES[calMonth]} {calYear}
+            </span>
+          </div>
 
-      <div className="ev-month-title">{listTitle}</div>
-      <div className="ev-list">
-        {evsMes.length === 0 ? (
-          <div className="empty-state">No hay eventos este mes</div>
-        ) : (
-          evsMes.map((e) => (
-            <EventoCard
-              key={e.id}
-              e={e}
-              currentUser={currentUser}
-              isCoord={isCoord}
-              selDateStr={selDateStr}
-              openDetail={openDetailId === e.id}
-              onToggle={() => setOpenDetailId((id) => (id === e.id ? null : e.id))}
-              onApuntarse={() => onApuntarse(e.id)}
-              onBaja={() => onBaja(e.id)}
-              onValidarPago={(inscripcionId) => onValidarPago(e.id, inscripcionId)}
-              onSeleccionarPareja={(parejaJugadorId) => onSeleccionarPareja(e.id, parejaJugadorId)}
-              onAbrirLista={() => setListaEventoId(e.id)}
-            />
-          ))
-        )}
-      </div>
+          <div className="legend agenda-legend-compact">
+            <div className="leg-item">
+              <div className="ev-dot dot-torneo" />
+              Torneo
+            </div>
+            <div className="leg-item">
+              <div className="ev-dot dot-social" />
+              Social
+            </div>
+            <div className="leg-item">
+              <div className="ev-dot dot-otro" />
+              Otro
+            </div>
+          </div>
+
+          <div className="ev-list">
+            {evsMes.length === 0 ? (
+              <div className="empty-state">No hay eventos en {MESES[calMonth]}</div>
+            ) : (
+              evsMes.map((e) => (
+                <EventoCard
+                  key={e.id}
+                  e={e}
+                  currentUser={currentUser}
+                  isCoord={isCoord}
+                  openDetail={openDetailId === e.id}
+                  onToggle={() => setOpenDetailId((id) => (id === e.id ? null : e.id))}
+                  onApuntarse={() => onApuntarse(e.id)}
+                  onBaja={() => onBaja(e.id)}
+                  onValidarPago={(inscripcionId) => onValidarPago(e.id, inscripcionId)}
+                  onSeleccionarPareja={(parejaJugadorId) => onSeleccionarPareja(e.id, parejaJugadorId)}
+                  onAbrirLista={() => setListaEventoId(e.id)}
+                />
+              ))
+            )}
+          </div>
+        </>
+      )}
 
       {listaEvento ? (
         <div
@@ -259,7 +266,6 @@ function EventoCard({
   e,
   currentUser,
   isCoord,
-  selDateStr,
   openDetail,
   onToggle,
   onApuntarse,
@@ -277,7 +283,7 @@ function EventoCard({
 
   return (
     <div
-      className={`ev-card${e.fecha === selDateStr ? " hl" : ""}`}
+      className="ev-card"
       style={{ cursor: "pointer" }}
       onClick={(ev) => {
         if (ev.target.closest("button") || ev.target.closest("input") || ev.target.closest("select")) return;
