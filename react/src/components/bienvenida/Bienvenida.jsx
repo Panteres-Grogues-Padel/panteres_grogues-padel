@@ -2,11 +2,20 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
 
+function horaMadrid(now = new Date()) {
+  const h = new Intl.DateTimeFormat("es-ES", {
+    timeZone: "Europe/Madrid",
+    hour: "numeric",
+    hour12: false
+  }).format(now);
+  return Number(h);
+}
+
 function saludoPorHora() {
-  const h = new Date().getHours();
-  if (h < 12) return "Buenos días";
-  if (h < 19) return "Buenas tardes";
-  return "Buenas noches";
+  const h = horaMadrid();
+  if (h >= 6 && h <= 13) return "¡Buenos días";
+  if (h >= 14 && h <= 20) return "¡Buenas tardes";
+  return "¡Buenas noches";
 }
 
 function formatActivityTs(value) {
