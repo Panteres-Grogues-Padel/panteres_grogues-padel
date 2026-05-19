@@ -1,4 +1,4 @@
--- Ejecutar en Supabase SQL Editor si la migración aún no está aplicada.
+-- Asegurar que get_inscripciones_eventos devuelve pago_confirmado (lectura solo vía RPC).
 CREATE OR REPLACE FUNCTION get_inscripciones_eventos(p_evento_id uuid DEFAULT NULL)
 RETURNS jsonb
 LANGUAGE sql

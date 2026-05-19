@@ -9,6 +9,36 @@ function rowsFromRpc(data) {
   return Array.isArray(data) ? data : [data];
 }
 
+function mapInscripcionRpcRow(ins) {
+  return {
+    id: ins.id,
+    jugadorId: ins.jugador_id,
+    nombre: ins.nombre ?? "Jugador",
+    nombreCompleto: ins.nombre_completo ?? ins.nombre ?? "Jugador",
+    pareja: ins.pareja ?? "",
+    pagoConfirmado: Boolean(ins.pago_confirmado)
+  };
+}
+
+function buildInscripcionesByEvento(insRows) {
+  const byEvento = new Map();
+  for (const ins of insRows ?? []) {
+    const arr = byEvento.get(ins.evento_id) ?? [];
+    arr.push(mapInscripcionRpcRow(ins));
+    byEvento.set(ins.evento_id, arr);
+  }
+  return byEvento;
+}
+
+/** Lectura de inscripciones_eventos solo vía RPC (jugadores y coordinación). */
+async function rpcGetInscripcionesEventos(eventoId = null) {
+  const { data, error } = await supabase.rpc("get_inscripciones_eventos", {
+    p_evento_id: eventoId
+  });
+  if (error) return { ok: false, error: error.message, rows: [] };
+  return { ok: true, rows: rowsFromRpc(data) };
+}
+
 export function useEventos(currentUser, isCoord) {
   const [eventos, setEventos] = useState(EVENTOS_INICIALES);
   const [loading, setLoading] = useState(false);
@@ -19,21 +49,25 @@ export function useEventos(currentUser, isCoord) {
     currentUser.fromFallback === true ||
     !isJugadorUuid(currentUser.id);
 
+  const mergeInscripcionesEnEventos = useCallback((prevEventos, insRows) => {
+    const byEvento = buildInscripcionesByEvento(insRows);
+    return (prevEventos ?? []).map((e) => {
+      const inscritos = byEvento.get(e.id) ?? [];
+      const miInscripcion =
+        inscritos.find((i) => jugadoresCoinciden(i.jugadorId, currentUser?.id)) ?? null;
+      return {
+        ...e,
+        inscritos,
+        totalInscritos: inscritos.length,
+        totalPagados: inscritos.filter((i) => i.pagoConfirmado).length,
+        miInscripcion
+      };
+    });
+  }, [currentUser?.id]);
+
   const mapEventosFromRpc = useCallback(
-    (eventosData, insRaw) => {
-      const byEvento = new Map();
-      rowsFromRpc(insRaw).forEach((ins) => {
-        const arr = byEvento.get(ins.evento_id) ?? [];
-        arr.push({
-          id: ins.id,
-          jugadorId: ins.jugador_id,
-          nombre: ins.nombre ?? "Jugador",
-          nombreCompleto: ins.nombre_completo ?? ins.nombre ?? "Jugador",
-          pareja: ins.pareja ?? "",
-          pagoConfirmado: Boolean(ins.pago_confirmado)
-        });
-        byEvento.set(ins.evento_id, arr);
-      });
+    (eventosData, insRows) => {
+      const byEvento = buildInscripcionesByEvento(insRows);
 
       return eventosData.map((e) => {
         const inscritos = byEvento.get(e.id) ?? [];
@@ -59,6 +93,23 @@ export function useEventos(currentUser, isCoord) {
     [currentUser?.id]
   );
 
+  /** Solo inscripciones vía RPC get_inscripciones_eventos (incluye pago_confirmado). */
+  const reloadInscripcionesEventos = useCallback(
+    async ({ silent = false } = {}) => {
+      if (useFallback) return { ok: false, skipped: true };
+
+      const insRes = await rpcGetInscripcionesEventos(null);
+      if (!insRes.ok) {
+        if (!silent) setError(insRes.error);
+        return { ok: false, error: insRes.error };
+      }
+
+      setEventos((prev) => mergeInscripcionesEnEventos(prev, insRes.rows));
+      return { ok: true };
+    },
+    [useFallback, mergeInscripcionesEnEventos]
+  );
+
   /** Recarga eventos + inscripciones vía RPC (get_eventos, get_inscripciones_eventos). */
   const loadEventos = useCallback(
     async ({ silent = false } = {}) => {
@@ -75,14 +126,14 @@ export function useEventos(currentUser, isCoord) {
         return { ok: false, error: eventosError.message };
       }
 
-      const { data: insRaw, error: insError } = await supabase.rpc("get_inscripciones_eventos");
+      const insRes = await rpcGetInscripcionesEventos(null);
       if (!silent) setLoading(false);
-      if (insError) {
-        setError(insError.message);
-        return { ok: false, error: insError.message };
+      if (!insRes.ok) {
+        setError(insRes.error);
+        return { ok: false, error: insRes.error };
       }
 
-      setEventos(mapEventosFromRpc(rowsFromRpc(eventosRaw), insRaw));
+      setEventos(mapEventosFromRpc(rowsFromRpc(eventosRaw), insRes.rows));
       return { ok: true };
     },
     [useFallback, mapEventosFromRpc]
@@ -220,7 +271,7 @@ export function useEventos(currentUser, isCoord) {
       tipo: "agenda",
       texto: `Se apunta a ${evento.titulo} (${evento.fecha})`
     });
-    await loadEventos({ silent: true });
+    await reloadInscripcionesEventos({ silent: true });
     return { ok: true };
   }
 
@@ -260,7 +311,7 @@ export function useEventos(currentUser, isCoord) {
       .eq("evento_id", eventoId)
       .eq("jugador_id", normalizeJugadorUuid(currentUser.id));
     if (upError) return { ok: false, error: upError.message };
-    await loadEventos({ silent: true });
+    await reloadInscripcionesEventos({ silent: true });
     return { ok: true };
   }
 
@@ -302,7 +353,7 @@ export function useEventos(currentUser, isCoord) {
       tipo: "agenda",
       texto: `Se da de baja de ${evento?.titulo ?? "evento"} (${evento?.fecha ?? eventoId})`
     });
-    await loadEventos({ silent: true });
+    await reloadInscripcionesEventos({ silent: true });
     return { ok: true };
   }
 
@@ -378,7 +429,7 @@ export function useEventos(currentUser, isCoord) {
       return { ok: false, error: payload.error ?? "No se pudo marcar el pago." };
     }
 
-    // RPC confirmada: mantener el estado optimista (sin recargar get_eventos para evitar race).
+    await reloadInscripcionesEventos({ silent: true });
     return { ok: true };
   }
 
