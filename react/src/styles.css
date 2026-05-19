@@ -1389,6 +1389,26 @@ select {
 }
 
 /* Agenda */
+.agenda-page {
+  position: relative;
+}
+
+.agenda-page--loading {
+  pointer-events: none;
+}
+
+.agenda-page--loading .agenda-loading-hint {
+  display: inline-block;
+}
+
+.agenda-loading-hint {
+  display: none;
+  font-size: 12px;
+  color: var(--text2);
+  margin-left: auto;
+  margin-right: 8px;
+}
+
 .agenda-title-row {
   display: flex;
   align-items: center;

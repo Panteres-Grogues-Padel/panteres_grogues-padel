@@ -234,9 +234,9 @@ export default function App() {
           ) : null}
           {activeTab === "agenda" ? (
             <>
-              {eventosLoading ? <p className="info-box">Cargando agenda...</p> : null}
               {eventosError ? <p className="error-box">Error agenda: {eventosError}</p> : null}
               <Agenda
+                loading={eventosLoading}
                 eventos={eventos}
                 currentUser={auth.currentUser}
                 isCoord={isCoord}
@@ -255,13 +255,13 @@ export default function App() {
                   if (!res.ok) return showMessage(res.error);
                   showMessage("Baja realizada");
                 }}
-                onValidarPago={async (eventoId, inscripcionId) => {
-                  const res = await validarPago(eventoId, inscripcionId);
+                onValidarPago={async (eventoId, inscripcionId, pagado) => {
+                  const res = await validarPago(eventoId, inscripcionId, pagado);
                   if (!res.ok) {
                     showMessage(res.error);
                     return res;
                   }
-                  showMessage("Pago validado");
+                  showMessage(pagado ? "Pago marcado" : "Pago desmarcado");
                   return res;
                 }}
                 onCrearEvento={async (form) => {

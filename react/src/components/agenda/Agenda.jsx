@@ -74,6 +74,7 @@ export default function Agenda({
   eventos,
   currentUser,
   isCoord,
+  loading = false,
   onApuntarse,
   onBaja,
   onValidarPago,
@@ -149,9 +150,10 @@ export default function Agenda({
   }
 
   return (
-    <div>
+    <div className={loading ? "agenda-page agenda-page--loading" : "agenda-page"}>
       <div className="agenda-title-row">
         <h2 className="section-title">Agenda</h2>
+        {loading ? <span className="agenda-loading-hint">Cargando…</span> : null}
         {isCoord ? (
           <button type="button" className="btn btn-primary btn-sm" onClick={abrirCrearEvento}>
             Crear evento

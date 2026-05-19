@@ -19,43 +19,26 @@ export function useEventos(currentUser, isCoord) {
     currentUser.fromFallback === true ||
     !isJugadorUuid(currentUser.id);
 
-  const loadEventos = useCallback(async () => {
-    if (useFallback) return;
-    setLoading(true);
-    setError("");
-    const { data: eventosRaw, error: eventosError } = await supabase.rpc("get_eventos");
-    if (eventosError) {
-      setLoading(false);
-      setError(eventosError.message);
-      return;
-    }
-    const eventosData = rowsFromRpc(eventosRaw);
-
-    const { data: insRaw, error: insError } = await supabase.rpc("get_inscripciones_eventos");
-    setLoading(false);
-    if (insError) {
-      setError(insError.message);
-      return;
-    }
-
-    const byEvento = new Map();
-    rowsFromRpc(insRaw).forEach((ins) => {
-      const arr = byEvento.get(ins.evento_id) ?? [];
-      arr.push({
-        id: ins.id,
-        jugadorId: ins.jugador_id,
-        nombre: ins.nombre ?? "Jugador",
-        nombreCompleto: ins.nombre_completo ?? ins.nombre ?? "Jugador",
-        pareja: ins.pareja ?? "",
-        pagoConfirmado: Boolean(ins.pago_confirmado)
+  const mapEventosFromRpc = useCallback(
+    (eventosData, insRaw) => {
+      const byEvento = new Map();
+      rowsFromRpc(insRaw).forEach((ins) => {
+        const arr = byEvento.get(ins.evento_id) ?? [];
+        arr.push({
+          id: ins.id,
+          jugadorId: ins.jugador_id,
+          nombre: ins.nombre ?? "Jugador",
+          nombreCompleto: ins.nombre_completo ?? ins.nombre ?? "Jugador",
+          pareja: ins.pareja ?? "",
+          pagoConfirmado: Boolean(ins.pago_confirmado)
+        });
+        byEvento.set(ins.evento_id, arr);
       });
-      byEvento.set(ins.evento_id, arr);
-    });
 
-    setEventos(
-      eventosData.map((e) => {
+      return eventosData.map((e) => {
         const inscritos = byEvento.get(e.id) ?? [];
-        const miInscripcion = inscritos.find((i) => jugadoresCoinciden(i.jugadorId, currentUser.id)) ?? null;
+        const miInscripcion =
+          inscritos.find((i) => jugadoresCoinciden(i.jugadorId, currentUser.id)) ?? null;
         return {
           id: e.id,
           titulo: e.titulo,
@@ -71,9 +54,39 @@ export function useEventos(currentUser, isCoord) {
           totalPagados: inscritos.filter((i) => i.pagoConfirmado).length,
           miInscripcion
         };
-      })
-    );
-  }, [useFallback, currentUser?.id]);
+      });
+    },
+    [currentUser?.id]
+  );
+
+  /** Recarga eventos + inscripciones vía RPC (get_eventos, get_inscripciones_eventos). */
+  const loadEventos = useCallback(
+    async ({ silent = false } = {}) => {
+      if (useFallback) return { ok: false, skipped: true };
+      if (!silent) {
+        setLoading(true);
+        setError("");
+      }
+
+      const { data: eventosRaw, error: eventosError } = await supabase.rpc("get_eventos");
+      if (eventosError) {
+        if (!silent) setLoading(false);
+        setError(eventosError.message);
+        return { ok: false, error: eventosError.message };
+      }
+
+      const { data: insRaw, error: insError } = await supabase.rpc("get_inscripciones_eventos");
+      if (!silent) setLoading(false);
+      if (insError) {
+        setError(insError.message);
+        return { ok: false, error: insError.message };
+      }
+
+      setEventos(mapEventosFromRpc(rowsFromRpc(eventosRaw), insRaw));
+      return { ok: true };
+    },
+    [useFallback, mapEventosFromRpc]
+  );
 
   useEffect(() => {
     loadEventos();
@@ -157,7 +170,7 @@ export function useEventos(currentUser, isCoord) {
       tipo: "agenda",
       texto: `Crea evento: ${tituloTrim} (${fecha}${fin !== fecha ? ` – ${fin}` : ""})`
     });
-    await loadEventos();
+    await loadEventos({ silent: true });
     return { ok: true };
   }
 
@@ -207,7 +220,7 @@ export function useEventos(currentUser, isCoord) {
       tipo: "agenda",
       texto: `Se apunta a ${evento.titulo} (${evento.fecha})`
     });
-    await loadEventos();
+    await loadEventos({ silent: true });
     return { ok: true };
   }
 
@@ -247,7 +260,7 @@ export function useEventos(currentUser, isCoord) {
       .eq("evento_id", eventoId)
       .eq("jugador_id", normalizeJugadorUuid(currentUser.id));
     if (upError) return { ok: false, error: upError.message };
-    await loadEventos();
+    await loadEventos({ silent: true });
     return { ok: true };
   }
 
@@ -289,7 +302,7 @@ export function useEventos(currentUser, isCoord) {
       tipo: "agenda",
       texto: `Se da de baja de ${evento?.titulo ?? "evento"} (${evento?.fecha ?? eventoId})`
     });
-    await loadEventos();
+    await loadEventos({ silent: true });
     return { ok: true };
   }
 
@@ -310,7 +323,7 @@ export function useEventos(currentUser, isCoord) {
       tipo: "agenda",
       texto: `Elimina evento: ${evento?.titulo ?? eventoId}`
     });
-    await loadEventos();
+    await loadEventos({ silent: true });
     return { ok: true };
   }
 
@@ -321,34 +334,42 @@ export function useEventos(currentUser, isCoord) {
 
     const marcado = Boolean(pagado);
 
+    const patchPagoLocal = (prev) =>
+      prev.map((e) => {
+        if (e.id !== eventoId) return e;
+        const inscritos = e.inscritos.map((i) =>
+          String(i.id) === String(inscripcionId) ? { ...i, pagoConfirmado: marcado } : i
+        );
+        return {
+          ...e,
+          inscritos,
+          totalPagados: inscritos.filter((i) => i.pagoConfirmado).length
+        };
+      });
+
     if (useFallback) {
-      setEventos((prev) =>
-        prev.map((e) =>
-          e.id === eventoId
-            ? {
-                ...e,
-                inscritos: e.inscritos.map((i) =>
-                  String(i.id) === String(inscripcionId) ? { ...i, pagoConfirmado: marcado } : i
-                )
-              }
-            : e
-        )
-      );
+      setEventos(patchPagoLocal);
       return { ok: true };
     }
+
+    setEventos(patchPagoLocal);
 
     const { data, error: rpcError } = await supabase.rpc("marcar_pago_inscripcion_evento", {
       p_inscripcion_id: inscripcionId,
       p_pagado: marcado
     });
-    if (rpcError) return { ok: false, error: rpcError.message };
+    if (rpcError) {
+      await loadEventos({ silent: true });
+      return { ok: false, error: rpcError.message };
+    }
 
     const payload = data && typeof data === "object" && !Array.isArray(data) ? data : {};
     if (payload.ok === false) {
+      await loadEventos({ silent: true });
       return { ok: false, error: payload.error ?? "No se pudo marcar el pago." };
     }
 
-    await loadEventos();
+    await loadEventos({ silent: true });
     return { ok: true };
   }
 
