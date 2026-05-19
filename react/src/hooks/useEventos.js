@@ -23,15 +23,13 @@ export function useEventos(currentUser, isCoord) {
     if (useFallback) return;
     setLoading(true);
     setError("");
-    const { data: eventosData, error: eventosError } = await supabase
-      .from("eventos")
-      .select("id,titulo,descripcion,tipo,fecha,precio,hora,aforo_maximo")
-      .order("fecha", { ascending: true });
+    const { data: eventosRaw, error: eventosError } = await supabase.rpc("get_eventos");
     if (eventosError) {
       setLoading(false);
       setError(eventosError.message);
       return;
     }
+    const eventosData = rowsFromRpc(eventosRaw);
 
     const { data: insRaw, error: insError } = await supabase.rpc("get_inscripciones_eventos");
     setLoading(false);
@@ -55,7 +53,7 @@ export function useEventos(currentUser, isCoord) {
     });
 
     setEventos(
-      (eventosData ?? []).map((e) => {
+      eventosData.map((e) => {
         const inscritos = byEvento.get(e.id) ?? [];
         const miInscripcion = inscritos.find((i) => jugadoresCoinciden(i.jugadorId, currentUser.id)) ?? null;
         return {
