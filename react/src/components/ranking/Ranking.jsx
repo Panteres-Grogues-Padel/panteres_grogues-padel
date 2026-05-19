@@ -34,7 +34,6 @@ export default function Ranking({ ranking = [], currentUser, onSelect }) {
                 const isMe = currentUser && jugadoresCoinciden(currentUser.id, jugador.id);
                 const rowClass = [
                   index % 2 === 0 ? "rank-row--even" : "rank-row--odd",
-                  pos === 1 ? "rank-row--first" : "",
                   isMe ? "rank-row--me" : ""
                 ]
                   .filter(Boolean)
