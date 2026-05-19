@@ -4,6 +4,11 @@ import { createActivityLog } from "../lib/engagement";
 import { supabase } from "../lib/supabase";
 import { isJugadorUuid, jugadoresCoinciden, normalizeJugadorUuid } from "../utils/jugador";
 
+function rowsFromRpc(data) {
+  if (data == null) return [];
+  return Array.isArray(data) ? data : [data];
+}
+
 export function useEventos(currentUser, isCoord) {
   const [eventos, setEventos] = useState(EVENTOS_INICIALES);
   const [loading, setLoading] = useState(false);
@@ -28,10 +33,7 @@ export function useEventos(currentUser, isCoord) {
       return;
     }
 
-    const { data: insData, error: insError } = await supabase
-      .from("inscripciones_eventos")
-      .select("id,evento_id,jugador_id,pareja,pago_confirmado,jugadores(nombre,nombre_completo)")
-      .order("inscrito_at", { ascending: true });
+    const { data: insRaw, error: insError } = await supabase.rpc("get_inscripciones_eventos");
     setLoading(false);
     if (insError) {
       setError(insError.message);
@@ -39,13 +41,13 @@ export function useEventos(currentUser, isCoord) {
     }
 
     const byEvento = new Map();
-    (insData ?? []).forEach((ins) => {
+    rowsFromRpc(insRaw).forEach((ins) => {
       const arr = byEvento.get(ins.evento_id) ?? [];
       arr.push({
         id: ins.id,
         jugadorId: ins.jugador_id,
-        nombre: ins.jugadores?.nombre ?? "Jugador",
-        nombreCompleto: ins.jugadores?.nombre_completo ?? ins.jugadores?.nombre ?? "Jugador",
+        nombre: ins.nombre ?? "Jugador",
+        nombreCompleto: ins.nombre_completo ?? ins.nombre ?? "Jugador",
         pareja: ins.pareja ?? "",
         pagoConfirmado: Boolean(ins.pago_confirmado)
       });
