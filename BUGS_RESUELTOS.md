@@ -7,32 +7,43 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 ## Bugs resueltos
 
 - **Inscripciones no persistían entre sesiones** — Causa: caché PostgREST en SELECT directo. Solución: RPC `get_inscripciones`.
-- **Baja de slot no actualizaba UI** — Causa: race condition con `void` sin esperar recarga. Solución: `await reloadInscripciones()` tras `borrar_inscripcion`.
 - **Partidos no persistían tras logout** — Causa: caché PostgREST. Solución: RPC `get_partidos_slot` / `get_partidos_generados`.
 - **Resultados no persistían al cambiar pestaña** — Causa: caché PostgREST y vaciado transitorio de `partidos`. Solución: RPC `get_resultados` + mantener estado en hooks durante recargas.
-- **Error 403 al crear notificaciones** — Causa: política RLS sin INSERT para coordinadores. Solución: política `Coordinador inserta notificaciones`.
-- **Días pasados aparecían en pestaña Jugar** — Solucionado: filtro por semana actual desde el día de hoy (`diaSemana >= diaActual`).
-- **Inscripciones no visibles tras logout/login** — Carrera `getSession()` vs estado React. Solución: `authEpoch`, `onAuthStateChange`, sin guarda que aborte la carga.
-- **Estado de inscripciones del usuario anterior** — Solución: `setInscripciones([])` al cambiar usuario + `reload` tras logout.
+- **Error 403 notificaciones** — Causa: política RLS sin INSERT para coordinadores. Solución: política `Coordinador inserta notificaciones`.
+- **Baja de slot no actualizaba UI** — Causa: race condition con `void` sin esperar recarga. Solución: `await reloadInscripciones()` tras `borrar_inscripcion`.
+- **Días pasados aparecían en Jugar** — Solucionado con filtrado por fecha/semana actual desde el día de hoy.
+- **Ranking mostraba nombres incorrectos** — Solucionado: RPC `get_ranking()` y mapeo correcto de `nombre` en la respuesta.
+- **Pago confirmado no se mostraba a jugadores** — Causa: caché PostgREST en lectura de `inscripciones_eventos`. Solución: RPC `get_inscripciones_eventos` (incluye `pago_confirmado`).
+- **Inscripciones no visibles tras logout/login** — Carrera `getSession()` vs estado React. Solución: `authEpoch`, `onAuthStateChange`, recarga al iniciar sesión.
+- **Estado de inscripciones del usuario anterior** — Solución: `setInscripciones([])` al cambiar usuario + `reloadInscripciones` tras logout.
 - **Coordinador aparecía apuntado sin fila en BD** — Solución: comparación estricta por UUID en `DetalleSlot`.
 - **Coordinador podía apuntarse a dos slots del mismo día** — Solución: comprobación en servidor antes del INSERT.
-- **Notificaciones tardaban ~30 s en la UI** — Causa: tabla fuera de publicación Realtime + recarga RPC lenta. Solución: `supabase_realtime` + actualización optimista en `postgres_changes`.
+- **Notificaciones tardaban ~30 s en la UI** — Causa: tabla fuera de publicación Realtime. Solución: migración Realtime + actualización optimista en `postgres_changes`.
+- **Error embed `inscripciones_eventos` + `jugadores`** — Causa: ambigüedad PostgREST (FK `jugador_id` vs `pago_confirmado_por`). Solución: RPC `get_inscripciones_eventos`.
+- **Generar partidos sin inscritos** — Causa: semana incorrecta en query (fecha del slot vs lunes UTC). Solución: `getLunesSemanaActual()` al buscar inscripciones.
+- **Marcar pago se revertía en UI** — Causa: race entre actualización optimista y `loadEventos` / caché. Solución: optimista → RPC → revertir si falla; recarga de inscripciones solo vía RPC tras confirmar.
 
 ---
 
 ## Funcionalidades implementadas
 
-- Sistema de inscripciones con cierre por hora (`hora_cierre` en tabla `slots`)
+- Inscripciones con cierre por hora (`hora_cierre` en tabla `slots`)
 - Generación de partidos con franjas horarias (outdoor/indoor por franja)
-- Regeneración de partidos (borra anteriores: resultados → jugadores_pista → pistas → partidos_generados)
-- Resultados con parejas por set (americano: pos1+4 vs 2+3, etc.)
-- Validación de resultados solo por coordinador
-- Sistema de notificaciones completo (campana, badge, panel con Realtime)
-- Notificaciones: apuntarse, baja, recordatorio 2 días (por inscripción), pista completa, resultado introducido, resultado validado, partidos generados/regenerados
-- Borrado automático de notificaciones con más de 14 días al cargar `useNotificaciones`
-- Panel de notificaciones: todas (leídas y no leídas), ordenadas de más reciente a más antigua; no leídas destacadas visualmente
+- Horarios asignados aleatoriamente a las pistas (`shufflePistasPlan`)
+- Regeneración de partidos (borra anteriores: resultados → jugadores_pista → pistas → partidos_generados antes de insertar)
+- Resultados con parejas por set americano (pos1+4 vs 2+3, pos1+3 vs 2+4, pos1+2 vs 3+4)
+- Validación y modificación de resultados solo por coordinador
+- Ranking con fórmula: **eficacia × (1 − penalización)**, donde **penalización = MAX(0, (9 − partidos) × 0,06)**
+- Sistema de notificaciones completo (campana, badge, panel, Realtime, borrado automático a los 14 días)
+- Notificaciones: apuntarse, baja, recordatorio 2 días (por inscripción), apertura lista 19:00, pista completa, resultado introducido/validado, partidos generados/regenerados
+- Agenda con vista anual en grid (12 meses) → detalle por mes; crear/borrar eventos; fechas inicio/fin (`fecha_fin`); inscripciones; marcar pago (coordinador)
+- Saludo dinámico según hora Madrid (buenos días / tardes / noches)
+- Pestaña renombrada **Coordinación** (antes «Sección»)
+- Información de la organización en Utilidades (Bienvenida)
+- Timezone corregido (hora Europe/Madrid en saludo y lógica de slots)
+- Panel de notificaciones: todas (leídas y no leídas), orden reciente; no leídas destacadas
 - Pestaña Partidos: dropdown solo día de hoy; coordinador genera/regenera solo hoy
-- Pestaña Resultados: ventanas por rol (coordinador vs jugador), modificar resultado validado
+- Pestaña Resultados: ventanas por rol (coordinador vs jugador)
 - Log de actividad en Bienvenida
 
 ---
@@ -41,33 +52,45 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 
 | RPC | Parámetros | Uso |
 |-----|------------|-----|
-| `get_inscripciones` | `p_desde`, `p_hasta` | Lectura de inscripciones sin caché PostgREST |
+| `get_inscripciones` | `p_desde`, `p_hasta` | Inscripciones a slots (sin caché PostgREST) |
 | `get_partidos_slot` | `p_slot_id`, `p_semana` | Partidos generados de un slot/semana |
 | `get_partidos_generados` | `p_slot_id`, `p_semana` | Listado histórico de partidos generados |
 | `get_resultados` | `p_pista_ids` | Resultados por pistas |
+| `get_ranking` | — | Ranking con nombres y estadísticas |
 | `get_notificaciones` | `p_jugador_id` | Notificaciones del jugador autenticado |
-| `notificacion_duplicada` | `p_jugador_id`, `p_tipo`, `p_titulo`, `p_texto` | Evitar envíos duplicados (recordatorios, pista completa) |
-| `borrar_inscripcion` | `p_jugador_id`, `p_slot_id`, `p_semana` | Baja de inscripción |
+| `get_eventos` | — | Eventos de agenda (sin caché PostgREST) |
+| `get_inscripciones_eventos` | `p_evento_id` (opcional) | Inscripciones a eventos + `pago_confirmado` + nombres |
+| `notificacion_duplicada` | `p_jugador_id`, `p_tipo`, `p_titulo`, `p_texto` | Evitar notificaciones duplicadas |
+| `borrar_inscripcion` | `p_jugador_id`, `p_slot_id`, `p_semana` | Baja de inscripción a slot |
+| `marcar_pago_inscripcion_evento` | `p_inscripcion_id`, `p_pagado` | Marcar/desmarcar pago (coordinador) |
+| `actualizar_ranking` | `p_resultado_id` | Recalcular ranking tras validar resultado |
 
-Otras funciones relacionadas: `actualizar_ranking`, `es_coordinador()` (RLS).
+Funciones auxiliares en BD: `es_coordinador()` (RLS).
 
 ---
 
-## Detalle histórico (referencia)
+## Pendientes
 
-### Caché PostgREST — inscripciones
+- Notificación slot abierto a las 19h — implementado Opción A (solo si la app está abierta)
+- Horarios aleatorios — pendiente probar con 8+ jugadores
+- Sistema de padrinos/ahijados
+- Google OAuth
+- Organigrama en Coordinación
+- Migración usuarios desde Google Sheets
+- i18n catalán/inglés
+- Penalización ranking por inactividad (2 meses sin jugar → bajada máx. 30 posiciones)
 
-Sustituido SELECT directo por `get_inscripciones` con rango de fechas (-2 / +4 semanas desde el lunes actual). Commit: `12f114f`.
+---
 
-### Cierre de inscripción por día y hora
+## Regla importante — caché PostgREST
 
-`isSlotOpen` en `slots.js`: día pasado → cerrado; hoy tras `hora_cierre` → cerrado; semana próxima → apertura 7 días antes a las 19:00. Commit: `bd2b20a`.
+**Todo SELECT directo a Supabase debe hacerse vía RPC** para evitar el caché de PostgREST.
 
-### Resultados a 0 al cambiar pestaña
+Las escrituras (INSERT, UPDATE, DELETE) pueden usar la API de tabla con RLS; las lecturas que alimentan la UI deben pasar por funciones `get_*` con `SECURITY DEFINER` cuando haya riesgo de caché o ambigüedad de embeds.
 
-`usePartidos` mantiene listado válido en recargas; `useResultados` no vacía si `partidos` está transitoriamente vacío. Commit: `0d8187e`.
+---
 
-### Migraciones Supabase relevantes
+## Migraciones Supabase relevantes
 
 - `20250515130500_get_partidos_slot.sql`
 - `20250515140000_get_resultados.sql`
@@ -75,3 +98,10 @@ Sustituido SELECT directo por `get_inscripciones` con rango de fechas (-2 / +4 s
 - `20250516120000_get_notificaciones.sql`
 - `20250516130000_notificacion_duplicada.sql`
 - `20250516140000_notificaciones_realtime.sql`
+- `20250516150000_get_ranking.sql`
+- `20250519140000_get_inscripciones_eventos.sql`
+- `20250519150000_eventos_hora_aforo.sql`
+- `20250519160000_get_eventos.sql`
+- `20250519170000_eventos_fecha_fin_y_pago.sql`
+- `20250519180000_marcar_pago_pagado_param.sql`
+- `20250519190000_get_inscripciones_eventos_pago.sql`
