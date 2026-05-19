@@ -3,6 +3,7 @@ import { EVENTOS_INICIALES } from "../utils/mockData";
 import { createActivityLog } from "../lib/engagement";
 import { supabase } from "../lib/supabase";
 import { isJugadorUuid, jugadoresCoinciden, normalizeJugadorUuid } from "../utils/jugador";
+import { getNombre } from "../utils/nombres";
 
 function rowsFromRpc(data) {
   if (data == null) return [];
@@ -13,7 +14,8 @@ function mapInscripcionRpcRow(ins) {
   return {
     id: ins.id,
     jugadorId: ins.jugador_id,
-    nombre: ins.nombre ?? "Jugador",
+    nombre: getNombre(ins) || "Jugador",
+    nickname: ins.nickname?.trim() || null,
     nombreCompleto: ins.nombre_completo ?? ins.nombre ?? "Jugador",
     pareja: ins.pareja ?? "",
     pagoConfirmado: Boolean(ins.pago_confirmado)

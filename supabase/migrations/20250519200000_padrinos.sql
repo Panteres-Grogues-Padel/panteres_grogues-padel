@@ -11,13 +11,14 @@ SET search_path = public
 AS $$
   SELECT COALESCE(jsonb_agg(row_data), '[]'::jsonb)
   FROM (
-    SELECT jsonb_build_object(
-      'id', j.id,
-      'nombre', j.nombre,
-      'nombre_completo', j.nombre_completo,
-      'padrino_id', j.padrino_id,
-      'padrino_nombre', p.nombre
-    ) AS row_data
+    SELECT       jsonb_build_object(
+        'id', j.id,
+        'nombre', j.nombre,
+        'nombre_completo', j.nombre_completo,
+        'nickname', j.nickname,
+        'padrino_id', j.padrino_id,
+        'padrino_nombre', p.nombre
+      ) AS row_data
     FROM jugadores j
     LEFT JOIN jugadores p ON p.id = j.padrino_id
   ) sub;

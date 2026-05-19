@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { jugadoresCoinciden } from "../../utils/jugador";
-import { nombreCorto } from "../../utils/nombres";
+import { getNombre, nombreCorto } from "../../utils/nombres";
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
 import { numeroSocioPanteres } from "../../utils/socio";
 
@@ -93,8 +93,9 @@ export default function PerfilJugador({ jugador, currentUser, open, onClose, onJ
   if (!open || !jugador) return null;
 
   const foto = jugador.foto_url;
-  const initials = initialsFromNombre(jugador.nombre ?? "");
-  const avClass = avatarClassFromNombre(jugador.nombre ?? "");
+  const displayName = getNombre(jugador) || jugador.nombre || "";
+  const initials = initialsFromNombre(displayName);
+  const avClass = avatarClassFromNombre(displayName);
 
   return (
     <div
@@ -123,11 +124,20 @@ export default function PerfilJugador({ jugador, currentUser, open, onClose, onJ
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
               <div className="profile-name">
-                {isOwn ? jugador.nombreCompleto || jugador.nombre : corto || jugador.nombre}
+                {isOwn ? jugador.nombreCompleto || jugador.nombre : corto || getNombre(jugador)}
               </div>
               {isOwn ? <span className="own-badge">Tú</span> : null}
             </div>
-            <div className="profile-sub">{jugador.nombre}</div>
+            {isOwn && jugador.nickname ? (
+              <div className="profile-nickname">@{jugador.nickname}</div>
+            ) : null}
+            <div className="profile-sub">
+              {isOwn
+                ? jugador.nickname
+                  ? `Nombre en app: ${jugador.nombre}`
+                  : jugador.nombre
+                : getNombre(jugador)}
+            </div>
             <div className="profile-socio-line">
               <span className="profile-socio-label">N.º socio Panteres</span>
               <span className="profile-socio-val">{numeroSocioPanteres(jugador.id)}</span>

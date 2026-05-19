@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { isJugadorUuid, jugadoresCoinciden } from "../../utils/jugador";
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
+import { getNombre } from "../../utils/nombres";
 
 const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 const MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
@@ -150,9 +151,9 @@ export default function DetalleSlot({
           sorted.map((p, idx) => (
             <div className="player-row" key={`${slot.id}-all-${idx}-${p.nombre}`}>
               <span className="ppos">{idx + 1}</span>
-              <div className={`avatar ${avatarClassFromNombre(p.nombre)}`}>{initialsFromNombre(p.nombre)}</div>
+              <div className={`avatar ${avatarClassFromNombre(getNombre(p))}`}>{initialsFromNombre(getNombre(p))}</div>
               <span className="pname">
-                {p.nombre}
+                {getNombre(p)}
                 {filaEsUsuarioActual(p, currentUser) ? " ✓" : ""}
               </span>
               {p.socio ? <span className="badge badge-socio">Up</span> : null}
@@ -172,9 +173,9 @@ export default function DetalleSlot({
             {titulares.map((p, idx) => (
               <div className="player-row" key={`${slot.id}-t-${idx}-${p.nombre}`}>
                 <span className="ppos">{idx + 1}</span>
-                <div className={`avatar ${avatarClassFromNombre(p.nombre)}`}>{initialsFromNombre(p.nombre)}</div>
+                <div className={`avatar ${avatarClassFromNombre(getNombre(p))}`}>{initialsFromNombre(getNombre(p))}</div>
                 <span className="pname">
-                  {p.nombre}
+                  {getNombre(p)}
                   {filaEsUsuarioActual(p, currentUser) ? " ✓" : ""}
                 </span>
                 {p.socio ? <span className="badge badge-socio">Up</span> : null}
@@ -187,9 +188,9 @@ export default function DetalleSlot({
                 {reserva.map((p, idx) => (
                   <div className="player-row" key={`${slot.id}-r-${idx}-${p.nombre}`}>
                     <span className="ppos">R{idx + 1}</span>
-                    <div className={`avatar ${avatarClassFromNombre(p.nombre)}`}>{initialsFromNombre(p.nombre)}</div>
+                    <div className={`avatar ${avatarClassFromNombre(getNombre(p))}`}>{initialsFromNombre(getNombre(p))}</div>
                     <span className="pname">
-                      {p.nombre}
+                      {getNombre(p)}
                       {filaEsUsuarioActual(p, currentUser) ? " ✓" : ""}
                     </span>
                     {p.socio ? <span className="badge badge-socio">Up</span> : null}

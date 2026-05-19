@@ -21,9 +21,11 @@ function mapRankingRow(row) {
   const id = j.id ?? row.jugador_id;
   if (!id) return null;
   const nombre = row.nombre ?? j.nombre ?? "";
+  const nickname = row.nickname ?? j.nickname ?? null;
   return {
     id,
     nombre,
+    nickname: nickname?.trim() || null,
     nombreCompleto: row.nombre_completo ?? j.nombre_completo ?? nombre,
     telefono: j.telefono ?? "",
     instagram: j.instagram ?? "",

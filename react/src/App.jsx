@@ -97,6 +97,7 @@ export default function App() {
     return {
       id: u.id,
       nombre: u.nombre,
+      nickname: u.nickname ?? rk?.nickname ?? null,
       nombreCompleto: u.nombreCompleto ?? u.nombre,
       telefono: u.telefono ?? u.tel ?? "",
       instagram: u.instagram ?? u.ig ?? "",

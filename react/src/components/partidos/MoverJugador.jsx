@@ -1,3 +1,5 @@
+import { getNombre } from "../../utils/nombres";
+
 export default function MoverJugador({ open, origenPartido, jugador, destinos, onClose, onMove }) {
   if (!open || !origenPartido || !jugador) return null;
 
@@ -6,7 +8,7 @@ export default function MoverJugador({ open, origenPartido, jugador, destinos, o
       <div className="overlay-sheet open">
         <div style={{ fontSize: "16px", fontWeight: 600, color: "var(--text)", marginBottom: "4px" }}>↕️ Mover jugador</div>
         <div style={{ fontSize: "13px", color: "var(--text2)", marginBottom: "1rem" }}>
-          Mover a <strong>{jugador.nombre}</strong> desde Partido {origenPartido.numeroPista || "-"} a:
+          Mover a <strong>{getNombre(jugador)}</strong> desde Partido {origenPartido.numeroPista || "-"} a:
         </div>
 
         {destinos.map((d) => {
@@ -25,7 +27,7 @@ export default function MoverJugador({ open, origenPartido, jugador, destinos, o
                   </span>
                 </div>
                 <div style={{ fontSize: "11px", color: "var(--text2)", marginTop: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {d.jugadores.map((j) => j.nombre).join(", ")}
+                  {d.jugadores.map((j) => getNombre(j)).join(", ")}
                 </div>
               </div>
               <button className="btn btn-sm btn-primary" style={{ fontSize: "12px", flexShrink: 0, marginLeft: "10px" }} onClick={() => onMove(d.id)}>

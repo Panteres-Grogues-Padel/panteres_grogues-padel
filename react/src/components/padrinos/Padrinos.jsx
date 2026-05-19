@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePadrinos } from "../../hooks/usePadrinos";
 import { jugadoresCoinciden } from "../../utils/jugador";
+import { getNombre } from "../../utils/nombres";
 
 function displayNombre(j) {
-  return j?.nombreCompleto ?? j?.nombre ?? "Jugador";
+  return getNombre(j) || j?.nombreCompleto || j?.nombre || "Jugador";
 }
 
 function PadrinosCard({ title, children }) {

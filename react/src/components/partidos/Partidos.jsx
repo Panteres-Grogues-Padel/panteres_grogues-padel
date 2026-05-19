@@ -13,6 +13,7 @@ import {
   franjasFromPartidos,
   resumenFranjas
 } from "../../utils/franjasPartidos";
+import { getNombre } from "../../utils/nombres";
 
 const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
@@ -191,9 +192,9 @@ export default function Partidos({
       const indoor = p.indoor ? " Indoor" : "";
       wa += `*Partido ${i + 1}*${hora}${indoor}\n`;
       const jugOrd = jugadoresOrdenRanking(p.jugadores, rankingPosByJugador);
-      wa += `${jugOrd.map((j) => j.nombre).join(" · ")}\n\n`;
+      wa += `${jugOrd.map((j) => getNombre(j)).join(" · ")}\n\n`;
     });
-    if (reservas.length) wa += `*Reserva:* ${reservas.map((r) => r.nombre).join(", ")}`;
+    if (reservas.length) wa += `*Reserva:* ${reservas.map((r) => getNombre(r)).join(", ")}`;
     return wa;
   }
 
@@ -373,7 +374,7 @@ export default function Partidos({
               <div style={{ fontSize: "11px", fontWeight: 600, color: "#BA7517", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: "6px" }}>
                 Reserva ({reservas.length})
               </div>
-              <div>{reservas.map((p) => <span key={p.id} className="chip" style={{ fontSize: "11px" }}>{p.nombre}</span>)}</div>
+              <div>{reservas.map((p) => <span key={p.id} className="chip" style={{ fontSize: "11px" }}>{getNombre(p)}</span>)}</div>
             </div>
           ) : null}
 

@@ -16,6 +16,7 @@ AS $$
       jsonb_build_object(
         'jugador_id', r.jugador_id,
         'nombre', j.nombre,
+        'nickname', j.nickname,
         'nombre_completo', j.nombre_completo,
         'partidos_jugados', r.partidos_jugados,
         'partidos_ganados', r.partidos_ganados,
@@ -27,6 +28,7 @@ AS $$
         'jugadores', jsonb_build_object(
           'id', j.id,
           'nombre', j.nombre,
+          'nickname', j.nickname,
           'nombre_completo', j.nombre_completo,
           'telefono', j.telefono,
           'instagram', j.instagram,

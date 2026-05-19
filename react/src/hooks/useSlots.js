@@ -10,6 +10,7 @@ import {
 import { supabase } from "../lib/supabase";
 import { createActivityLog, createNotifications, notificacionDuplicada } from "../lib/engagement";
 import { isJugadorUuid, jugadoresCoinciden, normalizeJugadorUuid } from "../utils/jugador";
+import { getNombre } from "../utils/nombres";
 import { fechaPartidoFromSlot, formatDiaPartidoLabel, hoyLocalStr } from "../utils/dates";
 
 // --- Utilidades de fecha UTC ---
@@ -49,17 +50,28 @@ function jugadorCoincide(insJugadorId, userId) {
   return isJugadorUuid(a) && isJugadorUuid(b) && a === b;
 }
 
-/** Enriquece las filas de inscripciones con el nombre del jugador. */
+function rowsFromRpcJugadores(data) {
+  if (data == null) return [];
+  return Array.isArray(data) ? data : [data];
+}
+
+/** Enriquece inscripciones con datos de jugador vía RPC get_jugadores. */
 async function cargarNombres(rows) {
-  const ids = [...new Set(rows.map((r) => normalizeJugadorUuid(r.jugador_id)).filter((id) => isJugadorUuid(id)))];
+  const { data, error } = await supabase.rpc("get_jugadores", {});
+  if (error) {
+    console.warn("[cargarNombres]", error.message);
+    return rows;
+  }
   const byId = {};
-  for (let i = 0; i < ids.length; i += 200) {
-    const { data } = await supabase.from("jugadores").select("id,nombre").in("id", ids.slice(i, i + 200));
-    for (const j of data ?? []) byId[normalizeJugadorUuid(j.id)] = j.nombre ?? "";
+  for (const j of rowsFromRpcJugadores(data)) {
+    byId[normalizeJugadorUuid(j.id)] = {
+      nombre: j.nombre ?? "",
+      nickname: j.nickname?.trim() || null
+    };
   }
   return rows.map((row) => ({
     ...row,
-    jugadores: { nombre: byId[normalizeJugadorUuid(row.jugador_id)] || row.jugador_id }
+    jugadores: byId[normalizeJugadorUuid(row.jugador_id)] ?? { nombre: String(row.jugador_id ?? "") }
   }));
 }
 
@@ -275,7 +287,8 @@ export function useSlots(currentUser, authEpoch = 0) {
       .filter((i) => i.slot_id === slotId && normalizeSemana(i.semana) === semana)
       .map((i, idx) => ({
         jugadorId: normalizeJugadorUuid(i.jugador_id),
-        nombre: i.jugadores?.nombre ?? i.jugador_id,
+        nombre: getNombre(i.jugadores) || i.jugador_id,
+        nickname: i.jugadores?.nickname ?? null,
         socio: Boolean(i.es_socio),
         ts: i.inscrito_at ? new Date(i.inscrito_at).getTime() : idx + 1,
         tsStr: formatTsStr(i.inscrito_at)

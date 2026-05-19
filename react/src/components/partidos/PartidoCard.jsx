@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import { formatHoraInput } from "../../utils/dates";
+import { jugadoresCoinciden } from "../../utils/jugador";
+import { getNombre } from "../../utils/nombres";
 
 const AVATAR_CLASSES = ["av-teal", "av-purple", "av-coral", "av-blue", "av-amber", "av-pink", "av-green", "av-gray"];
 
@@ -41,7 +43,7 @@ export default function PartidoCard({
     return copy;
   }, [partido.jugadores, rankingPosByJugador]);
   const allConfirmed = useMemo(() => partido.jugadores.every((j) => j.confirmado), [partido.jugadores]);
-  const names = useMemo(() => jugadoresPorRanking.map((j) => j.nombre).join(", "), [jugadoresPorRanking]);
+  const names = useMemo(() => jugadoresPorRanking.map((j) => getNombre(j)).join(", "), [jugadoresPorRanking]);
   const horaUi = formatHoraInput(partido.hora);
 
   return (
@@ -71,14 +73,15 @@ export default function PartidoCard({
       {expanded ? (
         <div style={{ padding: "10px 12px", background: "var(--bg)" }}>
           {jugadoresPorRanking.map((j, ordIdx) => {
-            const isSelf = currentUser && j.nombre === currentUser.nombre;
+            const isSelf = currentUser && jugadoresCoinciden(j.jugadorId, currentUser.id);
+            const label = getNombre(j);
             return (
               <div key={j.jugadorId} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "5px 0", borderBottom: "0.5px solid var(--border)" }}>
-                <div className={`avatar ${avatarClass(j.nombre)}`} style={{ width: "22px", height: "22px", fontSize: "9px" }}>
-                  {initials(j.nombre)}
+                <div className={`avatar ${avatarClass(label)}`} style={{ width: "22px", height: "22px", fontSize: "9px" }}>
+                  {initials(label)}
                 </div>
                 <span style={{ fontSize: "13px", flex: 1 }}>
-                  {j.nombre}
+                  {label}
                   <span style={{ fontSize: "10px", color: "var(--text2)", marginLeft: "4px" }}>#{ordIdx + 1}</span>
                 </span>
                 {j.confirmado ? (

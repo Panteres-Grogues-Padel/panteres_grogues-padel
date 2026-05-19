@@ -3,7 +3,7 @@ import { COORDS, JUGADORES_INICIALES } from "../utils/mockData";
 import { supabase } from "../lib/supabase";
 
 const JUGADORES_SELECT =
-  "id, auth_id, nombre, nombre_completo, email, telefono, instagram, foto_url, mostrar_telefono, autoriza_instagram, es_coordinador, activo";
+  "id, auth_id, nombre, nombre_completo, nickname, email, telefono, instagram, foto_url, mostrar_telefono, autoriza_instagram, es_coordinador, activo";
 
 function jugadorToState(jugador) {
   return {
@@ -11,6 +11,7 @@ function jugadorToState(jugador) {
     id: jugador.id != null ? String(jugador.id) : jugador.id,
     auth_id: jugador.auth_id ?? null,
     nombreCompleto: jugador.nombre_completo,
+    nickname: jugador.nickname?.trim() || null,
     fromFallback: false
   };
 }

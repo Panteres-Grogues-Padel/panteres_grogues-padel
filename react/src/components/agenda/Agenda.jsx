@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { jugadoresCoinciden } from "../../utils/jugador";
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
 import { formatHoraInput } from "../../utils/dates";
+import { getNombre } from "../../utils/nombres";
 
 const DS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 const MESES = [
@@ -24,7 +25,7 @@ const TIPO_LABEL = { torneo: "Torneo", social: "Social", otro: "Actividad" };
 function parejaNombre(parejaRef, inscritos) {
   if (!parejaRef) return "";
   const hit = inscritos.find((i) => jugadoresCoinciden(i.jugadorId, parejaRef));
-  return hit?.nombre ?? String(parejaRef);
+  return hit ? getNombre(hit) || hit.nombre : String(parejaRef);
 }
 
 function eventoEnMes(e, year, month) {
@@ -388,11 +389,11 @@ export default function Agenda({
                     borderBottom: "0.5px solid var(--border)"
                   }}
                 >
-                  <div className={`avatar ${avatarClassFromNombre(ins.nombre)}`} style={{ width: 28, height: 28, fontSize: 11 }}>
-                    {initialsFromNombre(ins.nombre)}
+                  <div className={`avatar ${avatarClassFromNombre(getNombre(ins))}`} style={{ width: 28, height: 28, fontSize: 11 }}>
+                    {initialsFromNombre(getNombre(ins))}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text)" }}>{ins.nombre}</div>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text)" }}>{getNombre(ins)}</div>
                     {esTorneo && ins.pareja ? (
                       <div style={{ fontSize: 11, color: "var(--text2)" }}>
                         con {parejaNombre(ins.pareja, listaEvento.inscritos)}
@@ -557,7 +558,7 @@ function EventoCard({
                       <option value="">— Seleccionar —</option>
                       {candidatosPareja.map((i) => (
                         <option key={String(i.jugadorId)} value={String(i.jugadorId)}>
-                          {i.nombre}
+                          {getNombre(i)}
                         </option>
                       ))}
                     </select>

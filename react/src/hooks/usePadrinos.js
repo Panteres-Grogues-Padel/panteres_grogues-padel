@@ -11,6 +11,7 @@ function mapJugadorRow(row) {
   return {
     id: normalizeJugadorUuid(row.id),
     nombre: row.nombre ?? "Jugador",
+    nickname: row.nickname?.trim() || null,
     nombreCompleto: row.nombre_completo ?? row.nombre ?? "Jugador",
     padrinoId: row.padrino_id ? normalizeJugadorUuid(row.padrino_id) : null,
     padrinoNombre: row.padrino_nombre ?? null

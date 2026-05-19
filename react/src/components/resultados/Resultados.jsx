@@ -6,6 +6,7 @@ import {
   getRotacionesAmericano
 } from "../../utils/resultadosUtils";
 import ResultadosCalendario from "./ResultadosCalendario";
+import { getNombre } from "../../utils/nombres";
 
 function emptySets() {
   return [
@@ -60,7 +61,7 @@ function PartidoResultadoCard({
               key={j.id}
               className={`chip${String(j.jugadorId) === String(currentUser?.id) ? " res-chip-me" : ""}`}
             >
-              <span className="res-pos">{j.posicion}º</span> {j.nombre}
+              <span className="res-pos">{j.posicion}º</span> {getNombre(j)}
             </span>
           ))}
       </div>
