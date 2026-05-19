@@ -244,13 +244,14 @@ export default function Bienvenida({
         className="btn btn-block bienvenida-actividad-btn"
         onClick={() => setActivityOpen(true)}
       >
+        <span style={{ fontSize: 18 }}>📜</span>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>Actividad</div>
           <div style={{ fontSize: 11, color: "var(--text2)" }}>
             {isCoord ? "Historial de todos los jugadores" : "Mi historial de acciones"}
           </div>
         </div>
-        <span style={{ fontSize: 12, color: "var(--text2)" }}>{">"}</span>
+        <span style={{ fontSize: 12, color: "var(--text2)" }}>→</span>
       </button>
 
       <div
