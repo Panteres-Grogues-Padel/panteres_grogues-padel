@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { ayerLocalStr, getDiasDisponiblesResultados, hoyLocalStr } from "../../utils/dates";
+import { getDiasDisponiblesResultados, hoyLocalStr } from "../../utils/dates";
 import {
   getEstadoLabel,
   getPermisosResultado,
   getRotacionesAmericano
 } from "../../utils/resultadosUtils";
-
-const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+import ResultadosCalendario from "./ResultadosCalendario";
 
 function emptySets() {
   return [
@@ -14,16 +13,6 @@ function emptySets() {
     { p1: 0, p2: 0 },
     { p1: 0, p2: 0 }
   ];
-}
-
-function formatDiaDropdown(fechaStr, hoy, ayer) {
-  const d = new Date(`${fechaStr}T12:00:00`);
-  const nombre = DIAS[(d.getDay() + 6) % 7];
-  const corta = d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
-  let sufijo = "";
-  if (fechaStr === hoy) sufijo = " · hoy";
-  else if (fechaStr === ayer) sufijo = " · ayer";
-  return `${nombre} ${corta}${sufijo}`;
 }
 
 function PartidoResultadoCard({
@@ -185,7 +174,6 @@ export default function Resultados({
   mapSetsFromResultado
 }) {
   const hoy = hoyLocalStr();
-  const ayer = ayerLocalStr();
   const diasDisponibles = useMemo(() => getDiasDisponiblesResultados(partidos, isCoord), [partidos, isCoord]);
   const [fechaSel, setFechaSel] = useState("");
   const [setsDraft, setSetsDraft] = useState({});
@@ -254,17 +242,11 @@ export default function Resultados({
 
       <div id="resultados-days">
         {diasDisponibles.length ? (
-          <select
-            value={fechaSel}
-            onChange={(e) => setFechaSel(e.target.value)}
-            className="resultados-day-select"
-          >
-            {diasDisponibles.map((f) => (
-              <option key={f} value={f}>
-                {formatDiaDropdown(f, hoy, ayer)}
-              </option>
-            ))}
-          </select>
+          <ResultadosCalendario
+            fechasConPartidos={diasDisponibles}
+            fechaSel={fechaSel}
+            onSelectFecha={setFechaSel}
+          />
         ) : (
           <p className="slot-meta">No hay partidos con resultados en esta ventana</p>
         )}

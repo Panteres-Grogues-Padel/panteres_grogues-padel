@@ -1932,17 +1932,92 @@ select {
   margin: -0.25rem 0 0.75rem;
 }
 
-.resultados-day-select {
-  font-size: 14px;
-  font-weight: 600;
-  height: 46px;
-  border: 0.5px solid var(--border2);
+.resultados-cal-scroll {
+  max-height: 320px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 0.5px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg);
-  width: 100%;
+  padding: 0.75rem;
   margin-bottom: 1rem;
-  padding: 0 12px;
+}
+
+.resultados-cal-empty {
+  margin-bottom: 1rem;
+}
+
+.resultados-cal-month + .resultados-cal-month {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 0.5px solid var(--border);
+}
+
+.resultados-cal-month__title {
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.resultados-cal-grid .cal-day--pad {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.resultados-cal-day {
+  border: none;
+  font: inherit;
+  padding: 2px 1px;
+}
+
+.resultados-cal-day--has {
+  cursor: pointer;
+  background: #fff;
+}
+
+.resultados-cal-day--has:hover {
+  background: var(--bg2);
+}
+
+.resultados-cal-day--muted {
+  pointer-events: none;
+}
+
+.resultados-cal-day--muted .cal-num {
+  color: var(--text3);
+}
+
+.resultados-cal-day--selected {
+  background: #0d1b3e;
+}
+
+.resultados-cal-day--selected .cal-num {
+  color: #fef9c3;
+  font-weight: 600;
+}
+
+.resultados-cal-day--selected .res-cal-dot {
+  background: #fef9c3;
+}
+
+.resultados-cal-day--today:not(.resultados-cal-day--selected) .cal-num {
+  box-shadow: 0 0 0 1.5px #0d1b3e;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.res-cal-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #fde047;
+  display: block;
+  margin-top: 1px;
 }
 
 .res-card {
