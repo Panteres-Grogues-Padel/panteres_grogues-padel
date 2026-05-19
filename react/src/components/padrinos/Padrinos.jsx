@@ -15,60 +15,6 @@ function PadrinosCard({ title, children }) {
   );
 }
 
-function GestionFila({ jugador, candidatos, onGuardar, onDesasignar, guardando }) {
-  const [padrinoSel, setPadrinoSel] = useState(jugador.padrinoId ?? "");
-
-  useEffect(() => {
-    setPadrinoSel(jugador.padrinoId ?? "");
-  }, [jugador.padrinoId]);
-
-  return (
-    <div className="padrinos-gestion-row">
-      <div className="padrinos-gestion-row__nombre">{displayNombre(jugador)}</div>
-      <div className="padrinos-gestion-row__actual">
-        {jugador.padrinoId ? (
-          <span>{jugador.padrinoNombre ?? "Asignado"}</span>
-        ) : (
-          <span className="padrinos-muted">Sin asignar</span>
-        )}
-      </div>
-      <select
-        className="padrinos-select"
-        value={padrinoSel}
-        disabled={guardando}
-        onChange={(ev) => setPadrinoSel(ev.target.value)}
-      >
-        <option value="">Sin asignar</option>
-        {candidatos.map((c) => (
-          <option key={c.id} value={c.id}>
-            {displayNombre(c)}
-          </option>
-        ))}
-      </select>
-      <div className="padrinos-gestion-row__actions">
-        <button
-          type="button"
-          className="btn btn-sm btn-primary"
-          disabled={guardando}
-          onClick={() => onGuardar(jugador.id, padrinoSel || null)}
-        >
-          Guardar
-        </button>
-        {jugador.padrinoId ? (
-          <button
-            type="button"
-            className="btn btn-sm"
-            disabled={guardando}
-            onClick={() => onDesasignar(jugador.id)}
-          >
-            Desasignar
-          </button>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
 export default function Padrinos({ currentUser, isCoord }) {
   const {
     jugadores,
@@ -81,7 +27,9 @@ export default function Padrinos({ currentUser, isCoord }) {
     desasignarPadrino
   } = usePadrinos(currentUser);
 
-  const [guardandoId, setGuardandoId] = useState(null);
+  const [ahijadoSel, setAhijadoSel] = useState("");
+  const [padrinoSel, setPadrinoSel] = useState("");
+  const [guardando, setGuardando] = useState(false);
   const [msg, setMsg] = useState("");
 
   const listaGestion = useMemo(
@@ -92,24 +40,44 @@ export default function Padrinos({ currentUser, isCoord }) {
     [jugadores]
   );
 
-  async function handleGuardar(ahijadoId, padrinoId) {
+  const ahijado = useMemo(
+    () => jugadores.find((j) => jugadoresCoinciden(j.id, ahijadoSel)) ?? null,
+    [jugadores, ahijadoSel]
+  );
+
+  const candidatos = useMemo(
+    () => (ahijadoSel ? candidatosPadrino(ahijadoSel) : []),
+    [ahijadoSel, candidatosPadrino]
+  );
+
+  useEffect(() => {
+    setPadrinoSel(ahijado?.padrinoId ?? "");
+  }, [ahijado?.id, ahijado?.padrinoId]);
+
+  async function handleAsignar() {
+    if (!ahijadoSel || !padrinoSel) {
+      setMsg("Selecciona un ahijado/a y un padrino/madrina.");
+      return;
+    }
     setMsg("");
-    setGuardandoId(ahijadoId);
-    const res = padrinoId
-      ? await asignarPadrino(ahijadoId, padrinoId)
-      : await desasignarPadrino(ahijadoId);
-    setGuardandoId(null);
-    if (!res.ok) setMsg(res.error ?? "No se pudo guardar.");
-    else setMsg("Asignación guardada.");
+    setGuardando(true);
+    const res = await asignarPadrino(ahijadoSel, padrinoSel);
+    setGuardando(false);
+    if (!res.ok) setMsg(res.error ?? "No se pudo asignar.");
+    else setMsg("Padrino/madrina asignado correctamente.");
   }
 
-  async function handleDesasignar(ahijadoId) {
+  async function handleQuitar() {
+    if (!ahijadoSel) return;
     setMsg("");
-    setGuardandoId(ahijadoId);
-    const res = await desasignarPadrino(ahijadoId);
-    setGuardandoId(null);
-    if (!res.ok) setMsg(res.error ?? "No se pudo desasignar.");
-    else setMsg("Padrino/madrina desasignado.");
+    setGuardando(true);
+    const res = await desasignarPadrino(ahijadoSel);
+    setGuardando(false);
+    if (!res.ok) setMsg(res.error ?? "No se pudo quitar el padrino/madrina.");
+    else {
+      setPadrinoSel("");
+      setMsg("Padrino/madrina desasignado.");
+    }
   }
 
   return (
@@ -141,17 +109,71 @@ export default function Padrinos({ currentUser, isCoord }) {
       {isCoord ? (
         <>
           <div className="padrinos-section-label">Gestionar asignaciones</div>
-          <div className="padrinos-gestion">
-            {listaGestion.map((j) => (
-              <GestionFila
-                key={j.id}
-                jugador={j}
-                candidatos={candidatosPadrino(j.id)}
-                guardando={guardandoId != null && jugadoresCoinciden(guardandoId, j.id)}
-                onGuardar={handleGuardar}
-                onDesasignar={handleDesasignar}
-              />
-            ))}
+          <div className="padrinos-gestion-form card">
+            <label className="padrinos-field">
+              <span className="padrinos-field__label">Selecciona un ahijado/a</span>
+              <select
+                className="padrinos-select"
+                value={ahijadoSel}
+                disabled={guardando || loading}
+                onChange={(ev) => setAhijadoSel(ev.target.value)}
+              >
+                <option value="">— Elige un jugador —</option>
+                {listaGestion.map((j) => (
+                  <option key={j.id} value={j.id}>
+                    {displayNombre(j)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {ahijadoSel ? (
+              <>
+                <label className="padrinos-field">
+                  <span className="padrinos-field__label">Selecciona su padrino/madrina</span>
+                  <select
+                    className="padrinos-select"
+                    value={padrinoSel}
+                    disabled={guardando}
+                    onChange={(ev) => setPadrinoSel(ev.target.value)}
+                  >
+                    <option value="">— Elige padrino/madrina —</option>
+                    {candidatos.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {displayNombre(c)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                {ahijado?.padrinoId ? (
+                  <p className="padrinos-muted padrinos-gestion-actual">
+                    Actual: {ahijado.padrinoNombre ?? "Asignado"}
+                  </p>
+                ) : null}
+
+                <div className="padrinos-gestion-actions">
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-block"
+                    disabled={guardando || !padrinoSel}
+                    onClick={() => void handleAsignar()}
+                  >
+                    Asignar
+                  </button>
+                  {ahijado?.padrinoId ? (
+                    <button
+                      type="button"
+                      className="btn btn-block"
+                      disabled={guardando}
+                      onClick={() => void handleQuitar()}
+                    >
+                      Quitar padrino/madrina
+                    </button>
+                  ) : null}
+                </div>
+              </>
+            ) : null}
           </div>
         </>
       ) : null}

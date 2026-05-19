@@ -635,37 +635,35 @@ select {
   margin-top: 0.25rem;
 }
 
-.padrinos-gestion {
+.padrinos-gestion-form {
   display: flex;
   flex-direction: column;
-  gap: 0.625rem;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
-.padrinos-gestion-row {
-  background: var(--bg);
-  border: 0.5px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.75rem;
+.padrinos-field {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.35rem;
 }
 
-.padrinos-gestion-row__nombre {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.padrinos-gestion-row__actual {
+.padrinos-field__label {
   font-size: 12px;
+  font-weight: 600;
   color: var(--text2);
 }
 
-.padrinos-gestion-row__actions {
+.padrinos-gestion-actual {
+  margin: 0;
+  font-size: 12px;
+}
+
+.padrinos-gestion-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 0.5rem;
+  margin-top: 0.25rem;
 }
 
 .padrinos-select {
