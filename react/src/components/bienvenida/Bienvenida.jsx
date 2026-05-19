@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import Padrinos from "../padrinos/Padrinos";
 import { supabase } from "../../lib/supabase";
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
 
@@ -66,6 +67,7 @@ export default function Bienvenida({
   onGoToRanking
 }) {
   const [utilOpen, setUtilOpen] = useState(false);
+  const [padrinosOpen, setPadrinosOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
   const [activityLog, setActivityLog] = useState([]);
   const [activityLoading, setActivityLoading] = useState(false);
@@ -220,6 +222,19 @@ export default function Bienvenida({
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>Utilidades</div>
           <div style={{ fontSize: 11, color: "var(--text2)" }}>Clubs, seguro, hospitales, más...</div>
+        </div>
+        <span style={{ fontSize: 12, color: "var(--text2)" }}>→</span>
+      </button>
+
+      <button
+        type="button"
+        className="btn btn-block bienvenida-padrinos-btn"
+        onClick={() => setPadrinosOpen(true)}
+      >
+        <span style={{ fontSize: 18 }}>🤝</span>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>Padrinos</div>
+          <div style={{ fontSize: 11, color: "var(--text2)" }}>Tu padrino/madrina y ahijados/as</div>
         </div>
         <span style={{ fontSize: 12, color: "var(--text2)" }}>→</span>
       </button>
@@ -598,6 +613,24 @@ export default function Bienvenida({
           </div>
 
           <button type="button" className="close-btn" onClick={() => setUtilOpen(false)}>
+            Cerrar
+          </button>
+        </div>
+      </div>
+
+      <div
+        className={`profile-overlay${padrinosOpen ? " open" : ""}`}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) setPadrinosOpen(false);
+        }}
+      >
+        <div className="profile-sheet profile-sheet--scroll">
+          <div className="profile-handle" />
+          <div style={{ fontSize: 18, fontWeight: 600, color: "var(--text)", marginBottom: "1rem" }}>
+            🤝 Padrinos
+          </div>
+          <Padrinos currentUser={currentUser} isCoord={isCoord} />
+          <button type="button" className="close-btn" onClick={() => setPadrinosOpen(false)}>
             Cerrar
           </button>
         </div>
