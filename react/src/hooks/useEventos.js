@@ -352,24 +352,33 @@ export function useEventos(currentUser, isCoord) {
       return { ok: true };
     }
 
-    setEventos(patchPagoLocal);
+    let snapshot = null;
+    setEventos((prev) => {
+      snapshot = prev;
+      return patchPagoLocal(prev);
+    });
 
     const { data, error: rpcError } = await supabase.rpc("marcar_pago_inscripcion_evento", {
       p_inscripcion_id: inscripcionId,
       p_pagado: marcado
     });
+
+    const revert = () => {
+      if (snapshot) setEventos(snapshot);
+    };
+
     if (rpcError) {
-      await loadEventos({ silent: true });
+      revert();
       return { ok: false, error: rpcError.message };
     }
 
     const payload = data && typeof data === "object" && !Array.isArray(data) ? data : {};
     if (payload.ok === false) {
-      await loadEventos({ silent: true });
+      revert();
       return { ok: false, error: payload.error ?? "No se pudo marcar el pago." };
     }
 
-    await loadEventos({ silent: true });
+    // RPC confirmada: mantener el estado optimista (sin recargar get_eventos para evitar race).
     return { ok: true };
   }
 
