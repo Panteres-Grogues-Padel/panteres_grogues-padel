@@ -492,13 +492,20 @@ export function usePartidos(currentUser) {
       tipo: "partidos",
       texto: `${generatedType} para ${slotId} (${semanaNorm}) · ${grupos.length} pistas`
     });
+    const club = slotMeta?.club ?? "";
+    const diaLabel =
+      formatDiaPartidoLabel(fechaPartidoFromSlot(semanaNorm, slotMeta?.diaSemana)) ||
+      slotMeta?.label ||
+      "día del slot";
+    const notifTitulo = delRes.deleted ? "¡Partidos regenerados!" : "¡Partidos generados!";
+    const notifTexto = `Ya están los partidos del ${diaLabel} en ${club}. Por favor confirma tu asistencia.`;
     const notifications = grupos
       .flatMap((g) => g)
       .map((j) => ({
         jugadorId: j.id,
         tipo: "partidos",
-        titulo: generatedType,
-        texto: `${slotId} · Semana ${semanaNorm}`
+        titulo: notifTitulo,
+        texto: notifTexto
       }));
     await createNotifications(notifications);
     return { ok: true, cantidad: grupos.length };
