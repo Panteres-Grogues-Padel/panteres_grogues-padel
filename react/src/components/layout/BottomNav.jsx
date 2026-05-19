@@ -1,4 +1,4 @@
-/** Orden: Jugar, Partidos, Resultados, Ranking, Agenda, Sección (misma barra en landing y resto de la app). Iconos SVG como en index.html. */
+/** Orden: Jugar, Partidos, Resultados, Ranking, Agenda, Coordinación (misma barra en landing y resto de la app). Iconos SVG como en index.html. */
 const TABS = [
   {
     id: "jugar",
@@ -61,7 +61,7 @@ const TABS = [
   },
   {
     id: "seccion",
-    label: "Sección",
+    label: "Coordinación",
     svg: (
       <svg viewBox="0 0 24 24" width={22} height={22} aria-hidden>
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />

@@ -2,7 +2,7 @@
 export default function Seccion() {
   return (
     <>
-      <div className="section-title">La sección</div>
+      <div className="section-title">Coordinación</div>
       <div className="org-area">Coordinación general</div>
       <div className="pcard feat">
         <div className="org-av av-blue">JG</div>

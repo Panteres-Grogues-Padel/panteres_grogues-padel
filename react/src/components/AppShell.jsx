@@ -1,4 +1,4 @@
-const tabs = ["Seccion", "Agenda", "Jugar", "Partidos", "Resultados", "Ranking"];
+const tabs = ["Coordinación", "Agenda", "Jugar", "Partidos", "Resultados", "Ranking"];
 
 export default function AppShell() {
   return (
@@ -13,7 +13,7 @@ export default function AppShell() {
 
         <main className="content">
           <div className="tab-content active">
-            <h2 className="section-title">La seccion</h2>
+            <h2 className="section-title">Coordinación</h2>
             <article className="card">
               <p>Coordinacion general y equipo organizador.</p>
             </article>
