@@ -1,4 +1,4 @@
--- Ejecutar en Supabase SQL Editor si la migración aún no está aplicada.
+-- Firma RPC: p_inscripcion_id + p_pagado (boolean).
 CREATE OR REPLACE FUNCTION marcar_pago_inscripcion_evento(
   p_inscripcion_id uuid,
   p_pagado boolean DEFAULT true

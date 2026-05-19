@@ -405,11 +405,9 @@ export default function Agenda({
                       <input
                         type="checkbox"
                         checked={pagado}
-                        disabled={pagado}
                         onChange={async (ev) => {
-                          if (!ev.target.checked || pagado) return;
-                          const res = await onValidarPago(listaEvento.id, ins.id);
-                          if (!res?.ok) ev.target.checked = false;
+                          const res = await onValidarPago(listaEvento.id, ins.id, ev.target.checked);
+                          if (!res?.ok) ev.target.checked = pagado;
                         }}
                       />
                       <span>Pagado</span>

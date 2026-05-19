@@ -314,10 +314,12 @@ export function useEventos(currentUser, isCoord) {
     return { ok: true };
   }
 
-  /** Marca pago del inscrito (coordinador) vía RPC. */
-  async function validarPago(eventoId, inscripcionId) {
+  /** Marca o desmarca pago del inscrito (coordinador) vía RPC. */
+  async function validarPago(eventoId, inscripcionId, pagado = true) {
     if (!isCoord) return { ok: false, error: "Solo coordinacion." };
     if (!inscripcionId) return { ok: false, error: "Inscripción no válida." };
+
+    const marcado = Boolean(pagado);
 
     if (useFallback) {
       setEventos((prev) =>
@@ -326,7 +328,7 @@ export function useEventos(currentUser, isCoord) {
             ? {
                 ...e,
                 inscritos: e.inscritos.map((i) =>
-                  String(i.id) === String(inscripcionId) ? { ...i, pagoConfirmado: true } : i
+                  String(i.id) === String(inscripcionId) ? { ...i, pagoConfirmado: marcado } : i
                 )
               }
             : e
@@ -336,7 +338,8 @@ export function useEventos(currentUser, isCoord) {
     }
 
     const { data, error: rpcError } = await supabase.rpc("marcar_pago_inscripcion_evento", {
-      p_inscripcion_id: inscripcionId
+      p_inscripcion_id: inscripcionId,
+      p_pagado: marcado
     });
     if (rpcError) return { ok: false, error: rpcError.message };
 
