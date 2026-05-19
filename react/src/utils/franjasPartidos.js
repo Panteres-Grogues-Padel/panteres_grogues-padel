@@ -34,6 +34,16 @@ export function expandFranjasToPistas(franjas) {
   return slots;
 }
 
+/** Mezcla horarios (y tipo indoor/outdoor) entre pistas antes de asignar a grupos. */
+export function shufflePistasPlan(pistas) {
+  const copy = [...(pistas ?? [])];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
 export function resumenFranjas(franjas, numJugadores = 0) {
   const pistas = expandFranjasToPistas(franjas);
   const totalPistas = pistas.length;

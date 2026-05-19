@@ -12,7 +12,7 @@ import {
   getLunesSemanaActual,
   normalizeSemanaDate
 } from "../utils/dates";
-import { expandFranjasToPistas, validarFranjas } from "../utils/franjasPartidos";
+import { expandFranjasToPistas, shufflePistasPlan, validarFranjas } from "../utils/franjasPartidos";
 import { isJugadorUuid } from "../utils/jugador";
 
 function strId(id) {
@@ -313,7 +313,7 @@ export function usePartidos(currentUser) {
     const val = validarFranjas(franjas);
     if (!val.ok) return val;
 
-    const pistasPlan = expandFranjasToPistas(franjas);
+    const pistasPlan = shufflePistasPlan(expandFranjasToPistas(franjas));
 
     console.log("Generando partidos...");
     if (useFallback) {
