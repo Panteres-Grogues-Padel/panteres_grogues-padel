@@ -991,17 +991,59 @@ select {
   text-align: right;
 }
 
+.rank-table thead th {
+  color: var(--text2);
+  font-size: 11px;
+  font-weight: 600;
+}
+
 .rank-table th:nth-child(2),
 .rank-table td:nth-child(2) {
   text-align: left;
 }
 
-.rank-table tr.me td {
+.rank-table tbody tr {
+  cursor: pointer;
+}
+
+.rank-table tbody tr.rank-row--even td {
+  background: #fff;
+}
+
+.rank-table tbody tr.rank-row--odd td {
+  background: #fef9c3;
+}
+
+.rank-table tbody tr.rank-row--first td {
+  box-shadow: inset 0 0 0 1.5px #fde047;
+}
+
+.rank-table tbody tr.rank-row--me td {
   background: #eef2fb;
 }
 
-.rank-table tbody tr {
-  cursor: pointer;
+.rank-table tbody tr.rank-row--me.rank-row--odd td {
+  background: #e8edf7;
+}
+
+.rank-table tbody tr.rank-row--me td:first-child {
+  border-left: 3px solid #0d1b3e;
+  padding-left: 3px;
+}
+
+.rank-table .rank-pos {
+  color: #0d1b3e;
+  font-weight: 700;
+}
+
+.rank-table .rank-name {
+  color: #0d1b3e;
+  font-weight: 600;
+}
+
+.rank-table .rank-stat {
+  color: #2d3d6b;
+  font-weight: 500;
 }
 
 .grid-sets {

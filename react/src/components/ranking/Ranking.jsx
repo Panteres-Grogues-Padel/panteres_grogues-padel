@@ -29,23 +29,35 @@ export default function Ranking({ ranking = [], currentUser, onSelect }) {
               </tr>
             </thead>
             <tbody>
-              {filas.map((jugador, index) => (
-                <tr
-                  key={jugador.id ?? index}
-                  className={currentUser && jugadoresCoinciden(currentUser.id, jugador.id) ? "me" : ""}
-                  onClick={() => onSelect?.(jugador)}
-                >
-                  <td>{index + 1}</td>
-                  <td>{jugador.nombre || "—"}</td>
-                  <td>{jugador.pj}</td>
-                  <td>{jugador.pg}</td>
-                  <td>{jugador.jj}</td>
-                  <td>{jugador.jg}</td>
-                  <td>{pct(jugador.eficacia, 1)}</td>
-                  <td>{pct(jugador.penalizacion, 0)}</td>
-                  <td>{pct(jugador.score, 1)}</td>
-                </tr>
-              ))}
+              {filas.map((jugador, index) => {
+                const pos = index + 1;
+                const isMe = currentUser && jugadoresCoinciden(currentUser.id, jugador.id);
+                const rowClass = [
+                  index % 2 === 0 ? "rank-row--even" : "rank-row--odd",
+                  pos === 1 ? "rank-row--first" : "",
+                  isMe ? "rank-row--me" : ""
+                ]
+                  .filter(Boolean)
+                  .join(" ");
+
+                return (
+                  <tr
+                    key={jugador.id ?? index}
+                    className={rowClass}
+                    onClick={() => onSelect?.(jugador)}
+                  >
+                    <td className="rank-pos">{pos}</td>
+                    <td className="rank-name">{jugador.nombre || "—"}</td>
+                    <td className="rank-stat">{jugador.pj}</td>
+                    <td className="rank-stat">{jugador.pg}</td>
+                    <td className="rank-stat">{jugador.jj}</td>
+                    <td className="rank-stat">{jugador.jg}</td>
+                    <td className="rank-stat">{pct(jugador.eficacia, 1)}</td>
+                    <td className="rank-stat">{pct(jugador.penalizacion, 0)}</td>
+                    <td className="rank-stat">{pct(jugador.score, 1)}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
