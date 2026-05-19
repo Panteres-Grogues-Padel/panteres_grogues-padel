@@ -342,6 +342,75 @@ export default function Bienvenida({
             🗺️ Utilidades
           </div>
 
+          {/* Organización */}
+          <div
+            style={{
+              background: "var(--bg2)",
+              borderRadius: "var(--radius-lg)",
+              padding: "1rem",
+              marginBottom: "1rem",
+              border: "0.5px solid var(--border)"
+            }}
+          >
+            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)", marginBottom: 10 }}>
+              Panteres Grogues
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <a
+                href="https://www.panteresgrogues.org"
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  fontSize: 13,
+                  color: "var(--text)",
+                  textDecoration: "none"
+                }}
+              >
+                <span style={{ fontSize: 16, lineHeight: 1 }} aria-hidden>
+                  🌐
+                </span>
+                <span>panteresgrogues.org</span>
+              </a>
+              <a
+                href="https://maps.google.com/?q=Carrer+Floridablanca+143+Barcelona"
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 10,
+                  fontSize: 13,
+                  color: "var(--text2)",
+                  textDecoration: "none"
+                }}
+              >
+                <span style={{ fontSize: 16, lineHeight: 1.3 }} aria-hidden>
+                  📍
+                </span>
+                <span>Carrer Floridablanca, 143, Barcelona</span>
+              </a>
+              <a
+                href="tel:+34936782254"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  fontSize: 13,
+                  color: "var(--text)",
+                  textDecoration: "none"
+                }}
+              >
+                <span style={{ fontSize: 16, lineHeight: 1 }} aria-hidden>
+                  📞
+                </span>
+                <span>+34 936 782 254</span>
+              </a>
+            </div>
+          </div>
+
           {/* Clubs */}
           <div
             style={{
