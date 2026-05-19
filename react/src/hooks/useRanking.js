@@ -61,6 +61,7 @@ export function useRanking() {
 
       try {
         const { data, error: fetchError } = await supabase.rpc("get_ranking");
+        console.log("[ranking] datos RPC:", JSON.stringify(data));
 
         if (!mounted) return;
         if (fetchError) {
