@@ -727,7 +727,7 @@ select {
 .ranking-pill {
   width: 100%;
   background: var(--bg);
-  border: 0.5px solid var(--border);
+  border: 1.5px solid #4a90d9;
   border-radius: var(--radius);
   padding: 0.625rem 0.875rem;
   display: flex;
