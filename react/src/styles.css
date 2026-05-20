@@ -483,9 +483,12 @@ select {
 .hero-pride {
   background: linear-gradient(135deg, #000 0%, #784f17 10%, #55cdfc 20%, #f7a8b8 30%, #fff 38%, #f7a8b8 46%, #55cdfc 54%, #e40303 62%, #ff8c00 70%, #ffed00 78%, #008026 86%, #004dff 93%, #750787 100%);
   border-radius: var(--radius-lg);
-  padding: 1.25rem 1.5rem;
+  padding: 1.25rem 1.5rem 1rem;
   margin-bottom: 0.75rem;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .hero-avatar {
@@ -510,27 +513,18 @@ select {
   margin-top: 2px;
 }
 
-.bienvenida-manana-card {
-  width: 100%;
-  background: var(--success-bg);
-  border: 1.5px solid var(--navy);
-  border-radius: var(--radius-lg);
-  padding: 0.75rem 1rem;
-  margin-bottom: 0.625rem;
-}
-
-.bienvenida-manana-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--navy);
-  margin-bottom: 4px;
-}
-
-.bienvenida-manana-detail {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text2);
-  line-height: 1.4;
+.hero-manana-chip {
+  display: inline-block;
+  margin: 0.625rem 0 0.25rem;
+  padding: 0.35rem 0.75rem;
+  max-width: 100%;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.35;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
 .bienvenida-cta {

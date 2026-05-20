@@ -178,14 +178,12 @@ export default function Bienvenida({
           {saludoPorHora()}, {nombre}!
         </div>
         <div className="hero-sub">Bienvenide a Panteres Grogues Pàdel 🏳️‍🌈</div>
+        {mananaJuegas ? (
+          <p className="hero-manana-chip" role="status">
+            {mananaJuegas.chipText}
+          </p>
+        ) : null}
       </div>
-
-      {mananaJuegas ? (
-        <div className="bienvenida-manana-card" role="status">
-          <div className="bienvenida-manana-title">🏓 ¡Mañana juegas!</div>
-          <div className="bienvenida-manana-detail">{mananaJuegas.detalle}</div>
-        </div>
-      ) : null}
 
       <button className="bienvenida-cta" onClick={onGoToJugar}>
         <span className="cta-emoji">🏓</span>
