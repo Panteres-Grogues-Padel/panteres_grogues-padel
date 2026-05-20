@@ -3,11 +3,36 @@ import { supabase } from "../lib/supabase";
 import {
   fechaPartidoFromSlot,
   formatDiaPartidoLabel,
+  formatHoraInput,
   getLunesDeSemanaLocal,
   mananaLocalStr,
   normalizeSemanaDate
 } from "../utils/dates";
 import { isJugadorUuid, jugadoresCoinciden, normalizeJugadorUuid } from "../utils/jugador";
+
+function rowsFromRpcPartidos(data) {
+  if (data == null) return [];
+  return Array.isArray(data) ? data : [data];
+}
+
+async function horaPartidoJugador(slotId, semana, jugadorId) {
+  const { data, error } = await supabase.rpc("get_partidos_slot", {
+    p_slot_id: slotId,
+    p_semana: semana
+  });
+  if (error) return null;
+
+  const uid = normalizeJugadorUuid(jugadorId);
+  for (const pg of rowsFromRpcPartidos(data)) {
+    for (const pista of pg.pistas_partido ?? []) {
+      const enPista = (pista.jugadores_pista ?? []).some((jp) =>
+        jugadoresCoinciden(jp.jugador_id, uid)
+      );
+      if (enPista && pista.hora) return formatHoraInput(pista.hora);
+    }
+  }
+  return null;
+}
 
 /**
  * Aviso landing: partido inscrito para mañana (inscripciones vía RPC get_inscripciones).
@@ -69,14 +94,16 @@ export function useMananaJuegas(currentUser) {
 
       const primero = misManana[0];
       const diaLabel = formatDiaPartidoLabel(primero.fecha);
+      const hora = await horaPartidoJugador(primero.slot.id, primero.semana, userId);
       if (cancelled) return;
 
-      let chipText = `Mañana juegas · ${diaLabel} — ${primero.slot.club}`;
+      let detalle = `${diaLabel} · ${primero.slot.label} — ${primero.slot.club}`;
+      if (hora) detalle += ` · ${hora}`;
       if (misManana.length > 1) {
-        chipText += ` (+${misManana.length - 1} más)`;
+        detalle += ` (+${misManana.length - 1} más)`;
       }
 
-      setAviso({ chipText });
+      setAviso({ detalle });
     })();
 
     return () => {
