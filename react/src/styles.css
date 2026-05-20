@@ -510,6 +510,29 @@ select {
   margin-top: 2px;
 }
 
+.bienvenida-manana-card {
+  width: 100%;
+  background: var(--success-bg);
+  border: 1.5px solid var(--navy);
+  border-radius: var(--radius-lg);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.625rem;
+}
+
+.bienvenida-manana-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 4px;
+}
+
+.bienvenida-manana-detail {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text2);
+  line-height: 1.4;
+}
+
 .bienvenida-cta {
   width: 100%;
   background: var(--navy);

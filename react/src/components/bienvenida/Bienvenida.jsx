@@ -10,6 +10,7 @@ import {
   IconUsers
 } from "@tabler/icons-react";
 import Padrinos from "../padrinos/Padrinos";
+import { useMananaJuegas } from "../../hooks/useMananaJuegas";
 import { supabase } from "../../lib/supabase";
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
 
@@ -99,6 +100,7 @@ export default function Bienvenida({
   const eficacia = rk ? `${(rk.eficacia * 100).toFixed(1)}%` : "-";
   const pj = rk?.pj ?? 0;
   const isCoord = Boolean(currentUser?.es_coordinador || currentUser?.isCoord);
+  const mananaJuegas = useMananaJuegas(currentUser);
   const entradasLog = isCoord && logFiltro ? activityLog.filter((e) => e.jugadorId === logFiltro) : activityLog;
   const jugadoresLog = useMemo(() => {
     const jugadores = new Map();
@@ -177,6 +179,13 @@ export default function Bienvenida({
         </div>
         <div className="hero-sub">Bienvenide a Panteres Grogues Pàdel 🏳️‍🌈</div>
       </div>
+
+      {mananaJuegas ? (
+        <div className="bienvenida-manana-card" role="status">
+          <div className="bienvenida-manana-title">🏓 ¡Mañana juegas!</div>
+          <div className="bienvenida-manana-detail">{mananaJuegas.detalle}</div>
+        </div>
+      ) : null}
 
       <button className="bienvenida-cta" onClick={onGoToJugar}>
         <span className="cta-emoji">🏓</span>

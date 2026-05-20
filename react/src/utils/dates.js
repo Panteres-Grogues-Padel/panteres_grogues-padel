@@ -62,6 +62,10 @@ export function ayerLocalStr(now = new Date()) {
   return formatFechaLocal(addDaysLocal(startOfLocalDay(now), -1));
 }
 
+export function mananaLocalStr(now = new Date()) {
+  return formatFechaLocal(addDaysLocal(startOfLocalDay(now), 1));
+}
+
 /** YYYY-MM-DD del día del partido (semana lunes + diaSemana 0=Lun). */
 export function fechaPartidoFromSlot(semanaObjetivo, diaSemana) {
   const d = fechaSlotEnSemana(semanaObjetivo, diaSemana);
