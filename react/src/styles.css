@@ -512,7 +512,7 @@ select {
 
 .bienvenida-cta {
   width: 100%;
-  background: var(--navy);
+  background: #1a56a0;
   border: none;
   border-radius: var(--radius-lg);
   padding: 0.875rem 1.25rem;
