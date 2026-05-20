@@ -14,7 +14,7 @@ import { useMananaJuegas } from "../../hooks/useMananaJuegas";
 import { supabase } from "../../lib/supabase";
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
 
-const LANDING_TABLER_ICON_SIZE = 28;
+const LANDING_TABLER_ICON_SIZE = 34;
 
 function LandingTablerIcon({ Icon }) {
   return (
@@ -153,7 +153,7 @@ export default function Bienvenida({
   }, [activityOpen, currentUser?.fromFallback, currentUser?.id, isCoord]);
 
   return (
-    <div className="bienvenida-page">
+    <div>
       <div className="hero-pride">
         <button
           type="button"
@@ -174,17 +174,15 @@ export default function Bienvenida({
             </div>
           )}
         </button>
-        <div className="hero-copy">
-          <div className="hero-title">
-            {saludoPorHora()}, {nombre}!
-          </div>
-          <div className="hero-sub">Bienvenide a Panteres Grogues Pàdel 🏳️‍🌈</div>
-          {mananaJuegas ? (
-            <p className="hero-manana-chip" role="status">
-              {mananaJuegas.chipText}
-            </p>
-          ) : null}
+        <div className="hero-title">
+          {saludoPorHora()}, {nombre}!
         </div>
+        <div className="hero-sub">Bienvenide a Panteres Grogues Pàdel 🏳️‍🌈</div>
+        {mananaJuegas ? (
+          <p className="hero-manana-chip" role="status">
+            {mananaJuegas.chipText}
+          </p>
+        ) : null}
       </div>
 
       <button className="bienvenida-cta" onClick={onGoToJugar}>
