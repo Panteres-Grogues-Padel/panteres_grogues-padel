@@ -512,7 +512,7 @@ select {
 
 .bienvenida-cta {
   width: 100%;
-  background: #1a56a0;
+  background: #0d1b3e;
   border: none;
   border-radius: var(--radius-lg);
   padding: 0.875rem 1.25rem;
@@ -709,8 +709,8 @@ select {
   flex-shrink: 0;
   margin: 0 auto 2px;
   border-radius: 8px;
-  background: #4a90d9;
-  color: #fff;
+  background: #0d1b3e;
+  color: #fde047;
 }
 
 .bienvenida-utilidades-btn .landing-tabler-icon-box,
@@ -727,7 +727,7 @@ select {
 .ranking-pill {
   width: 100%;
   background: var(--bg);
-  border: 1.5px solid #4a90d9;
+  border: 0.5px solid var(--border);
   border-radius: var(--radius);
   padding: 0.625rem 0.875rem;
   display: flex;

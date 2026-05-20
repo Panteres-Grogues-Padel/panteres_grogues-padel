@@ -19,7 +19,7 @@ const LANDING_TABLER_ICON_SIZE = 34;
 function LandingTablerIcon({ Icon }) {
   return (
     <span className="landing-tabler-icon-box" aria-hidden>
-      <Icon size={LANDING_TABLER_ICON_SIZE} color="#fff" stroke={1.75} />
+      <Icon size={LANDING_TABLER_ICON_SIZE} color="#fde047" stroke={1.75} />
     </span>
   );
 }
