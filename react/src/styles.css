@@ -699,6 +699,26 @@ select {
   margin-bottom: 2px;
 }
 
+/* Landing: iconos Tabler (fondo azul medio, SVG blanco 34px) */
+.landing-tabler-icon-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  margin: 0 auto 2px;
+  border-radius: 8px;
+  background: #4a90d9;
+  color: #fff;
+}
+
+.bienvenida-utilidades-btn .landing-tabler-icon-box,
+.bienvenida-padrinos-btn .landing-tabler-icon-box,
+.bienvenida-actividad-btn .landing-tabler-icon-box {
+  margin: 0;
+}
+
 .quick-label {
   font-size: 12px;
   font-weight: 500;

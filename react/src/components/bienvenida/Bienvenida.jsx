@@ -1,7 +1,28 @@
 import { useEffect, useMemo, useState } from "react";
+import {
+  IconBallTennis,
+  IconBrandInstagram,
+  IconBrandWhatsapp,
+  IconCalendarEvent,
+  IconChartBar,
+  IconClipboardList,
+  IconMap2,
+  IconTrophy,
+  IconUsers
+} from "@tabler/icons-react";
 import Padrinos from "../padrinos/Padrinos";
 import { supabase } from "../../lib/supabase";
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
+
+const LANDING_TABLER_ICON_SIZE = 34;
+
+function LandingTablerIcon({ Icon }) {
+  return (
+    <span className="landing-tabler-icon-box" aria-hidden>
+      <Icon size={LANDING_TABLER_ICON_SIZE} color="#fff" stroke={1.75} />
+    </span>
+  );
+}
 
 function horaMadrid(now = new Date()) {
   const h = new Intl.DateTimeFormat("es-ES", {
@@ -169,19 +190,19 @@ export default function Bienvenida({
 
       <div className="quick-grid">
         <button className="quick-card" onClick={onGoToAgenda}>
-          <div className="quick-emoji">📅</div>
+          <LandingTablerIcon Icon={IconCalendarEvent} />
           <div className="quick-label">Agenda</div>
         </button>
         <button className="quick-card" onClick={onGoToPartidos}>
-          <div className="quick-emoji">🌐</div>
+          <LandingTablerIcon Icon={IconBallTennis} />
           <div className="quick-label">Partidos</div>
         </button>
         <button className="quick-card" onClick={onGoToResultados}>
-          <div className="quick-emoji">📋</div>
+          <LandingTablerIcon Icon={IconClipboardList} />
           <div className="quick-label">Resultados</div>
         </button>
         <button className="quick-card" onClick={onGoToRanking}>
-          <div className="quick-emoji">📈</div>
+          <LandingTablerIcon Icon={IconTrophy} />
           <div className="quick-label">Ranking</div>
         </button>
       </div>
@@ -204,11 +225,11 @@ export default function Bienvenida({
           target="_blank"
           rel="noreferrer"
         >
-          <div className="quick-emoji">📸</div>
+          <LandingTablerIcon Icon={IconBrandInstagram} />
           <div className="quick-label">Instagram</div>
         </a>
         <a className="quick-card" href="https://wa.me/" target="_blank" rel="noreferrer">
-          <div className="quick-emoji">💬</div>
+          <LandingTablerIcon Icon={IconBrandWhatsapp} />
           <div className="quick-label">WhatsApp</div>
         </a>
       </div>
@@ -218,7 +239,7 @@ export default function Bienvenida({
         className="btn btn-block bienvenida-utilidades-btn"
         onClick={() => setUtilOpen(true)}
       >
-        <span style={{ fontSize: 18 }}>🗺️</span>
+        <LandingTablerIcon Icon={IconMap2} />
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>Utilidades</div>
           <div style={{ fontSize: 11, color: "var(--text2)" }}>Clubs, seguro, hospitales, más...</div>
@@ -231,7 +252,7 @@ export default function Bienvenida({
         className="btn btn-block bienvenida-padrinos-btn"
         onClick={() => setPadrinosOpen(true)}
       >
-        <span style={{ fontSize: 18 }}>🤝</span>
+        <LandingTablerIcon Icon={IconUsers} />
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>Padrinos</div>
           <div style={{ fontSize: 11, color: "var(--text2)" }}>Tu padrino/madrina y ahijados/as</div>
@@ -244,7 +265,7 @@ export default function Bienvenida({
         className="btn btn-block bienvenida-actividad-btn"
         onClick={() => setActivityOpen(true)}
       >
-        <span style={{ fontSize: 18 }}>📜</span>
+        <LandingTablerIcon Icon={IconChartBar} />
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>Actividad</div>
           <div style={{ fontSize: 11, color: "var(--text2)" }}>
