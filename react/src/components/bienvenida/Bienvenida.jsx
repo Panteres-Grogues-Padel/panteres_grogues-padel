@@ -7,7 +7,6 @@ import {
   IconChartBar,
   IconClipboardList,
   IconMap2,
-  IconTrophy,
   IconUsers
 } from "@tabler/icons-react";
 import Padrinos from "../padrinos/Padrinos";
@@ -201,9 +200,9 @@ export default function Bienvenida({
           <LandingTablerIcon Icon={IconClipboardList} />
           <div className="quick-label">Resultados</div>
         </button>
-        <button className="quick-card" onClick={onGoToRanking}>
-          <LandingTablerIcon Icon={IconTrophy} />
-          <div className="quick-label">Ranking</div>
+        <button type="button" className="quick-card" onClick={() => setActivityOpen(true)}>
+          <LandingTablerIcon Icon={IconChartBar} />
+          <div className="quick-label">Actividad</div>
         </button>
       </div>
 
@@ -256,21 +255,6 @@ export default function Bienvenida({
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>Padrinos</div>
           <div style={{ fontSize: 11, color: "var(--text2)" }}>Tu padrino/madrina y ahijados/as</div>
-        </div>
-        <span style={{ fontSize: 12, color: "var(--text2)" }}>→</span>
-      </button>
-
-      <button
-        type="button"
-        className="btn btn-block bienvenida-actividad-btn"
-        onClick={() => setActivityOpen(true)}
-      >
-        <LandingTablerIcon Icon={IconChartBar} />
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>Actividad</div>
-          <div style={{ fontSize: 11, color: "var(--text2)" }}>
-            {isCoord ? "Historial de todos los jugadores" : "Mi historial de acciones"}
-          </div>
         </div>
         <span style={{ fontSize: 12, color: "var(--text2)" }}>→</span>
       </button>
