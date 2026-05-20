@@ -154,7 +154,7 @@ export default function Bienvenida({
 
   return (
     <div>
-      <div className="hero-pride">
+      <div className={`hero-pride${mananaJuegas ? " hero-pride--manana" : ""}`}>
         <button
           type="button"
           className="hero-avatar-btn"
@@ -178,7 +178,7 @@ export default function Bienvenida({
           {saludoPorHora()}, {nombre}!
         </div>
         <div className="hero-sub">Bienvenide a Panteres Grogues Pàdel 🏳️‍🌈</div>
-        {mananaJuegas ? <div className="hero-sub">Mañana juegas</div> : null}
+        {mananaJuegas ? <div className="hero-manana">Mañana juegas</div> : null}
       </div>
 
       <button className="bienvenida-cta" onClick={onGoToJugar}>
