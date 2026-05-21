@@ -197,7 +197,7 @@ export function useResultados(partidos, currentUser, isCoord) {
     await createActivityLog({
       jugadorId: currentUser.id,
       tipo: "resultados",
-      texto: `Valida resultado en pista ${partidoId} (${fechaPartido})`
+      texto: t("hooks.resultados.activity.validate", { id: partidoId, date: fechaPartido })
     });
 
     const notifications = partido.jugadores

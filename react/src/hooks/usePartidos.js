@@ -6,6 +6,7 @@ import {
   fechaPartidoFromSlot,
   formatDiaPartidoLabel,
   formatHoraInput,
+  slotDayLabel,
   getDiaSemanaLocal,
   getFechasVentanaPartidos,
   getLunesDeSemanaLocal,
@@ -65,7 +66,8 @@ function flattenPartidos(data) {
         numeroPista: pista.numero_pista,
         partidoGeneradoId: pg.id,
         slotId: pg.slot_id,
-        slotLabel: pg.slots?.label ?? pg.slot_id,
+        slotLabel:
+          slotDayLabel({ label: pg.slots?.label, diaSemana: pg.slots?.dia_semana }) || pg.slot_id,
         club: pg.slots?.club ?? "",
         diaSemana: pg.slots?.dia_semana ?? null,
         semana: normalizeSemanaDate(pg.semana),
@@ -506,7 +508,7 @@ export function usePartidos(currentUser) {
     const club = slotMeta?.club ?? "";
     const diaLabel =
       formatDiaPartidoLabel(fechaPartidoFromSlot(semanaNorm, slotMeta?.diaSemana)) ||
-      slotMeta?.label ||
+      slotDayLabel(slotMeta) ||
       t("hooks.partidos.notifications.slotDay");
     const notifTitulo = delRes.deleted
       ? t("hooks.partidos.notifications.regeneratedTitle")

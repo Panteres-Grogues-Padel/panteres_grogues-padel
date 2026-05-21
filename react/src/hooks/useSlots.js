@@ -11,7 +11,7 @@ import { supabase } from "../lib/supabase";
 import { createActivityLog, createNotifications, notificacionDuplicada } from "../lib/engagement";
 import { isJugadorUuid, jugadoresCoinciden, normalizeJugadorUuid } from "../utils/jugador";
 import { getNombre } from "../utils/nombres";
-import { DATE_LOCALE, fechaPartidoFromSlot, formatDiaPartidoLabel, hoyLocalStr } from "../utils/dates";
+import { fechaPartidoFromSlot, formatDiaPartidoLabel, hoyLocalStr, slotDayLabel } from "../utils/dates";
 import { t } from "../i18n";
 
 // --- Utilidades de fecha UTC ---
@@ -131,7 +131,7 @@ export function useSlots(currentUser, authEpoch = 0) {
           setSlots(
             slotsData.map((s) => ({
               id: s.id,
-              label: s.label,
+              label: slotDayLabel({ label: s.label, diaSemana: s.dia_semana }),
               club: s.club,
               diaSemana: s.dia_semana,
               horaCierre: s.hora_cierre ?? null,
@@ -253,7 +253,7 @@ export function useSlots(currentUser, authEpoch = 0) {
 
         const diaLabel =
           formatDiaPartidoLabel(fechaPartidoFromSlot(semanaObjetivo, slot.diaSemana)) ||
-          slot.label ||
+          slotDayLabel(slot) ||
           t("hooks.slots.notifications.yourDay");
         const texto = t("hooks.slots.notifications.listOpenText", { day: diaLabel, club: slot.club });
 
@@ -406,7 +406,7 @@ export function useSlots(currentUser, authEpoch = 0) {
     if (yaMismoDia) {
       return {
         ok: false,
-        error: t("hooks.slots.alreadyEnrolled", { label: yaMismoDia.label, club: yaMismoDia.club })
+        error: t("hooks.slots.alreadyEnrolled", { label: slotDayLabel(yaMismoDia), club: yaMismoDia.club })
       };
     }
 
@@ -444,7 +444,7 @@ export function useSlots(currentUser, authEpoch = 0) {
     void createActivityLog({
       jugadorId: currentUser.id,
       tipo: "jugar",
-      texto: t("hooks.slots.activity.signUp", { label: slot.label, club: slot.club, week: semana })
+      texto: t("hooks.slots.activity.signUp", { label: slotDayLabel(slot), club: slot.club, week: semana })
     });
     void createNotifications([
       {
@@ -496,7 +496,7 @@ export function useSlots(currentUser, authEpoch = 0) {
       jugadorId,
       tipo: "jugar",
       texto: t("hooks.slots.activity.unregister", {
-        label: slot.label,
+        label: slotDayLabel(slot),
         club: slot.club,
         week: slot.semanaObjetivo
       })
