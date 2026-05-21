@@ -1,35 +1,4 @@
 import { t } from "../i18n";
-import { normalizeDiaSemana } from "./slots";
-
-/** Etiquetes de dia en castellà (BD) → català (UI). */
-const WEEKDAY_ES_TO_CA = {
-  Lunes: "Dilluns",
-  Martes: "Dimarts",
-  Miércoles: "Dimecres",
-  Miercoles: "Dimecres",
-  Jueves: "Dijous",
-  Viernes: "Divendres",
-  Sábado: "Dissabte",
-  Sabado: "Dissabte",
-  Domingo: "Diumenge"
-};
-
-export function translateWeekdayLabel(label) {
-  if (!label) return "";
-  const trimmed = String(label).trim();
-  return WEEKDAY_ES_TO_CA[trimmed] ?? trimmed;
-}
-
-/** Nom del dia del slot en català (prefereix dia_semana; si no, tradueix label de BD). */
-export function slotDayLabel(slot) {
-  if (!slot) return "";
-  const ds = normalizeDiaSemana(slot);
-  if (ds != null) {
-    const name = weekdayName(ds);
-    if (name) return name;
-  }
-  return translateWeekdayLabel(slot.label);
-}
 
 const WEEKDAY_KEYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 const WEEKDAY_SHORT_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
@@ -155,9 +124,8 @@ export function formatDiaPartidoLabel(fechaStr) {
   if (!fechaStr) return "";
   const d = new Date(`${fechaStr}T12:00:00`);
   if (Number.isNaN(d.getTime())) return fechaStr;
-  const name = weekdayName(getDiaSemanaLocal(d));
-  if (!name) return fechaStr;
-  return name.charAt(0).toLowerCase() + name.slice(1);
+  const label = d.toLocaleDateString(DATE_LOCALE, { weekday: "long" });
+  return label.charAt(0).toLowerCase() + label.slice(1);
 }
 
 /** Lunes–domingo de la semana calendario anterior. */

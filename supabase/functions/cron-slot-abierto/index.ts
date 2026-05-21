@@ -1,19 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const TIPO = "slot_abierto";
-const TITULO = "Ja et pots apuntar!";
-
-const DIES_ES_CA: Record<string, string> = {
-  Lunes: "Dilluns",
-  Martes: "Dimarts",
-  Miércoles: "Dimecres",
-  Miercoles: "Dimecres",
-  Jueves: "Dijous",
-  Viernes: "Divendres",
-  Sábado: "Dissabte",
-  Sabado: "Dissabte",
-  Domingo: "Diumenge"
-};
+const TITULO = "¡Ya puedes inscribirte!";
 
 type SlotRow = { id: string; label: string; club: string; nombre: string };
 type JugadorRow = { id: string };
@@ -23,22 +11,8 @@ function rowsFromRpc<T>(data: unknown): T[] {
   return Array.isArray(data) ? (data as T[]) : [data as T];
 }
 
-function diaSetmanaCa(label: string): string {
-  const trimmed = String(label ?? "").trim();
-  return DIES_ES_CA[trimmed] ?? trimmed;
-}
-
 function nombreSlot(slot: SlotRow): string {
-  if (slot.nombre) {
-    const parts = String(slot.nombre).split(" · ");
-    if (parts.length >= 2) {
-      return `${diaSetmanaCa(parts[0])} · ${parts.slice(1).join(" · ")}`;
-    }
-    return diaSetmanaCa(slot.nombre);
-  }
-  const dia = diaSetmanaCa(slot.label ?? "");
-  if (slot.club) return `${dia} · ${slot.club}`;
-  return dia || "el teu slot";
+  return slot.nombre || slot.label || slot.club || "tu slot";
 }
 
 Deno.serve(async (req) => {
@@ -65,7 +39,7 @@ Deno.serve(async (req) => {
   const slots = rowsFromRpc<SlotRow>(slotsRaw);
   if (!slots.length) {
     return new Response(
-      JSON.stringify({ ok: true, slots: 0, inserted: 0, skipped: 0, message: "Cap slot obre avui" }),
+      JSON.stringify({ ok: true, slots: 0, inserted: 0, skipped: 0, message: "No slots abren hoy" }),
       { headers: { "Content-Type": "application/json" } }
     );
   }
@@ -81,7 +55,7 @@ Deno.serve(async (req) => {
   let skipped = 0;
 
   for (const slot of slots) {
-    const texto = `Les inscripcions per a ${nombreSlot(slot)} ja estan obertes`;
+    const texto = `Las inscripciones para ${nombreSlot(slot)} ya están abiertas`;
 
     for (const jugador of jugadores) {
       if (!jugador?.id) continue;

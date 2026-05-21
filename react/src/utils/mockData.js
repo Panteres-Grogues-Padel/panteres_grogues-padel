@@ -18,25 +18,25 @@ export const JUGADORES_INICIALES = [
 ];
 
 export const SLOTS_INICIALES = [
-  { id: "lun-up", label: "Dilluns", club: "Club Up", diaSemana: 0, pistas: 3, jugadores: ["JoseGB", "MigueB", "ZoaH"] },
-  { id: "lun-del", label: "Dilluns", club: "Club Delfos", diaSemana: 0, pistas: 2, jugadores: ["AndresA"] },
-  { id: "mar-up", label: "Dimarts", club: "Club Up", diaSemana: 1, pistas: 2, jugadores: [] },
-  { id: "mar-del", label: "Dimarts", club: "Club Delfos", diaSemana: 1, pistas: 2, jugadores: [] },
-  { id: "mie-man", label: "Dimecres", club: "Matí", diaSemana: 2, pistas: 1, jugadores: [] },
-  { id: "mie-up", label: "Dimecres", club: "Club Up", diaSemana: 2, pistas: 5, jugadores: ["SergiIbso", "Jordi_V", "Fresco", "PacoCh"] },
-  { id: "mie-del", label: "Dimecres", club: "Club Delfos", diaSemana: 2, pistas: 0, jugadores: [] },
-  { id: "jue-up", label: "Dijous", club: "Club Up", diaSemana: 3, pistas: 1, jugadores: [] },
-  { id: "jue-del", label: "Dijous", club: "Club Delfos", diaSemana: 3, pistas: 2, jugadores: [] },
-  { id: "vie-up", label: "Divendres", club: "Club Up", diaSemana: 4, pistas: 7, jugadores: ["Javi_C", "RobertoL", "Guille", "David_L"] },
-  { id: "vie-del", label: "Divendres", club: "Club Delfos", diaSemana: 4, pistas: 1, jugadores: [] },
-  { id: "dom", label: "Diumenge", club: "Americana", diaSemana: 6, pistas: 0, jugadores: [] }
+  { id: "lun-up", label: "Lunes", club: "Club Up", diaSemana: 0, pistas: 3, jugadores: ["JoseGB", "MigueB", "ZoaH"] },
+  { id: "lun-del", label: "Lunes", club: "Club Delfos", diaSemana: 0, pistas: 2, jugadores: ["AndresA"] },
+  { id: "mar-up", label: "Martes", club: "Club Up", diaSemana: 1, pistas: 2, jugadores: [] },
+  { id: "mar-del", label: "Martes", club: "Club Delfos", diaSemana: 1, pistas: 2, jugadores: [] },
+  { id: "mie-man", label: "Miércoles", club: "Mañana", diaSemana: 2, pistas: 1, jugadores: [] },
+  { id: "mie-up", label: "Miércoles", club: "Club Up", diaSemana: 2, pistas: 5, jugadores: ["SergiIbso", "Jordi_V", "Fresco", "PacoCh"] },
+  { id: "mie-del", label: "Miércoles", club: "Club Delfos", diaSemana: 2, pistas: 0, jugadores: [] },
+  { id: "jue-up", label: "Jueves", club: "Club Up", diaSemana: 3, pistas: 1, jugadores: [] },
+  { id: "jue-del", label: "Jueves", club: "Club Delfos", diaSemana: 3, pistas: 2, jugadores: [] },
+  { id: "vie-up", label: "Viernes", club: "Club Up", diaSemana: 4, pistas: 7, jugadores: ["Javi_C", "RobertoL", "Guille", "David_L"] },
+  { id: "vie-del", label: "Viernes", club: "Club Delfos", diaSemana: 4, pistas: 1, jugadores: [] },
+  { id: "dom", label: "Domingo", club: "Americana", diaSemana: 6, pistas: 0, jugadores: [] }
 ];
 
 export const PARTIDOS_INICIALES = [
   {
     id: 1,
     fecha: "2026-04-20",
-    dia: "Dilluns",
+    dia: "Lunes",
     jugadores: ["JoseGB", "MigueB", "SergiIbso", "Jordi_V"],
     sets: [{ p1: 6, p2: 3 }, { p1: 4, p2: 6 }, { p1: 6, p2: 4 }],
     introducidoPor: "JoseGB",

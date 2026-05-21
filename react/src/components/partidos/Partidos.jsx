@@ -14,7 +14,7 @@ import {
   resumenFranjas
 } from "../../utils/franjasPartidos";
 import { getNombre } from "../../utils/nombres";
-import { monthShortName, slotDayLabel, weekdayName, getDiaSemanaLocal } from "../../utils/dates";
+import { DATE_LOCALE, weekdayName } from "../../utils/dates";
 import { t, pluralSuffix } from "../../i18n";
 
 function jugadoresOrdenRanking(jugadores, rankingPosByJugador) {
@@ -30,13 +30,12 @@ function jugadoresOrdenRanking(jugadores, rankingPosByJugador) {
 
 function formatFechaPartido(d) {
   if (!d) return "";
-  const wd = weekdayName(getDiaSemanaLocal(d));
-  return `${wd}, ${d.getDate()} ${monthShortName(d.getMonth())}`;
+  return d.toLocaleDateString(DATE_LOCALE, { weekday: "long", day: "numeric", month: "short" });
 }
 
 function etiquetaOpcion(o) {
   return t("partidos.todayLabel", {
-    day: slotDayLabel(o.slot),
+    day: weekdayName(o.diaSemana) || o.slot.label,
     club: o.slot.club
   });
 }
@@ -183,7 +182,7 @@ export default function Partidos({
         (a.numeroPista ?? 0) - (b.numeroPista ?? 0)
     );
     const n = ordenados.length;
-    let wa = `🎾 *${slotDayLabel(slotActual)} — ${slotActual.club}*\n`;
+    let wa = `🎾 *${slotActual.label} — ${slotActual.club}*\n`;
     wa += `${t("partidos.waTemplateHeader", { count: n, players: n * 4 })}\n`;
     const indoorCount = ordenados.filter((p) => p.indoor).length;
     if (indoorCount > 0) {
@@ -250,7 +249,7 @@ export default function Partidos({
       {isCoord && esHoy ? (
         <div className="coord-box">
           <div className="coord-box-title">
-            <span className="coord-pill">{t("partidos.coordBox")}</span> {slotDayLabel(slotActual)} — {slotActual?.club}
+            <span className="coord-pill">{t("partidos.coordBox")}</span> {slotActual?.label} — {slotActual?.club}
             <span style={{ display: "block", fontSize: "12px", fontWeight: 400, color: "var(--text2)", marginTop: "4px" }}>
               {formatFechaPartido(seleccion?.fechaPartido)}
             </span>

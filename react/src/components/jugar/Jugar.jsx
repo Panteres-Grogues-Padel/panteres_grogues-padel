@@ -3,7 +3,6 @@ import DetalleSlot from "./DetalleSlot";
 import { getDiaSemanaActual, sameDiaSemanaSlot } from "../../utils/slots";
 import { monthShortName } from "../../utils/dates";
 import { t } from "../../i18n";
-import { slotDayLabel } from "../../utils/dates";
 
 function slotFechaLabel(slot) {
   if (!slot.semanaObjetivo || slot.diaSemana === undefined) return "";
@@ -113,7 +112,7 @@ export default function Jugar({ slots, currentUser, onApuntar, onBaja, backendNo
         />
         <div style={{ flex: 1 }}>
           <div className="radio-option-title">
-            {slotDayLabel(slot)}{fecha ? ` ${fecha}` : ""}{" "}
+            {slot.label}{fecha ? ` ${fecha}` : ""}{" "}
             <span style={{ fontWeight: 400, color: "var(--text2)" }}>— {slot.club}</span>
           </div>
           <div className="radio-option-sub" style={{ color: dotColor }}>
