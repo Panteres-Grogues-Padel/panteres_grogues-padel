@@ -20,6 +20,7 @@ import { useNotificaciones } from "./hooks/useNotificaciones";
 import { isJugadorUuid, jugadoresCoinciden } from "./utils/jugador";
 import PerfilJugador from "./components/ranking/PerfilJugador";
 import { t } from "./i18n";
+import { slotDayLabel } from "./utils/dates";
 
 export default function App() {
   const auth = useAuth();
@@ -127,7 +128,7 @@ export default function App() {
       semana: semana || slot.semanaObjetivo,
       currentUserId: auth.currentUser.id,
       franjas: options.franjas,
-      slotMeta: { label: slot.label, club: slot.club, diaSemana: slot.diaSemana }
+      slotMeta: { label: slotDayLabel(slot), club: slot.club, diaSemana: slot.diaSemana }
     });
     if (!res.ok) return showMessage(res.error);
     showMessage(t("app.toasts.matchesGenerated", { count: res.cantidad }));

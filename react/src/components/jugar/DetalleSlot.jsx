@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { isJugadorUuid, jugadoresCoinciden } from "../../utils/jugador";
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
 import { getNombre } from "../../utils/nombres";
-import { monthShortName, weekdayName } from "../../utils/dates";
+import { monthShortName, slotDayLabel, weekdayName } from "../../utils/dates";
 import { t, pluralSuffix } from "../../i18n";
 
 function dayOpenLabel(slot) {
@@ -84,7 +84,7 @@ export default function DetalleSlot({
       <div className="slot-head">
         <div>
           <div className="radio-option-title">
-            {slot.label} — {slot.club}
+            {slotDayLabel(slot)} — {slot.club}
           </div>
           <div className="slot-meta">{dayOpenLabel(slot)}</div>
         </div>
@@ -98,7 +98,7 @@ export default function DetalleSlot({
       {!enrolled && slot.abierto && rivalSlot ? (
         <div className="baja-locked">
           {t("jugar.detalle.alreadyEnrolledElsewhere", {
-            label: rivalSlot.label,
+            label: slotDayLabel(rivalSlot),
             club: rivalSlot.club
           })}
         </div>
