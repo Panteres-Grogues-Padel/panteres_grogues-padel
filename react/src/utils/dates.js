@@ -1,18 +1,5 @@
 import { t } from "../i18n";
 
-/** Etiquetes de dia en castellà (BD) → català. */
-const WEEKDAY_ES_TO_CA = {
-  Lunes: "Dilluns",
-  Martes: "Dimarts",
-  Miércoles: "Dimecres",
-  Miercoles: "Dimecres",
-  Jueves: "Dijous",
-  Viernes: "Divendres",
-  Sábado: "Dissabte",
-  Sabado: "Dissabte",
-  Domingo: "Diumenge"
-};
-
 const WEEKDAY_KEYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 const WEEKDAY_SHORT_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 const MONTH_KEYS = [
@@ -41,32 +28,6 @@ export function weekdayName(diaSemana) {
 export function weekdayShortName(diaSemana) {
   const key = WEEKDAY_SHORT_KEYS[Number(diaSemana)];
   return key ? t(`dates.weekdaysShort.${key}`) : "";
-}
-
-/** Tradueix un label de dia en castellà (ex. «Lunes» de la BD). */
-export function translateWeekdayLabel(label) {
-  if (!label) return "";
-  const trimmed = String(label).trim();
-  return WEEKDAY_ES_TO_CA[trimmed] ?? trimmed;
-}
-
-function slotDiaSemana(slot) {
-  if (!slot) return null;
-  const raw = slot.diaSemana ?? slot.dia_semana;
-  if (raw === null || raw === undefined || raw === "") return null;
-  const n = Number(raw);
-  return Number.isFinite(n) ? n : null;
-}
-
-/** Nom del dia del slot en català (dia_semana o traducció del label de BD). */
-export function slotDayLabel(slot) {
-  if (!slot) return "";
-  const ds = slotDiaSemana(slot);
-  if (ds != null) {
-    const name = weekdayName(ds);
-    if (name) return name;
-  }
-  return translateWeekdayLabel(slot.label);
 }
 
 export function monthName(monthIndex) {
@@ -163,9 +124,8 @@ export function formatDiaPartidoLabel(fechaStr) {
   if (!fechaStr) return "";
   const d = new Date(`${fechaStr}T12:00:00`);
   if (Number.isNaN(d.getTime())) return fechaStr;
-  const name = weekdayName(getDiaSemanaLocal(d));
-  if (!name) return fechaStr;
-  return name.charAt(0).toLowerCase() + name.slice(1);
+  const label = d.toLocaleDateString(DATE_LOCALE, { weekday: "long" });
+  return label.charAt(0).toLowerCase() + label.slice(1);
 }
 
 /** Lunes–domingo de la semana calendario anterior. */
