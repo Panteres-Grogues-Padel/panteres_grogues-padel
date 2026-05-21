@@ -230,7 +230,12 @@ export default function Bienvenida({
           <LandingTablerIcon Icon={IconBrandInstagram} />
           <div className="quick-label">Instagram</div>
         </a>
-        <a className="quick-card" href="https://wa.me/" target="_blank" rel="noreferrer">
+        <a
+          className="quick-card"
+          href="https://chat.whatsapp.com/IrHK6sBegxg639n48Px5qY?mode=gi_t"
+          target="_blank"
+          rel="noreferrer"
+        >
           <LandingTablerIcon Icon={IconBrandWhatsapp} />
           <div className="quick-label">WhatsApp</div>
         </a>
