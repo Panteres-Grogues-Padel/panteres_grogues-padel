@@ -5,6 +5,21 @@ import { getNombre } from "../../utils/nombres";
 import { monthShortName, weekdayName } from "../../utils/dates";
 import { t, pluralSuffix } from "../../i18n";
 
+const DIES = {
+  Lunes: "Dilluns",
+  Martes: "Dimarts",
+  Miércoles: "Dimecres",
+  Jueves: "Dijous",
+  Viernes: "Divendres",
+  Sábado: "Dissabte",
+  Domingo: "Diumenge"
+};
+
+function diaSlotCa(label) {
+  if (!label) return "";
+  return DIES[String(label).trim()] ?? label;
+}
+
 function dayOpenLabel(slot) {
   if (!slot) return "";
   if (slot.semana === "actual") return t("jugar.detalle.openCurrentWeek");
@@ -84,7 +99,7 @@ export default function DetalleSlot({
       <div className="slot-head">
         <div>
           <div className="radio-option-title">
-            {slot.label} — {slot.club}
+            {diaSlotCa(slot.label)} — {slot.club}
           </div>
           <div className="slot-meta">{dayOpenLabel(slot)}</div>
         </div>
@@ -98,7 +113,7 @@ export default function DetalleSlot({
       {!enrolled && slot.abierto && rivalSlot ? (
         <div className="baja-locked">
           {t("jugar.detalle.alreadyEnrolledElsewhere", {
-            label: rivalSlot.label,
+            label: diaSlotCa(rivalSlot.label),
             club: rivalSlot.club
           })}
         </div>

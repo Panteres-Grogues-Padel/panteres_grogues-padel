@@ -4,6 +4,21 @@ import { getDiaSemanaActual, sameDiaSemanaSlot } from "../../utils/slots";
 import { monthShortName } from "../../utils/dates";
 import { t } from "../../i18n";
 
+const DIES = {
+  Lunes: "Dilluns",
+  Martes: "Dimarts",
+  Miércoles: "Dimecres",
+  Jueves: "Dijous",
+  Viernes: "Divendres",
+  Sábado: "Dissabte",
+  Domingo: "Diumenge"
+};
+
+function diaSlotCa(label) {
+  if (!label) return "";
+  return DIES[String(label).trim()] ?? label;
+}
+
 function slotFechaLabel(slot) {
   if (!slot.semanaObjetivo || slot.diaSemana === undefined) return "";
   const lun = new Date(slot.semanaObjetivo + "T00:00:00Z");
@@ -112,7 +127,7 @@ export default function Jugar({ slots, currentUser, onApuntar, onBaja, backendNo
         />
         <div style={{ flex: 1 }}>
           <div className="radio-option-title">
-            {slot.label}{fecha ? ` ${fecha}` : ""}{" "}
+            {diaSlotCa(slot.label)}{fecha ? ` ${fecha}` : ""}{" "}
             <span style={{ fontWeight: 400, color: "var(--text2)" }}>— {slot.club}</span>
           </div>
           <div className="radio-option-sub" style={{ color: dotColor }}>

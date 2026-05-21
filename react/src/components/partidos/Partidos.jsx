@@ -17,6 +17,21 @@ import { getNombre } from "../../utils/nombres";
 import { DATE_LOCALE, weekdayName } from "../../utils/dates";
 import { t, pluralSuffix } from "../../i18n";
 
+const DIES = {
+  Lunes: "Dilluns",
+  Martes: "Dimarts",
+  Miércoles: "Dimecres",
+  Jueves: "Dijous",
+  Viernes: "Divendres",
+  Sábado: "Dissabte",
+  Domingo: "Diumenge"
+};
+
+function diaSlotCa(label) {
+  if (!label) return "";
+  return DIES[String(label).trim()] ?? label;
+}
+
 function jugadoresOrdenRanking(jugadores, rankingPosByJugador) {
   const copy = [...jugadores];
   copy.sort((a, b) => {
@@ -35,7 +50,7 @@ function formatFechaPartido(d) {
 
 function etiquetaOpcion(o) {
   return t("partidos.todayLabel", {
-    day: weekdayName(o.diaSemana) || o.slot.label,
+    day: weekdayName(o.diaSemana) || diaSlotCa(o.slot.label),
     club: o.slot.club
   });
 }
@@ -182,7 +197,7 @@ export default function Partidos({
         (a.numeroPista ?? 0) - (b.numeroPista ?? 0)
     );
     const n = ordenados.length;
-    let wa = `🎾 *${slotActual.label} — ${slotActual.club}*\n`;
+    let wa = `🎾 *${diaSlotCa(slotActual.label)} — ${slotActual.club}*\n`;
     wa += `${t("partidos.waTemplateHeader", { count: n, players: n * 4 })}\n`;
     const indoorCount = ordenados.filter((p) => p.indoor).length;
     if (indoorCount > 0) {
@@ -249,7 +264,7 @@ export default function Partidos({
       {isCoord && esHoy ? (
         <div className="coord-box">
           <div className="coord-box-title">
-            <span className="coord-pill">{t("partidos.coordBox")}</span> {slotActual?.label} — {slotActual?.club}
+            <span className="coord-pill">{t("partidos.coordBox")}</span> {diaSlotCa(slotActual?.label)} — {slotActual?.club}
             <span style={{ display: "block", fontSize: "12px", fontWeight: 400, color: "var(--text2)", marginTop: "4px" }}>
               {formatFechaPartido(seleccion?.fechaPartido)}
             </span>

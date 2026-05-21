@@ -9,6 +9,21 @@ import ResultadosCalendario from "./ResultadosCalendario";
 import { getNombre } from "../../utils/nombres";
 import { t } from "../../i18n";
 
+const DIES = {
+  Lunes: "Dilluns",
+  Martes: "Dimarts",
+  Miércoles: "Dimecres",
+  Jueves: "Dijous",
+  Viernes: "Divendres",
+  Sábado: "Dissabte",
+  Domingo: "Diumenge"
+};
+
+function diaSlotCa(label) {
+  if (!label) return "";
+  return DIES[String(label).trim()] ?? label;
+}
+
 function emptySets() {
   return [
     { p1: 0, p2: 0 },
@@ -41,7 +56,7 @@ function PartidoResultadoCard({
       <div className="res-card-head">
         <div>
           <strong>
-            {partido.slotLabel} · {partido.club}
+            {diaSlotCa(partido.slotLabel)} · {partido.club}
           </strong>
           <p className="slot-meta">
             {t("common.courtNumber", { num: partido.numeroPista })}
