@@ -1,21 +1,12 @@
-import { formatFechaLocal, getDiaSemanaLocal } from "./dates";
+import { formatFechaLocal, getDiaSemanaLocal, monthName, weekdayShortName } from "./dates";
 
-export const MESES_RESULTADOS = [
-  "Enero",
-  "Febrero",
-  "Marzo",
-  "Abril",
-  "Mayo",
-  "Junio",
-  "Julio",
-  "Agosto",
-  "Septiembre",
-  "Octubre",
-  "Noviembre",
-  "Diciembre"
-];
+export function mesCalendarioResultados(monthIndex) {
+  return monthName(monthIndex);
+}
 
-export const DOW_CORTO = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+export function dowCalendarioCorto(diaSemana) {
+  return weekdayShortName(diaSemana);
+}
 
 /** Meses desde el más antiguo con partido hasta el mes actual (inclusive). */
 export function buildMesesCalendarioResultados(fechasConPartidos, now = new Date()) {

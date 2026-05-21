@@ -13,6 +13,8 @@ import Padrinos from "../padrinos/Padrinos";
 import { useMananaJuegas } from "../../hooks/useMananaJuegas";
 import { supabase } from "../../lib/supabase";
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
+import { DATE_LOCALE } from "../../utils/dates";
+import { t } from "../../i18n";
 
 const LANDING_TABLER_ICON_SIZE = 34;
 
@@ -25,7 +27,7 @@ function LandingTablerIcon({ Icon }) {
 }
 
 function horaMadrid(now = new Date()) {
-  const h = new Intl.DateTimeFormat("es-ES", {
+  const h = new Intl.DateTimeFormat(DATE_LOCALE, {
     timeZone: "Europe/Madrid",
     hour: "numeric",
     hour12: false
@@ -35,16 +37,16 @@ function horaMadrid(now = new Date()) {
 
 function saludoPorHora() {
   const h = horaMadrid();
-  if (h >= 6 && h <= 13) return "¡Buenos días";
-  if (h >= 14 && h <= 20) return "¡Buenas tardes";
-  return "¡Buenas noches";
+  if (h >= 6 && h <= 13) return t("bienvenida.greetingMorning");
+  if (h >= 14 && h <= 20) return t("bienvenida.greetingAfternoon");
+  return t("bienvenida.greetingEvening");
 }
 
 function formatActivityTs(value) {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleString("es-ES", {
+  return date.toLocaleString(DATE_LOCALE, {
     day: "2-digit",
     month: "2-digit",
     hour: "2-digit",
@@ -54,7 +56,7 @@ function formatActivityTs(value) {
 
 function mapActivityRow(row) {
   const jugador = row.jugadores ?? {};
-  const nombreJugador = jugador.nombre_completo ?? jugador.nombre ?? "Jugador";
+  const nombreJugador = jugador.nombre_completo ?? jugador.nombre ?? t("common.player");
   return {
     id: row.id,
     jugadorId: row.jugador_id,
@@ -94,7 +96,7 @@ export default function Bienvenida({
   const [activityLoading, setActivityLoading] = useState(false);
   const [activityError, setActivityError] = useState("");
   const [logFiltro, setLogFiltro] = useState("");
-  const nombre = currentUser?.nombreCompleto?.split(" ")[0] || currentUser?.nombre || "jugador";
+  const nombre = currentUser?.nombreCompleto?.split(" ")[0] || currentUser?.nombre || t("common.playerFallback");
   const pos = Math.max(1, ranking.findIndex((j) => j.id === currentUser?.id) + 1);
   const rk = ranking.find((j) => j.id === currentUser?.id);
   const eficacia = rk ? `${(rk.eficacia * 100).toFixed(1)}%` : "-";
@@ -105,13 +107,13 @@ export default function Bienvenida({
   const jugadoresLog = useMemo(() => {
     const jugadores = new Map();
     ranking.forEach((j) => {
-      if (j.id) jugadores.set(String(j.id), j.nombreCompleto ?? j.nombre ?? "Jugador");
+      if (j.id) jugadores.set(String(j.id), j.nombreCompleto ?? j.nombre ?? t("common.player"));
     });
     activityLog.forEach((e) => {
       if (e.jugadorId) jugadores.set(String(e.jugadorId), e.jugador);
     });
     return Array.from(jugadores, ([id, label]) => ({ id, label })).sort((a, b) =>
-      a.label.localeCompare(b.label, "es")
+      a.label.localeCompare(b.label, DATE_LOCALE)
     );
   }, [activityLog, ranking]);
 
@@ -159,7 +161,7 @@ export default function Bienvenida({
           type="button"
           className="hero-avatar-btn"
           onClick={() => onOpenPerfil?.()}
-          aria-label="Abrir mi perfil"
+          aria-label={t("bienvenida.openProfile")}
         >
           {currentUser?.foto_url ? (
             <img
@@ -175,17 +177,18 @@ export default function Bienvenida({
           )}
         </button>
         <div className="hero-title">
-          {saludoPorHora()}, {nombre}!
+          {saludoPorHora()}
+          {t("bienvenida.greetingSuffix", { name: nombre })}
         </div>
-        <div className="hero-sub">Bienvenide a Panteres Grogues Pàdel 🏳️‍🌈</div>
-        {mananaJuegas ? <div className="hero-manana">Mañana juegas</div> : null}
+        <div className="hero-sub">{t("bienvenida.welcomeSubtitle")}</div>
+        {mananaJuegas ? <div className="hero-manana">{t("bienvenida.playTomorrow")}</div> : null}
       </div>
 
       <button className="bienvenida-cta" onClick={onGoToJugar}>
         <span className="cta-emoji">🏓</span>
         <span className="cta-copy">
-          <span className="cta-title">¡A Jugaaarrr !!!!</span>
-          <span className="cta-sub">Apúntate a tu próximo partido</span>
+          <span className="cta-title">{t("bienvenida.ctaTitle")}</span>
+          <span className="cta-sub">{t("bienvenida.ctaSubtitle")}</span>
         </span>
         <span className="cta-arrow">→</span>
       </button>
@@ -193,29 +196,27 @@ export default function Bienvenida({
       <div className="quick-grid">
         <button className="quick-card" onClick={onGoToAgenda}>
           <LandingTablerIcon Icon={IconCalendarEvent} />
-          <div className="quick-label">Agenda</div>
+          <div className="quick-label">{t("nav.agenda")}</div>
         </button>
         <button className="quick-card" onClick={onGoToPartidos}>
           <LandingTablerIcon Icon={IconBallTennis} />
-          <div className="quick-label">Partidos</div>
+          <div className="quick-label">{t("nav.partidos")}</div>
         </button>
         <button className="quick-card" onClick={onGoToResultados}>
           <LandingTablerIcon Icon={IconClipboardList} />
-          <div className="quick-label">Resultados</div>
+          <div className="quick-label">{t("nav.resultados")}</div>
         </button>
         <button type="button" className="quick-card" onClick={() => setActivityOpen(true)}>
           <LandingTablerIcon Icon={IconChartBar} />
-          <div className="quick-label">Actividad</div>
+          <div className="quick-label">{t("bienvenida.activity")}</div>
         </button>
       </div>
 
       <button className="ranking-pill" onClick={onGoToRanking}>
-        <span className="ranking-pos">{pos}º</span>
+        <span className="ranking-pos">{t("common.positionOrdinal", { pos })}</span>
         <span>
-          <span className="ranking-title">Tu posición en el ranking</span>
-          <span className="ranking-sub">
-            Eficacia: {eficacia} · {pj} partidos
-          </span>
+          <span className="ranking-title">{t("bienvenida.rankingPillTitle")}</span>
+          <span className="ranking-sub">{t("bienvenida.rankingPillSub", { eficacia, pj })}</span>
         </span>
         <span className="cta-arrow">→</span>
       </button>
@@ -248,8 +249,8 @@ export default function Bienvenida({
       >
         <LandingTablerIcon Icon={IconMap2} />
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>Utilidades</div>
-          <div style={{ fontSize: 11, color: "var(--text2)" }}>Clubs, seguro, hospitales, más...</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{t("bienvenida.utilities")}</div>
+          <div style={{ fontSize: 11, color: "var(--text2)" }}>{t("bienvenida.utilitiesSub")}</div>
         </div>
         <span style={{ fontSize: 12, color: "var(--text2)" }}>→</span>
       </button>
@@ -261,8 +262,8 @@ export default function Bienvenida({
       >
         <LandingTablerIcon Icon={IconUsers} />
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>Padrinos</div>
-          <div style={{ fontSize: 11, color: "var(--text2)" }}>Tu padrino/madrina y ahijados/as</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{t("bienvenida.godparents")}</div>
+          <div style={{ fontSize: 11, color: "var(--text2)" }}>{t("bienvenida.godparentsSub")}</div>
         </div>
         <span style={{ fontSize: 12, color: "var(--text2)" }}>→</span>
       </button>
@@ -276,7 +277,7 @@ export default function Bienvenida({
         <div className="profile-sheet">
           <div className="profile-handle" />
           <div style={{ fontSize: 18, fontWeight: 600, color: "var(--text)", marginBottom: "1.25rem" }}>
-            Historial
+            {t("bienvenida.history")}
           </div>
 
           <div style={{ marginTop: ".75rem" }}>
@@ -293,7 +294,7 @@ export default function Bienvenida({
                 justifyContent: "space-between"
               }}
             >
-              <span>{isCoord ? "Actividad reciente" : "Mi actividad"}</span>
+              <span>{isCoord ? t("bienvenida.activityRecent") : t("bienvenida.myActivity")}</span>
               {isCoord ? (
                 <select
                   id="log-filtro"
@@ -308,7 +309,7 @@ export default function Bienvenida({
                     background: "var(--bg)"
                   }}
                 >
-                  <option value="">Todos</option>
+                  <option value="">{t("common.all")}</option>
                   {jugadoresLog.map((j) => (
                     <option key={j.id} value={j.id}>
                       {j.label}
@@ -320,7 +321,7 @@ export default function Bienvenida({
             <div id="log-landing">
               {activityLoading ? (
                 <div style={{ fontSize: 12, color: "var(--text2)", padding: ".5rem 0", textAlign: "center" }}>
-                  Cargando actividad...
+                  {t("bienvenida.loadingActivity")}
                 </div>
               ) : null}
               {!activityLoading && activityError ? (
@@ -330,7 +331,7 @@ export default function Bienvenida({
               ) : null}
               {!activityLoading && !activityError && !entradasLog.length ? (
                 <div style={{ fontSize: 12, color: "var(--text2)", padding: ".5rem 0", textAlign: "center" }}>
-                  Sin actividad registrada todavía
+                  {t("bienvenida.noActivity")}
                 </div>
               ) : null}
               {!activityLoading && !activityError
@@ -353,7 +354,7 @@ export default function Bienvenida({
           </div>
 
           <button type="button" className="close-btn" onClick={() => setActivityOpen(false)}>
-            Cerrar
+            {t("common.close")}
           </button>
         </div>
       </div>
@@ -368,7 +369,7 @@ export default function Bienvenida({
         <div className="profile-sheet">
           <div className="profile-handle" />
           <div style={{ fontSize: 18, fontWeight: 600, color: "var(--text)", marginBottom: "1.25rem" }}>
-            🗺️ Utilidades
+            {t("bienvenida.utilitiesSheetTitle")}
           </div>
 
           {/* Organización */}
@@ -382,7 +383,7 @@ export default function Bienvenida({
             }}
           >
             <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)", marginBottom: 10 }}>
-              Panteres Grogues
+              {t("bienvenida.orgTitle")}
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <a
@@ -451,7 +452,7 @@ export default function Bienvenida({
               marginBottom: "0.625rem"
             }}
           >
-            Clubs
+            {t("bienvenida.clubsSection")}
           </div>
 
           <div
@@ -480,7 +481,7 @@ export default function Bienvenida({
                 className="btn btn-sm"
                 style={{ fontSize: 12, textDecoration: "none" }}
               >
-                📍 Cómo llegar
+                📍 {t("common.howToGetThere")}
               </a>
             </div>
           </div>
@@ -511,7 +512,7 @@ export default function Bienvenida({
                 className="btn btn-sm"
                 style={{ fontSize: 12, textDecoration: "none" }}
               >
-                📍 Cómo llegar
+                📍 {t("common.howToGetThere")}
               </a>
             </div>
           </div>
@@ -527,7 +528,7 @@ export default function Bienvenida({
               marginBottom: "0.625rem"
             }}
           >
-            Seguro médico
+            {t("bienvenida.insuranceSection")}
           </div>
           <div
             style={{
@@ -539,13 +540,13 @@ export default function Bienvenida({
             }}
           >
             <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)", marginBottom: 4 }}>
-              🏥 Seguro deportivo
+              {t("bienvenida.insuranceSport")}
             </div>
             <div style={{ fontSize: 12, color: "var(--text2)", marginBottom: 4 }}>
-              Póliza federativa — Federació Catalana de Pàdel
+              {t("bienvenida.insurancePolicy")}
             </div>
             <div style={{ fontSize: 11, color: "var(--text3)" }}>
-              Contacta con el coordinador para obtener los datos de tu póliza
+              {t("bienvenida.insuranceContact")}
             </div>
           </div>
 
@@ -560,7 +561,7 @@ export default function Bienvenida({
               marginBottom: "0.625rem"
             }}
           >
-            Urgencias cercanas
+            {t("bienvenida.urgenciesSection")}
           </div>
           <div
             style={{
@@ -606,8 +607,8 @@ export default function Bienvenida({
               <div style={{ height: "0.5px", background: "var(--border)" }} />
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text)" }}>Urgencias · 112</div>
-                  <div style={{ fontSize: 11, color: "var(--text2)" }}>Emergencias generales</div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text)" }}>{t("bienvenida.urgency112")}</div>
+                  <div style={{ fontSize: 11, color: "var(--text2)" }}>{t("common.emergencies")}</div>
                 </div>
                 <a
                   href="tel:112"
@@ -627,7 +628,7 @@ export default function Bienvenida({
           </div>
 
           <button type="button" className="close-btn" onClick={() => setUtilOpen(false)}>
-            Cerrar
+            {t("common.close")}
           </button>
         </div>
       </div>
@@ -641,11 +642,11 @@ export default function Bienvenida({
         <div className="profile-sheet profile-sheet--scroll">
           <div className="profile-handle" />
           <div style={{ fontSize: 18, fontWeight: 600, color: "var(--text)", marginBottom: "1rem" }}>
-            🤝 Padrinos
+            {t("bienvenida.godparentsSheetTitle")}
           </div>
           <Padrinos currentUser={currentUser} isCoord={isCoord} />
           <button type="button" className="close-btn" onClick={() => setPadrinosOpen(false)}>
-            Cerrar
+            {t("common.close")}
           </button>
         </div>
       </div>

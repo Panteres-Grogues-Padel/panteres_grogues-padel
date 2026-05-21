@@ -1,3 +1,50 @@
+import { t } from "../i18n";
+
+const WEEKDAY_KEYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+const WEEKDAY_SHORT_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+const MONTH_KEYS = [
+  "january",
+  "february",
+  "march",
+  "april",
+  "may",
+  "june",
+  "july",
+  "august",
+  "september",
+  "october",
+  "november",
+  "december"
+];
+const MONTH_SHORT_KEYS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+
+export const DATE_LOCALE = "ca-ES";
+
+export function weekdayName(diaSemana) {
+  const key = WEEKDAY_KEYS[Number(diaSemana)];
+  return key ? t(`dates.weekdays.${key}`) : "";
+}
+
+export function weekdayShortName(diaSemana) {
+  const key = WEEKDAY_SHORT_KEYS[Number(diaSemana)];
+  return key ? t(`dates.weekdaysShort.${key}`) : "";
+}
+
+export function monthName(monthIndex) {
+  const key = MONTH_KEYS[Number(monthIndex)];
+  return key ? t(`dates.months.${key}`) : "";
+}
+
+export function monthShortName(monthIndex) {
+  const key = MONTH_SHORT_KEYS[Number(monthIndex)];
+  return key ? t(`dates.monthsShort.${key}`) : "";
+}
+
+export function monthShortCapitalName(monthIndex) {
+  const key = MONTH_SHORT_KEYS[Number(monthIndex)];
+  return key ? t(`dates.monthsShortCapital.${key}`) : "";
+}
+
 /** Fecha de semana (lunes) como YYYY-MM-DD, alineado con Postgres `date` y useSlots. */
 export function normalizeSemanaDate(s) {
   if (s == null || s === "") return "";
@@ -72,12 +119,12 @@ export function fechaPartidoFromSlot(semanaObjetivo, diaSemana) {
   return d ? formatFechaLocal(d) : "";
 }
 
-/** Nombre del día en español (ej. "martes") para textos de notificación. */
+/** Nom del dia en català (ex. «dimarts») per textos de notificació. */
 export function formatDiaPartidoLabel(fechaStr) {
   if (!fechaStr) return "";
   const d = new Date(`${fechaStr}T12:00:00`);
   if (Number.isNaN(d.getTime())) return fechaStr;
-  const label = d.toLocaleDateString("es-ES", { weekday: "long" });
+  const label = d.toLocaleDateString(DATE_LOCALE, { weekday: "long" });
   return label.charAt(0).toLowerCase() + label.slice(1);
 }
 

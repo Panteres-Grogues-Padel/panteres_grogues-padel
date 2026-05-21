@@ -3,6 +3,7 @@ import { supabase } from "../lib/supabase";
 import { createActivityLog, createNotifications } from "../lib/engagement";
 import { ayerLocalStr, enVentanaCoordResultados, hoyLocalStr } from "../utils/dates";
 import { isJugadorUuid } from "../utils/jugador";
+import { t } from "../i18n";
 
 function rowsFromRpcResultados(data) {
   if (data == null) return [];
@@ -83,33 +84,33 @@ export function useResultados(partidos, currentUser, isCoord) {
 
   function puedeGuardarPartido(partido, prev) {
     const fecha = partido.fechaPartido;
-    if (!fecha) return { ok: false, error: "Fecha de partido no disponible." };
+    if (!fecha) return { ok: false, error: t("hooks.resultados.dateUnavailable") };
 
     if (isCoord) {
       if (!enVentanaCoordResultados(fecha)) {
-        return { ok: false, error: "Solo puedes gestionar resultados de la semana pasada y hoy." };
+        return { ok: false, error: t("hooks.resultados.coordWindow") };
       }
       return { ok: true };
     }
 
     const esJugador = partido.jugadores.some((j) => String(j.jugadorId) === String(currentUser.id));
-    if (!esJugador) return { ok: false, error: "No puedes reportar este partido." };
+    if (!esJugador) return { ok: false, error: t("hooks.resultados.cannotReport") };
 
     const hoy = hoyLocalStr();
     const ayer = ayerLocalStr();
     if (fecha !== hoy && fecha !== ayer) {
-      return { ok: false, error: "Solo puedes introducir resultados de hoy o ayer." };
+      return { ok: false, error: t("hooks.resultados.todayYesterdayOnly") };
     }
     if (prev) {
-      return { ok: false, error: "No puedes modificar un resultado ya introducido." };
+      return { ok: false, error: t("hooks.resultados.cannotModifyIntroduced") };
     }
     return { ok: true };
   }
 
   async function guardarResultado(partidoId, fecha, sets) {
-    if (!currentUser) return { ok: false, error: "Debes iniciar sesion." };
+    if (!currentUser) return { ok: false, error: t("hooks.resultados.mustLogin") };
     const partido = partidos.find((p) => p.id === partidoId);
-    if (!partido) return { ok: false, error: "Partido no encontrado." };
+    if (!partido) return { ok: false, error: t("hooks.resultados.matchNotFound") };
 
     const fechaPartido = partido.fechaPartido || fecha;
     const prev = getResultado(partidoId, fechaPartido);
@@ -144,7 +145,9 @@ export function useResultados(partidos, currentUser, isCoord) {
     await createActivityLog({
       jugadorId: currentUser.id,
       tipo: "resultados",
-      texto: `${prev ? "Modifica" : "Introduce"} resultado en pista ${partidoId} (${fechaPartido})`
+      texto: prev
+        ? t("hooks.resultados.activity.modify", { id: partidoId, date: fechaPartido })
+        : t("hooks.resultados.activity.introduce", { id: partidoId, date: fechaPartido })
     });
 
     if (!isCoord) {
@@ -153,8 +156,8 @@ export function useResultados(partidos, currentUser, isCoord) {
         .map((j) => ({
           jugadorId: j.jugadorId,
           tipo: "resultados",
-          titulo: "Resultado pendiente de validacion",
-          texto: `Se ha subido un resultado en tu partido (${fechaPartido}).`
+          titulo: t("hooks.resultados.notifications.pendingTitle"),
+          texto: t("hooks.resultados.notifications.pendingText", { date: fechaPartido })
         }));
       await createNotifications(notifications);
     }
@@ -164,18 +167,18 @@ export function useResultados(partidos, currentUser, isCoord) {
   }
 
   async function validarResultado(partidoId, fecha) {
-    if (!currentUser) return { ok: false, error: "Debes iniciar sesion." };
-    if (!isCoord) return { ok: false, error: "Solo el coordinador puede validar resultados." };
+    if (!currentUser) return { ok: false, error: t("hooks.resultados.mustLogin") };
+    if (!isCoord) return { ok: false, error: t("hooks.resultados.coordOnlyValidate") };
 
     const partido = partidos.find((p) => p.id === partidoId);
-    if (!partido) return { ok: false, error: "Partido no encontrado." };
+    if (!partido) return { ok: false, error: t("hooks.resultados.matchNotFound") };
 
     const fechaPartido = partido.fechaPartido || fecha;
     const r = getResultado(partidoId, fechaPartido);
-    if (!r) return { ok: false, error: "No hay resultado para validar." };
+    if (!r) return { ok: false, error: t("hooks.resultados.noResultToValidate") };
 
     if (!enVentanaCoordResultados(fechaPartido)) {
-      return { ok: false, error: "Fuera de la ventana de resultados del coordinador." };
+      return { ok: false, error: t("hooks.resultados.outsideCoordWindow") };
     }
 
     if (useFallback) return { ok: true };
@@ -202,8 +205,8 @@ export function useResultados(partidos, currentUser, isCoord) {
       .map((j) => ({
         jugadorId: j.jugadorId,
         tipo: "resultados",
-        titulo: "Resultado validado",
-        texto: `El resultado de tu partido (${fechaPartido}) ya esta validado.`
+        titulo: t("hooks.resultados.notifications.validatedTitle"),
+        texto: t("hooks.resultados.notifications.validatedText", { date: fechaPartido })
       }));
     await createNotifications(notifications);
 
@@ -212,19 +215,19 @@ export function useResultados(partidos, currentUser, isCoord) {
   }
 
   async function modificarResultado(partidoId, fecha) {
-    if (!currentUser) return { ok: false, error: "Debes iniciar sesion." };
-    if (!isCoord) return { ok: false, error: "Solo el coordinador puede modificar resultados validados." };
+    if (!currentUser) return { ok: false, error: t("hooks.resultados.mustLogin") };
+    if (!isCoord) return { ok: false, error: t("hooks.resultados.coordOnlyModify") };
 
     const partido = partidos.find((p) => p.id === partidoId);
-    if (!partido) return { ok: false, error: "Partido no encontrado." };
+    if (!partido) return { ok: false, error: t("hooks.resultados.matchNotFound") };
 
     const fechaPartido = partido.fechaPartido || fecha;
     if (!enVentanaCoordResultados(fechaPartido)) {
-      return { ok: false, error: "Fuera de la ventana de resultados del coordinador." };
+      return { ok: false, error: t("hooks.resultados.outsideCoordWindow") };
     }
 
     const r = getResultado(partidoId, fechaPartido);
-    if (!r) return { ok: false, error: "No hay resultado para modificar." };
+    if (!r) return { ok: false, error: t("hooks.resultados.noResultToModify") };
     if (!r.validado_por) return { ok: true, yaPendiente: true };
 
     if (useFallback) return { ok: true };
@@ -238,7 +241,7 @@ export function useResultados(partidos, currentUser, isCoord) {
     await createActivityLog({
       jugadorId: currentUser.id,
       tipo: "resultados",
-      texto: `Desbloquea resultado en pista ${partidoId} (${fechaPartido}) para edicion`
+      texto: t("hooks.resultados.activity.unlock", { id: partidoId, date: fechaPartido })
     });
 
     await loadResultados();

@@ -1,9 +1,11 @@
+import { t } from "../../i18n";
+
 /** Contenido de `tab-seccion` en index.html (organigrama). */
 export default function Seccion() {
   return (
     <>
-      <div className="section-title">Coordinación</div>
-      <div className="org-area">Coordinación general</div>
+      <div className="section-title">{t("seccion.title")}</div>
+      <div className="org-area">{t("seccion.generalCoord")}</div>
       <div className="pcard feat">
         <div className="org-av av-blue">JG</div>
         <div className="pcard-info">
@@ -16,7 +18,7 @@ export default function Seccion() {
           </div>
         </div>
       </div>
-      <div className="org-area">Área de gestión</div>
+      <div className="org-area">{t("seccion.managementArea")}</div>
       <div className="pcard">
         <div className="org-av av-teal">MP</div>
         <div className="pcard-info">
@@ -31,7 +33,7 @@ export default function Seccion() {
           <div className="pcard-role">Soporte informático</div>
         </div>
       </div>
-      <div className="org-area">Área deportiva y competición</div>
+      <div className="org-area">{t("seccion.sportsArea")}</div>
       <div className="pcard">
         <div className="org-av av-purple">AL</div>
         <div className="pcard-info">
@@ -46,7 +48,7 @@ export default function Seccion() {
           <div className="pcard-role">Coord. Torneos</div>
         </div>
       </div>
-      <div className="org-area">Área de comunicación</div>
+      <div className="org-area">{t("seccion.commsArea")}</div>
       <div className="pcard">
         <div className="org-av av-pink">BM</div>
         <div className="pcard-info">

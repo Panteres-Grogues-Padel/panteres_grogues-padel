@@ -14,8 +14,8 @@ import {
   resumenFranjas
 } from "../../utils/franjasPartidos";
 import { getNombre } from "../../utils/nombres";
-
-const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+import { DATE_LOCALE, weekdayName } from "../../utils/dates";
+import { t, pluralSuffix } from "../../i18n";
 
 function jugadoresOrdenRanking(jugadores, rankingPosByJugador) {
   const copy = [...jugadores];
@@ -30,11 +30,14 @@ function jugadoresOrdenRanking(jugadores, rankingPosByJugador) {
 
 function formatFechaPartido(d) {
   if (!d) return "";
-  return d.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "short" });
+  return d.toLocaleDateString(DATE_LOCALE, { weekday: "long", day: "numeric", month: "short" });
 }
 
 function etiquetaOpcion(o) {
-  return `${DIAS[o.diaSemana] ?? o.slot.label} — ${o.slot.club} (hoy)`;
+  return t("partidos.todayLabel", {
+    day: weekdayName(o.diaSemana) || o.slot.label,
+    club: o.slot.club
+  });
 }
 
 export default function Partidos({
@@ -156,7 +159,7 @@ export default function Partidos({
   function handleGenerarClick(regenerar) {
     if (!slotId || !semanaObjetivo || !esHoy) return;
     if (regenerar) {
-      const ok = window.confirm("¿Regenerar los partidos de esta semana?");
+      const ok = window.confirm(t("partidos.regenerateConfirm"));
       if (!ok) return;
     }
     onGenerar(slotId, semanaObjetivo, { franjas });
@@ -180,21 +183,23 @@ export default function Partidos({
     );
     const n = ordenados.length;
     let wa = `🎾 *${slotActual.label} — ${slotActual.club}*\n`;
-    wa += `Partidos: ${n} · Jugadores: ${n * 4}\n`;
+    wa += `${t("partidos.waTemplateHeader", { count: n, players: n * 4 })}\n`;
     const indoorCount = ordenados.filter((p) => p.indoor).length;
     if (indoorCount > 0) {
-      wa += `${indoorCount} partido${indoorCount !== 1 ? "s" : ""} Indoor\n`;
+      wa += `${t("partidos.waIndoorCount", { count: indoorCount, plural: pluralSuffix(indoorCount) })}\n`;
     }
     wa += "\n";
     ordenados.forEach((p, i) => {
       const horaRaw = formatHoraInput(p.hora);
       const hora = horaRaw ? ` · 🕐 ${horaRaw}` : "";
-      const indoor = p.indoor ? " Indoor" : "";
-      wa += `*Partido ${i + 1}*${hora}${indoor}\n`;
+      const indoorSuffix = p.indoor ? " Indoor" : "";
+      wa += `${t("partidos.waMatchLine", { num: i + 1, hora, indoorSuffix })}\n`;
       const jugOrd = jugadoresOrdenRanking(p.jugadores, rankingPosByJugador);
       wa += `${jugOrd.map((j) => getNombre(j)).join(" · ")}\n\n`;
     });
-    if (reservas.length) wa += `*Reserva:* ${reservas.map((r) => getNombre(r)).join(", ")}`;
+    if (reservas.length) {
+      wa += t("partidos.waReserve", { names: reservas.map((r) => getNombre(r)).join(", ") });
+    }
     return wa;
   }
 
@@ -214,7 +219,7 @@ export default function Partidos({
 
   return (
     <div>
-      <h2 className="section-title">Partidos</h2>
+      <h2 className="section-title">{t("partidos.title")}</h2>
       <div id="partidos-days">
         {opciones.length ? (
           <select
@@ -237,14 +242,14 @@ export default function Partidos({
             ))}
           </select>
         ) : (
-          <p className="slot-meta">No hay slots para hoy</p>
+          <p className="slot-meta">{t("partidos.noSlotsToday")}</p>
         )}
       </div>
 
       {isCoord && esHoy ? (
         <div className="coord-box">
           <div className="coord-box-title">
-            <span className="coord-pill">Coord.</span> {slotActual?.label} — {slotActual?.club}
+            <span className="coord-pill">{t("partidos.coordBox")}</span> {slotActual?.label} — {slotActual?.club}
             <span style={{ display: "block", fontSize: "12px", fontWeight: 400, color: "var(--text2)", marginTop: "4px" }}>
               {formatFechaPartido(seleccion?.fechaPartido)}
             </span>
@@ -253,20 +258,20 @@ export default function Partidos({
             {franjas.map((f, idx) => (
               <div key={f.id} className="franja-card">
                 <div className="franja-card-head">
-                  <span className="franja-card-title">Franja {idx + 1}</span>
+                  <span className="franja-card-title">{t("common.fringeNumber", { num: idx + 1 })}</span>
                   {franjas.length > 1 ? (
                     <button
                       type="button"
                       className="franja-remove"
                       onClick={() => removeFranja(f.id)}
-                      aria-label="Eliminar franja"
+                      aria-label={t("partidos.deleteFringe")}
                     >
                       ×
                     </button>
                   ) : null}
                 </div>
                 <label className="franja-field">
-                  <span className="franja-label">Hora</span>
+                  <span className="franja-label">{t("agenda.fieldTime")}</span>
                   <input
                     type="time"
                     className="franja-hora"
@@ -276,7 +281,7 @@ export default function Partidos({
                 </label>
                 <div className="franja-counters">
                   <div className="franja-counter">
-                    <span className="franja-label">Outdoor</span>
+                    <span className="franja-label">{t("common.outdoor")}</span>
                     <div className="pistas-ctrl">
                       <button
                         type="button"
@@ -296,7 +301,7 @@ export default function Partidos({
                     </div>
                   </div>
                   <div className="franja-counter">
-                    <span className="franja-label">Indoor</span>
+                    <span className="franja-label">{t("common.indoor")}</span>
                     <div className="pistas-ctrl">
                       <button
                         type="button"
@@ -320,19 +325,24 @@ export default function Partidos({
             ))}
           </div>
           <button type="button" className="btn btn-sm btn-block franja-add-btn" onClick={addFranja}>
-            + Añadir franja horaria
+            {t("partidos.addFringe")}
           </button>
           <div className="franjas-resumen">
-            <strong>{resumen.totalPistas}</strong> pistas ({resumen.totalIndoor} indoor) ·{" "}
-            <strong>{resumen.titulares}</strong> titulares · <strong>{resumen.reserva}</strong> reserva
+            {t("partidos.summaryCourts", {
+              pistas: resumen.totalPistas,
+              pistasPlural: pluralSuffix(resumen.totalPistas),
+              indoor: resumen.totalIndoor,
+              titulares: resumen.titulares,
+              reserva: resumen.reserva
+            })}
           </div>
           {mostrarRegenerar ? (
             <button type="button" className="btn btn-primary btn-sm btn-block" onClick={() => handleGenerarClick(true)}>
-              Regenerar partidos
+              {t("partidos.regenerateMatches")}
             </button>
           ) : mostrarGenerar ? (
             <button type="button" className="btn btn-primary btn-sm btn-block" onClick={() => handleGenerarClick(false)}>
-              Generar partidos
+              {t("partidos.generateMatches")}
             </button>
           ) : null}
         </div>
@@ -342,8 +352,8 @@ export default function Partidos({
         <div className="card">
           <div className="empty-state">
             {slotActual?.jugadores?.length
-              ? "Los partidos aún no se han generado"
-              : "No hay nadie apuntado"}
+              ? t("partidos.notGeneratedYet")
+              : t("partidos.nobodySignedUp")}
           </div>
         </div>
       ) : (
@@ -372,7 +382,7 @@ export default function Partidos({
           {reservas.length ? (
             <div className="reserva-box">
               <div style={{ fontSize: "11px", fontWeight: 600, color: "#BA7517", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: "6px" }}>
-                Reserva ({reservas.length})
+                {t("partidos.reserveBox", { count: reservas.length })}
               </div>
               <div>{reservas.map((p) => <span key={p.id} className="chip" style={{ fontSize: "11px" }}>{getNombre(p)}</span>)}</div>
             </div>
@@ -380,9 +390,9 @@ export default function Partidos({
 
           <div className="wa-box">
             <div className="wa-header">
-              <span>WhatsApp</span>
+              <span>{t("partidos.waHeader")}</span>
               <button type="button" className="btn btn-sm" onClick={() => void handleCopyWa()}>
-                Copiar
+                {t("common.copy")}
               </button>
             </div>
             <div className="wa-text">{buildWaText()}</div>

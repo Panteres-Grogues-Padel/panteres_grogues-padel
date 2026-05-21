@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import DetalleSlot from "./DetalleSlot";
 import { getDiaSemanaActual, sameDiaSemanaSlot } from "../../utils/slots";
-
-const MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+import { monthShortName } from "../../utils/dates";
+import { t } from "../../i18n";
 
 function slotFechaLabel(slot) {
   if (!slot.semanaObjetivo || slot.diaSemana === undefined) return "";
   const lun = new Date(slot.semanaObjetivo + "T00:00:00Z");
   lun.setUTCDate(lun.getUTCDate() + slot.diaSemana);
-  return `${lun.getUTCDate()} ${MESES[lun.getUTCMonth()]}`;
+  return `${lun.getUTCDate()} ${monthShortName(lun.getUTCMonth())}`;
 }
 
 function weekRangeLabel(lunesDate) {
@@ -17,7 +17,7 @@ function weekRangeLabel(lunesDate) {
   const dom = new Date(lun);
   dom.setUTCDate(dom.getUTCDate() + 6);
   const lD = lun.getUTCDate(), dD = dom.getUTCDate();
-  const lM = MESES[lun.getUTCMonth()], dM = MESES[dom.getUTCMonth()];
+  const lM = monthShortName(lun.getUTCMonth()), dM = monthShortName(dom.getUTCMonth());
   return lM === dM ? `${lD}–${dD} ${lM}` : `${lD} ${lM}–${dD} ${dM}`;
 }
 
@@ -84,12 +84,12 @@ export default function Jugar({ slots, currentUser, onApuntar, onBaja, backendNo
         s.apuntado
     );
     const dot = slot.apuntado
-      ? "✓ Apuntado"
+      ? t("jugar.enrolled")
       : rival
-        ? `Apuntado en ${rival.club}`
+        ? t("jugar.enrolledAtClub", { club: rival.club })
         : slot.abierto
-          ? `${slot.jugadores.length} apuntados`
-          : "Cerrada 🔒";
+          ? t("jugar.enrolledCount", { count: slot.jugadores.length })
+          : t("jugar.closed");
     const dotColor = slot.apuntado
       ? "#27500A"
       : rival
@@ -126,11 +126,11 @@ export default function Jugar({ slots, currentUser, onApuntar, onBaja, backendNo
 
   return (
     <div>
-      <h2 className="section-title">Jugar</h2>
+      <h2 className="section-title">{t("jugar.title")}</h2>
       {!slotsVisibles.length ? (
         <div className="card">
           <div className="slot-meta" style={{ textAlign: "center", padding: "1rem 0" }}>
-            No hay slots disponibles.
+            {t("jugar.noSlots")}
           </div>
         </div>
       ) : null}
@@ -139,14 +139,14 @@ export default function Jugar({ slots, currentUser, onApuntar, onBaja, backendNo
         <div className="card" style={{ display: slotsVisibles.length ? "block" : "none" }}>
           {slotsActual.length > 0 && (
             <>
-              <div className="slot-week-header">Semana actual · {weekRangeLabel(lunesActual)}</div>
+              <div className="slot-week-header">{t("jugar.currentWeek", { range: weekRangeLabel(lunesActual) })}</div>
               {slotsActual.map(renderSlotRow)}
             </>
           )}
           {slotsProxima.length > 0 && (
             <>
               <div className="slot-week-header" style={{ marginTop: slotsActual.length ? "1rem" : 0 }}>
-                Semana próxima · {weekRangeLabel(lunesProximo)}
+                {t("jugar.nextWeek", { range: weekRangeLabel(lunesProximo) })}
               </div>
               {slotsProxima.map(renderSlotRow)}
             </>
@@ -157,7 +157,7 @@ export default function Jugar({ slots, currentUser, onApuntar, onBaja, backendNo
             onClick={() => setShowLista(true)}
             disabled={!selectedSlot}
           >
-            {selectedEnrolled ? "Ver lista" : "Apuntarme"}
+            {selectedEnrolled ? t("jugar.viewList") : t("jugar.signUp")}
           </button>
         </div>
       ) : (

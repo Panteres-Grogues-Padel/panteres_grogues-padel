@@ -1,26 +1,15 @@
 import { useMemo, useState } from "react";
 import { jugadoresCoinciden } from "../../utils/jugador";
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
-import { formatHoraInput } from "../../utils/dates";
+import { DATE_LOCALE, formatHoraInput, monthName, monthShortCapitalName, weekdayShortName } from "../../utils/dates";
 import { getNombre } from "../../utils/nombres";
+import { t, pluralSuffix } from "../../i18n";
 
-const DS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
-const MESES = [
-  "Enero",
-  "Febrero",
-  "Marzo",
-  "Abril",
-  "Mayo",
-  "Junio",
-  "Julio",
-  "Agosto",
-  "Septiembre",
-  "Octubre",
-  "Noviembre",
-  "Diciembre"
-];
-const MESES_CORTO = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-const TIPO_LABEL = { torneo: "Torneo", social: "Social", otro: "Actividad" };
+const TIPO_LABEL = {
+  torneo: () => t("agenda.types.torneo"),
+  social: () => t("agenda.types.social"),
+  otro: () => t("agenda.types.otro")
+};
 
 function parejaNombre(parejaRef, inscritos) {
   if (!parejaRef) return "";
@@ -49,9 +38,9 @@ function formatRangoFechas(fecha, fechaFin) {
   const fin = fechaFin ?? fecha;
   const opts = { day: "numeric", month: "short" };
   const d0 = new Date(`${fecha}T12:00:00`);
-  if (fin === fecha) return d0.toLocaleDateString("es-ES", opts);
+  if (fin === fecha) return d0.toLocaleDateString(DATE_LOCALE, opts);
   const d1 = new Date(`${fin}T12:00:00`);
-  return `${d0.toLocaleDateString("es-ES", opts)} – ${d1.toLocaleDateString("es-ES", opts)}`;
+  return `${d0.toLocaleDateString(DATE_LOCALE, opts)} – ${d1.toLocaleDateString(DATE_LOCALE, opts)}`;
 }
 
 function tiposEnMes(eventos, year, month) {
@@ -100,12 +89,12 @@ export default function Agenda({
   const evsMes = useMemo(() => eventosEnMes(eventos, calYear, calMonth), [eventos, calYear, calMonth]);
 
   const resumenMeses = useMemo(() => {
-    return MESES.map((nombre, month) => {
+    return Array.from({ length: 12 }, (_, month) => {
       const delMes = eventosEnMes(eventos, calYear, month);
       return {
         month,
-        nombre,
-        corto: MESES_CORTO[month],
+        nombre: monthName(month),
+        corto: monthShortCapitalName(month),
         count: delMes.length,
         tipos: tiposEnMes(eventos, calYear, month)
       };
@@ -137,7 +126,7 @@ export default function Agenda({
     const res = await onCrearEvento(formCrear);
     setGuardando(false);
     if (!res.ok) {
-      setFormError(res.error ?? "No se pudo crear el evento.");
+      setFormError(res.error ?? t("agenda.createEventFailed"));
       return;
     }
     const fechaGuardada = formCrear.fechaInicio;
@@ -153,11 +142,11 @@ export default function Agenda({
   return (
     <div className={loading ? "agenda-page agenda-page--loading" : "agenda-page"}>
       <div className="agenda-title-row">
-        <h2 className="section-title">Agenda</h2>
-        {loading ? <span className="agenda-loading-hint">Cargando…</span> : null}
+        <h2 className="section-title">{t("agenda.title")}</h2>
+        {loading ? <span className="agenda-loading-hint">{t("common.loadingEllipsis")}</span> : null}
         {isCoord ? (
           <button type="button" className="btn btn-primary btn-sm" onClick={abrirCrearEvento}>
-            Crear evento
+            {t("agenda.createEvent")}
           </button>
         ) : null}
       </div>
@@ -168,15 +157,15 @@ export default function Agenda({
           <div className="legend agenda-legend-compact">
             <div className="leg-item">
               <div className="ev-dot dot-torneo" />
-              Torneo
+              {t("agenda.types.torneo")}
             </div>
             <div className="leg-item">
               <div className="ev-dot dot-social" />
-              Social
+              {t("agenda.types.social")}
             </div>
             <div className="leg-item">
               <div className="ev-dot dot-otro" />
-              Otro
+              {t("agenda.legendOther")}
             </div>
           </div>
           <div className="agenda-year-grid">
@@ -200,7 +189,7 @@ export default function Agenda({
                   <span className="agenda-month-card__name">{m.corto}</span>
                   {m.count > 0 ? (
                     <span className="agenda-month-card__count">
-                      {m.count} evento{m.count !== 1 ? "s" : ""}
+                      {t("agenda.eventCount", { count: m.count, plural: pluralSuffix(m.count) })}
                     </span>
                   ) : (
                     <span className="agenda-month-card__count agenda-month-card__count--empty">—</span>
@@ -221,31 +210,31 @@ export default function Agenda({
         <>
           <div className="agenda-month-header">
             <button type="button" className="btn btn-sm agenda-back-btn" onClick={volverAAno}>
-              ← Año
+              {t("agenda.yearBack")}
             </button>
             <span className="agenda-month-header__title">
-              {MESES[calMonth]} {calYear}
+              {monthName(calMonth)} {calYear}
             </span>
           </div>
 
           <div className="legend agenda-legend-compact">
             <div className="leg-item">
               <div className="ev-dot dot-torneo" />
-              Torneo
+              {t("agenda.types.torneo")}
             </div>
             <div className="leg-item">
               <div className="ev-dot dot-social" />
-              Social
+              {t("agenda.types.social")}
             </div>
             <div className="leg-item">
               <div className="ev-dot dot-otro" />
-              Otro
+              {t("agenda.legendOther")}
             </div>
           </div>
 
           <div className="ev-list">
             {evsMes.length === 0 ? (
-              <div className="empty-state">No hay eventos en {MESES[calMonth]}</div>
+              <div className="empty-state">{t("agenda.noEventsInMonth", { month: monthName(calMonth) })}</div>
             ) : (
               evsMes.map((e) => (
                 <EventoCard
@@ -277,21 +266,21 @@ export default function Agenda({
         >
           <div className="profile-sheet" onClick={(ev) => ev.stopPropagation()}>
             <div className="profile-handle" />
-            <div className="agenda-form-title">Crear evento</div>
+            <div className="agenda-form-title">{t("agenda.formTitle")}</div>
             <form className="agenda-form" onSubmit={handleGuardarEvento}>
               <label className="agenda-field">
-                <span className="agenda-field__label">Título *</span>
+                <span className="agenda-field__label">{t("agenda.fieldTitle")}</span>
                 <input
                   type="text"
                   required
                   maxLength={100}
                   value={formCrear.titulo}
                   onChange={(ev) => setFormCrear((f) => ({ ...f, titulo: ev.target.value }))}
-                  placeholder="Nombre del evento"
+                  placeholder={t("agenda.fieldTitlePlaceholder")}
                 />
               </label>
               <label className="agenda-field">
-                <span className="agenda-field__label">Fecha inicio *</span>
+                <span className="agenda-field__label">{t("agenda.fieldStartDate")}</span>
                 <input
                   type="date"
                   required
@@ -307,7 +296,7 @@ export default function Agenda({
                 />
               </label>
               <label className="agenda-field">
-                <span className="agenda-field__label">Fecha fin *</span>
+                <span className="agenda-field__label">{t("agenda.fieldEndDate")}</span>
                 <input
                   type="date"
                   required
@@ -317,7 +306,7 @@ export default function Agenda({
                 />
               </label>
               <label className="agenda-field">
-                <span className="agenda-field__label">Hora</span>
+                <span className="agenda-field__label">{t("agenda.fieldTime")}</span>
                 <input
                   type="time"
                   value={formCrear.hora}
@@ -325,28 +314,28 @@ export default function Agenda({
                 />
               </label>
               <label className="agenda-field">
-                <span className="agenda-field__label">Descripción</span>
+                <span className="agenda-field__label">{t("agenda.fieldDescription")}</span>
                 <textarea
                   rows={3}
                   value={formCrear.descripcion}
                   onChange={(ev) => setFormCrear((f) => ({ ...f, descripcion: ev.target.value }))}
-                  placeholder="Detalles del evento (opcional)"
+                  placeholder={t("agenda.fieldDescriptionPlaceholder")}
                 />
               </label>
               <label className="agenda-field">
-                <span className="agenda-field__label">Aforo máximo</span>
+                <span className="agenda-field__label">{t("agenda.fieldCapacity")}</span>
                 <input
                   type="number"
                   min={1}
                   step={1}
                   value={formCrear.aforoMaximo}
                   onChange={(ev) => setFormCrear((f) => ({ ...f, aforoMaximo: ev.target.value }))}
-                  placeholder="Sin límite"
+                  placeholder={t("common.noLimit")}
                 />
               </label>
               {formError ? <p className="agenda-form-error">{formError}</p> : null}
               <button type="submit" className="btn btn-primary btn-block" disabled={guardando}>
-                {guardando ? "Guardando…" : "Guardar evento"}
+                {guardando ? t("common.saving") : t("agenda.saveEvent")}
               </button>
               <button
                 type="button"
@@ -354,7 +343,7 @@ export default function Agenda({
                 disabled={guardando}
                 onClick={() => setCrearOpen(false)}
               >
-                Cancelar
+                {t("common.cancel")}
               </button>
             </form>
           </div>
@@ -372,8 +361,10 @@ export default function Agenda({
             <div className="profile-handle" />
             <div style={{ fontSize: 16, fontWeight: 600, color: "var(--text)", marginBottom: 4 }}>{listaEvento.titulo}</div>
             <div style={{ fontSize: 12, color: "var(--text2)", marginBottom: "1rem" }}>
-              {listaEvento.inscritos.length} inscritos ·{" "}
-              {listaEvento.inscritos.filter((i) => i.pagoConfirmado).length} pagados
+              {t("agenda.inscribedPaid", {
+                inscritos: listaEvento.inscritos.length,
+                pagados: listaEvento.inscritos.filter((i) => i.pagoConfirmado).length
+              })}
             </div>
             {listaEvento.inscritos.map((ins) => {
               const pagado = ins.pagoConfirmado;
@@ -396,7 +387,9 @@ export default function Agenda({
                     <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text)" }}>{getNombre(ins)}</div>
                     {esTorneo && ins.pareja ? (
                       <div style={{ fontSize: 11, color: "var(--text2)" }}>
-                        con {parejaNombre(ins.pareja, listaEvento.inscritos)}
+                        {t("agenda.withPartner", {
+                          name: parejaNombre(ins.pareja, listaEvento.inscritos)
+                        })}
                       </div>
                     ) : null}
                   </div>
@@ -413,18 +406,18 @@ export default function Agenda({
                           if (!res?.ok) ev.target.checked = pagado;
                         }}
                       />
-                      <span>Pagado</span>
+                      <span>{t("agenda.paid")}</span>
                     </label>
                   ) : pagado ? (
-                    <span style={{ fontSize: 12, color: "#27500A", fontWeight: 600 }}>✅ Pagado</span>
+                    <span style={{ fontSize: 12, color: "#27500A", fontWeight: 600 }}>✅ {t("agenda.paid")}</span>
                   ) : (
-                    <span style={{ fontSize: 12, color: "var(--text2)" }}>Pendiente</span>
+                    <span style={{ fontSize: 12, color: "var(--text2)" }}>{t("agenda.paymentPending")}</span>
                   )}
                 </div>
               );
             })}
             <button type="button" className="close-btn" onClick={() => setListaEventoId(null)}>
-              Cerrar
+              {t("common.close")}
             </button>
           </div>
         </div>
@@ -447,7 +440,7 @@ function EventoCard({
   onBorrar
 }) {
   const d = new Date(`${e.fecha}T12:00:00`);
-  const dow = DS[(d.getDay() + 6) % 7].slice(0, 3);
+  const dow = weekdayShortName((d.getDay() + 6) % 7);
   const miIns = e.miInscripcion ?? null;
   const haPagado = Boolean(miIns?.pagoConfirmado);
   const esTorneo = e.tipo === "torneo";
@@ -482,14 +475,14 @@ function EventoCard({
         </div>
         <div style={{ display: "flex", gap: 5, alignItems: "center", flexWrap: "wrap", marginTop: 3 }}>
           <span className={`ev-type et-${e.tipo}`} style={{ marginTop: 0 }}>
-            {TIPO_LABEL[e.tipo] ?? e.tipo}
+            {(TIPO_LABEL[e.tipo] ? TIPO_LABEL[e.tipo]() : null) ?? e.tipo}
           </span>
           {horaLabel ? (
             <span style={{ fontSize: 10, color: "var(--text2)" }}>{horaLabel}</span>
           ) : null}
           {aforoMax != null ? (
             <span style={{ fontSize: 10, color: completo ? "#BA7517" : "var(--text2)" }}>
-              {inscritosCount}/{aforoMax} plazas
+              {t("agenda.places", { current: inscritosCount, max: aforoMax })}
             </span>
           ) : null}
           {(e.fechaFin ?? e.fecha) !== e.fecha ? (
@@ -499,12 +492,12 @@ function EventoCard({
             <span style={{ fontSize: 10, fontWeight: 600, color: "var(--text2)" }}>{e.precio}€</span>
           ) : null}
           {esTorneo ? (
-            <span style={{ fontSize: 10, color: "var(--text2)" }}>Individual</span>
+            <span style={{ fontSize: 10, color: "var(--text2)" }}>{t("agenda.individual")}</span>
           ) : null}
           {miIns ? (
             <span style={{ fontSize: 10, fontWeight: 600, color: "#27500A" }}>
-              ✓ Apuntado
-              {haPagado ? " · Pagado" : ""}
+              {t("agenda.signedUp")}
+              {haPagado ? ` · ${t("agenda.paid")}` : ""}
             </span>
           ) : null}
           {e.inscritos.length && !miIns ? (
@@ -527,22 +520,22 @@ function EventoCard({
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--success-t)" }}>✓ Apuntado</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--success-t)" }}>{t("agenda.signedUp")}</span>
                   {haPagado ? (
-                    <span style={{ fontSize: 11, fontWeight: 600, color: "#27500A" }}>✅ Pago confirmado</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: "#27500A" }}>{t("agenda.paymentConfirmed")}</span>
                   ) : (
-                    <span style={{ fontSize: 11, color: "#BA7517" }}>⏳ Pago pendiente</span>
+                    <span style={{ fontSize: 11, color: "#BA7517" }}>{t("agenda.paymentPendingEmoji")}</span>
                   )}
                 </div>
                 {esTorneo && miIns.pareja ? (
                   <div style={{ fontSize: 12, color: "var(--success-t)", marginTop: 3 }}>
-                    Pareja: <strong>{parejaNombre(miIns.pareja, e.inscritos)}</strong>
+                    {t("agenda.partner", { name: parejaNombre(miIns.pareja, e.inscritos) })}
                   </div>
                 ) : null}
                 {esTorneo && miIns && candidatosPareja.length > 0 ? (
                   <div style={{ marginTop: 10 }}>
                     <label htmlFor={`pareja-sel-${e.id}`} style={{ fontSize: 12, color: "var(--text2)", display: "block", marginBottom: 4 }}>
-                      Elegir pareja (entre inscrit@s)
+                      {t("agenda.choosePartner")}
                     </label>
                     <select
                       key={`${e.id}-${miIns?.pareja || "np"}`}
@@ -555,7 +548,7 @@ function EventoCard({
                         ev.target.value = "";
                       }}
                     >
-                      <option value="">— Seleccionar —</option>
+                      <option value="">{t("common.selectPlaceholder")}</option>
                       {candidatosPareja.map((i) => (
                         <option key={String(i.jugadorId)} value={String(i.jugadorId)}>
                           {getNombre(i)}
@@ -570,15 +563,15 @@ function EventoCard({
                   style={{ marginTop: 8, width: "100%", fontSize: 12 }}
                   onClick={() => onBaja()}
                 >
-                  Darme de baja
+                  {t("agenda.unregister")}
                 </button>
               </div>
             ) : completo ? (
-              <p style={{ marginTop: 8, fontSize: 12, color: "#BA7517" }}>Evento completo (aforo máximo alcanzado).</p>
+              <p style={{ marginTop: 8, fontSize: 12, color: "#BA7517" }}>{t("agenda.eventFull")}</p>
             ) : (
               <div style={{ marginTop: 8 }}>
                 <button type="button" className="btn btn-primary btn-sm btn-block" style={{ fontSize: 13 }} onClick={() => onApuntarse()}>
-                  Apuntarme
+                  {t("agenda.signUp")}
                 </button>
               </div>
             )}
@@ -594,8 +587,11 @@ function EventoCard({
                       onAbrirLista();
                     }}
                   >
-                    Ver inscritos ({e.inscritos.length}) ·{" "}
-                    {e.totalPagados ?? e.inscritos.filter((i) => i.pagoConfirmado).length} pagados ↑
+                    {t("agenda.viewInscribed", {
+                      count: e.inscritos.length,
+                      paid: e.totalPagados ?? e.inscritos.filter((i) => i.pagoConfirmado).length
+                    })}{" "}
+                    ↑
                   </button>
                 ) : null}
                 <button
@@ -604,18 +600,19 @@ function EventoCard({
                   style={{ width: "100%", fontSize: 12 }}
                   onClick={(ev) => {
                     ev.stopPropagation();
-                    if (window.confirm("¿Seguro que quieres borrar este evento?")) onBorrar();
+                    if (window.confirm(t("agenda.deleteConfirm"))) onBorrar();
                   }}
                 >
-                  Borrar
+                  {t("common.delete")}
                 </button>
               </div>
             ) : e.inscritos.length ? (
               <div style={{ fontSize: 12, color: "var(--text2)", marginTop: 6 }}>
-                {e.inscritos.length} inscrito{e.inscritos.length !== 1 ? "s" : ""}
-                {e.precio > 0
-                  ? ` · ${e.totalPagados ?? e.inscritos.filter((i) => i.pagoConfirmado).length} pagados`
-                  : ""}
+                {t("agenda.inscribedSummary", {
+                  count: e.inscritos.length,
+                  plural: pluralSuffix(e.inscritos.length),
+                  paid: e.totalPagados ?? e.inscritos.filter((i) => i.pagoConfirmado).length
+                })}
               </div>
             ) : null}
           </>

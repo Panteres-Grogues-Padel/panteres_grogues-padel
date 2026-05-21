@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { isJugadorUuid, normalizeJugadorUuid } from "../utils/jugador";
+import { DATE_LOCALE } from "../utils/dates";
 
 function rowsFromRpc(data) {
   if (data == null) return [];
@@ -61,7 +62,7 @@ export function formatNotificacionTs(value) {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleString("es-ES", {
+  return date.toLocaleString(DATE_LOCALE, {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",

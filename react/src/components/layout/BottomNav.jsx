@@ -1,8 +1,10 @@
+import { t } from "../../i18n";
+
 /** Orden: Jugar, Partidos, Resultados, Ranking, Agenda, Coordinación (misma barra en landing y resto de la app). Iconos SVG como en index.html. */
 const TABS = [
   {
     id: "jugar",
-    label: "Jugar",
+    labelKey: "nav.jugar",
     svg: (
       <svg viewBox="0 0 24 24" width={22} height={22} aria-hidden>
         <rect x="3" y="4" width="18" height="18" rx="2" />
@@ -14,7 +16,7 @@ const TABS = [
   },
   {
     id: "partidos",
-    label: "Partidos",
+    labelKey: "nav.partidos",
     svg: (
       <svg viewBox="0 0 24 24" width={22} height={22} aria-hidden>
         <circle cx="12" cy="12" r="10" />
@@ -25,7 +27,7 @@ const TABS = [
   },
   {
     id: "resultados",
-    label: "Resultados",
+    labelKey: "nav.resultados",
     svg: (
       <svg viewBox="0 0 24 24" width={22} height={22} aria-hidden>
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -37,7 +39,7 @@ const TABS = [
   },
   {
     id: "ranking",
-    label: "Ranking",
+    labelKey: "nav.ranking",
     svg: (
       <svg viewBox="0 0 24 24" width={22} height={22} aria-hidden>
         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
@@ -46,7 +48,7 @@ const TABS = [
   },
   {
     id: "agenda",
-    label: "Agenda",
+    labelKey: "nav.agenda",
     svg: (
       <svg viewBox="0 0 24 24" width={22} height={22} aria-hidden>
         <rect x="3" y="4" width="18" height="18" rx="2" />
@@ -61,7 +63,7 @@ const TABS = [
   },
   {
     id: "seccion",
-    label: "Coordinación",
+    labelKey: "nav.coordinacion",
     svg: (
       <svg viewBox="0 0 24 24" width={22} height={22} aria-hidden>
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -76,7 +78,7 @@ const TABS = [
 export default function BottomNav({ activeTab, setActiveTab }) {
   return (
     <nav className="bottom-nav">
-      {TABS.map(({ id, label, svg }) => (
+      {TABS.map(({ id, labelKey, svg }) => (
         <button
           key={id}
           type="button"
@@ -84,7 +86,7 @@ export default function BottomNav({ activeTab, setActiveTab }) {
           onClick={() => setActiveTab(id)}
         >
           {svg}
-          <span className="nav-label">{label}</span>
+          <span className="nav-label">{t(labelKey)}</span>
         </button>
       ))}
     </nav>

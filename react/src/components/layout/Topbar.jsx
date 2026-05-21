@@ -1,3 +1,5 @@
+import { t } from "../../i18n";
+
 /** Igual que en index.html (`nombreCorto`): "Jose García Blanco" → "Jose G. B." */
 function nombreCorto(nombreCompleto) {
   const parts = (nombreCompleto ?? "").trim().split(/\s+/);
@@ -37,7 +39,7 @@ export default function Topbar({ currentUser, setActiveTab, onLogout, noLeidas =
   return (
     <header className="topbar">
       <div className="topbar-left">
-        <button type="button" className="topbar-logo" onClick={irBienvenida} aria-label="Volver a la bienvenida">
+        <button type="button" className="topbar-logo" onClick={irBienvenida} aria-label={t("topbar.backToWelcome")}>
           <img src="/icons/landing-logo.png" alt="" width={28} height={28} />
         </button>
         <div>
@@ -52,7 +54,9 @@ export default function Topbar({ currentUser, setActiveTab, onLogout, noLeidas =
           type="button"
           className="notif-btn"
           onClick={onOpenNotificaciones}
-          aria-label={noLeidas ? `${noLeidas} notificaciones sin leer` : "Notificaciones"}
+          aria-label={
+            noLeidas ? t("topbar.notificationsUnread", { count: noLeidas }) : t("topbar.notifications")
+          }
         >
           <IconBell />
           {noLeidas > 0 ? (
@@ -69,7 +73,7 @@ export default function Topbar({ currentUser, setActiveTab, onLogout, noLeidas =
             onLogout();
           }}
         >
-          Salir
+          {t("nav.logout")}
         </button>
       </div>
     </header>

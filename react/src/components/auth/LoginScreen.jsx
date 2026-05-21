@@ -1,23 +1,25 @@
+import { t } from "../../i18n";
+
 export default function LoginScreen({ auth }) {
   return (
     <section className="screen active">
       <div className="login-screen">
         <div className="login-card">
-          <div className="login-title">Panteres Grogues Padel</div>
-          <div className="login-sub">Inicia sesion para continuar</div>
+          <div className="login-title">{t("auth.appTitle")}</div>
+          <div className="login-sub">{t("auth.subtitle")}</div>
 
           <div className="form-group">
-            <label className="login-label">Email</label>
+            <label className="login-label">{t("common.email")}</label>
             <input
               type="text"
               value={auth.email}
               onChange={(e) => auth.setEmail(e.target.value)}
-              placeholder="tu@email.com"
+              placeholder={t("auth.emailPlaceholder")}
             />
           </div>
 
           <div className="form-group">
-            <label className="login-label">Contrasena</label>
+            <label className="login-label">{t("auth.passwordLabel")}</label>
             <input
               type="password"
               value={auth.password}
@@ -33,31 +35,31 @@ export default function LoginScreen({ auth }) {
               checked={auth.privacyAccepted}
               onChange={(e) => auth.setPrivacyAccepted(e.target.checked)}
             />
-            <span className="login-privacy-text">Acepto la politica de privacidad</span>
+            <span className="login-privacy-text">{t("auth.privacyAccept")}</span>
           </label>
 
           <button className="btn btn-primary btn-block" onClick={auth.loginEmail} disabled={auth.loading}>
-            {auth.loading ? "Entrando..." : "Entrar"}
+            {auth.loading ? t("auth.entering") : t("auth.enter")}
           </button>
 
           <button className="btn btn-block mt-8" onClick={auth.loginGoogle} disabled={auth.loading}>
-            Entrar con Google
+            {t("auth.enterGoogle")}
           </button>
 
           <div className="login-divider">
-            <span>o acceso demo</span>
+            <span>{t("auth.demoDivider")}</span>
           </div>
           <select value={auth.demoId} onChange={(e) => auth.setDemoId(e.target.value)}>
-            <option value="">Selecciona un usuario demo...</option>
+            <option value="">{t("auth.selectDemoUser")}</option>
             {auth.demoUsers.map((u) => (
               <option key={u.id} value={u.id}>
                 {u.nombreCompleto}
-                {u.isCoord ? " (Coord.)" : ""}
+                {u.isCoord ? t("auth.coordMarker") : ""}
               </option>
             ))}
           </select>
           <button className="btn btn-block mt-8" onClick={auth.loginDemo} disabled={auth.loading}>
-            Entrar como demo
+            {t("auth.enterAsDemo")}
           </button>
 
           {auth.error ? <p className="error-box">{auth.error}</p> : null}

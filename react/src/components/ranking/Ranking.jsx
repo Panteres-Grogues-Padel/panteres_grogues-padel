@@ -1,5 +1,6 @@
 import { jugadoresCoinciden } from "../../utils/jugador";
 import { getNombre } from "../../utils/nombres";
+import { t } from "../../i18n";
 
 function pct(value, decimals = 1) {
   const n = Number(value);
@@ -12,21 +13,21 @@ export default function Ranking({ ranking = [], currentUser, onSelect }) {
 
   return (
     <div>
-      <h2 className="section-title">Ranking</h2>
+      <h2 className="section-title">{t("ranking.title")}</h2>
       <article className="card">
         <div className="rank-wrap">
           <table className="rank-table">
             <thead>
               <tr>
                 <th>#</th>
-                <th>Jugador</th>
-                <th>PJ</th>
-                <th>PG</th>
-                <th>JJ</th>
-                <th>JG</th>
-                <th>Efic.</th>
-                <th>Pen.</th>
-                <th>Score</th>
+                <th>{t("ranking.columns.player")}</th>
+                <th>{t("ranking.columns.pj")}</th>
+                <th>{t("ranking.columns.pg")}</th>
+                <th>{t("ranking.columns.jj")}</th>
+                <th>{t("ranking.columns.jg")}</th>
+                <th>{t("ranking.columns.efficiency")}</th>
+                <th>{t("ranking.columns.penalty")}</th>
+                <th>{t("ranking.columns.score")}</th>
               </tr>
             </thead>
             <tbody>
@@ -61,7 +62,7 @@ export default function Ranking({ ranking = [], currentUser, onSelect }) {
             </tbody>
           </table>
         </div>
-        <p className="formula-note">Ordenado por score · Eficacia, penalización y score en %</p>
+        <p className="formula-note">{t("ranking.formulaNote")}</p>
       </article>
     </div>
   );

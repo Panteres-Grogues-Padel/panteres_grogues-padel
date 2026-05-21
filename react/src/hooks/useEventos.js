@@ -4,6 +4,7 @@ import { createActivityLog } from "../lib/engagement";
 import { supabase } from "../lib/supabase";
 import { isJugadorUuid, jugadoresCoinciden, normalizeJugadorUuid } from "../utils/jugador";
 import { getNombre } from "../utils/nombres";
+import { t } from "../i18n";
 
 function rowsFromRpc(data) {
   if (data == null) return [];
@@ -14,9 +15,9 @@ function mapInscripcionRpcRow(ins) {
   return {
     id: ins.id,
     jugadorId: ins.jugador_id,
-    nombre: getNombre(ins) || "Jugador",
+    nombre: getNombre(ins) || t("common.player"),
     nickname: ins.nickname?.trim() || null,
-    nombreCompleto: ins.nombre_completo ?? ins.nombre ?? "Jugador",
+    nombreCompleto: ins.nombre_completo ?? ins.nombre ?? t("common.player"),
     pareja: ins.pareja ?? "",
     pagoConfirmado: Boolean(ins.pago_confirmado)
   };
@@ -163,20 +164,20 @@ export function useEventos(currentUser, isCoord) {
   }, [eventos, currentUser]);
 
   async function crearEvento({ titulo, fechaInicio, fechaFin, hora, descripcion, aforoMaximo }) {
-    if (!isCoord) return { ok: false, error: "Solo coordinación." };
+    if (!isCoord) return { ok: false, error: t("hooks.eventos.coordOnly") };
     const tituloTrim = String(titulo ?? "").trim();
-    if (!tituloTrim) return { ok: false, error: "El título es obligatorio." };
+    if (!tituloTrim) return { ok: false, error: t("hooks.eventos.titleRequired") };
     const fecha = fechaInicio;
     const fin = fechaFin || fechaInicio;
-    if (!fecha) return { ok: false, error: "La fecha de inicio es obligatoria." };
-    if (!fin) return { ok: false, error: "La fecha de fin es obligatoria." };
-    if (fin < fecha) return { ok: false, error: "La fecha de fin no puede ser anterior a la de inicio." };
+    if (!fecha) return { ok: false, error: t("hooks.eventos.startDateRequired") };
+    if (!fin) return { ok: false, error: t("hooks.eventos.endDateRequired") };
+    if (fin < fecha) return { ok: false, error: t("hooks.eventos.endBeforeStart") };
 
     let aforo = null;
     if (aforoMaximo !== "" && aforoMaximo != null) {
       aforo = Number(aforoMaximo);
       if (!Number.isInteger(aforo) || aforo < 1) {
-        return { ok: false, error: "El aforo debe ser un número entero mayor que 0." };
+        return { ok: false, error: t("hooks.eventos.capacityInvalid") };
       }
     }
 
@@ -221,7 +222,10 @@ export function useEventos(currentUser, isCoord) {
     await createActivityLog({
       jugadorId: uid,
       tipo: "agenda",
-      texto: `Crea evento: ${tituloTrim} (${fecha}${fin !== fecha ? ` – ${fin}` : ""})`
+      texto: t("hooks.eventos.activity.create", {
+        title: tituloTrim,
+        dates: `${fecha}${fin !== fecha ? ` – ${fin}` : ""}`
+      })
     });
     await loadEventos({ silent: true });
     return { ok: true };
@@ -229,12 +233,12 @@ export function useEventos(currentUser, isCoord) {
 
   /** Inscripción individual: sin pareja en el alta (torneos y resto). */
   async function apuntarseEvento(eventoId) {
-    if (!currentUser) return { ok: false, error: "Debes iniciar sesion." };
+    if (!currentUser) return { ok: false, error: t("hooks.eventos.mustLogin") };
     const evento = eventos.find((e) => e.id === eventoId);
-    if (!evento) return { ok: false, error: "Evento no encontrado." };
+    if (!evento) return { ok: false, error: t("hooks.eventos.eventNotFound") };
 
     if (evento.aforoMaximo != null && (evento.inscritos?.length ?? 0) >= evento.aforoMaximo) {
-      return { ok: false, error: "El evento está completo (aforo máximo alcanzado)." };
+      return { ok: false, error: t("hooks.eventos.eventFull") };
     }
 
     if (useFallback) {
@@ -271,7 +275,7 @@ export function useEventos(currentUser, isCoord) {
     await createActivityLog({
       jugadorId: uid,
       tipo: "agenda",
-      texto: `Se apunta a ${evento.titulo} (${evento.fecha})`
+      texto: t("hooks.eventos.activity.signUp", { title: evento.titulo, date: evento.fecha })
     });
     await reloadInscripcionesEventos({ silent: true });
     return { ok: true };
@@ -279,18 +283,18 @@ export function useEventos(currentUser, isCoord) {
 
   /** Pareja = `jugador_id` del compañer@ (debe estar ya inscrito en el mismo torneo). */
   async function setParejaTorneo(eventoId, parejaJugadorId) {
-    if (!currentUser) return { ok: false, error: "Debes iniciar sesion." };
+    if (!currentUser) return { ok: false, error: t("hooks.eventos.mustLogin") };
     const pid = normalizeJugadorUuid(parejaJugadorId);
-    if (!isJugadorUuid(pid)) return { ok: false, error: "Selecciona una pareja válida." };
+    if (!isJugadorUuid(pid)) return { ok: false, error: t("hooks.eventos.invalidPartner") };
     if (jugadoresCoinciden(pid, currentUser.id)) {
-      return { ok: false, error: "No puedes emparejarte contigo mism@." };
+      return { ok: false, error: t("hooks.eventos.cannotPartnerSelf") };
     }
 
     const evento = eventos.find((e) => e.id === eventoId);
-    if (!evento || evento.tipo !== "torneo") return { ok: false, error: "Solo aplica a torneos." };
+    if (!evento || evento.tipo !== "torneo") return { ok: false, error: t("hooks.eventos.tournamentOnly") };
     const inscritos = evento.inscritos ?? [];
     const parejaInscrita = inscritos.some((i) => jugadoresCoinciden(i.jugadorId, pid));
-    if (!parejaInscrita) return { ok: false, error: "Esa persona no está inscrita en este torneo." };
+    if (!parejaInscrita) return { ok: false, error: t("hooks.eventos.partnerNotInscribed") };
 
     if (useFallback) {
       setEventos((prev) =>
@@ -318,7 +322,7 @@ export function useEventos(currentUser, isCoord) {
   }
 
   async function bajaEvento(eventoId) {
-    if (!currentUser) return { ok: false, error: "Debes iniciar sesion." };
+    if (!currentUser) return { ok: false, error: t("hooks.eventos.mustLogin") };
     const uid = normalizeJugadorUuid(currentUser.id);
 
     if (useFallback) {
@@ -353,14 +357,17 @@ export function useEventos(currentUser, isCoord) {
     await createActivityLog({
       jugadorId: uid,
       tipo: "agenda",
-      texto: `Se da de baja de ${evento?.titulo ?? "evento"} (${evento?.fecha ?? eventoId})`
+      texto: t("hooks.eventos.activity.unregister", {
+        title: evento?.titulo ?? "evento",
+        date: evento?.fecha ?? eventoId
+      })
     });
     await reloadInscripcionesEventos({ silent: true });
     return { ok: true };
   }
 
   async function borrarEvento(eventoId) {
-    if (!isCoord) return { ok: false, error: "Solo coordinación." };
+    if (!isCoord) return { ok: false, error: t("hooks.eventos.coordOnly") };
     const evento = eventos.find((e) => e.id === eventoId);
 
     if (useFallback) {
@@ -374,7 +381,7 @@ export function useEventos(currentUser, isCoord) {
     await createActivityLog({
       jugadorId: normalizeJugadorUuid(currentUser.id),
       tipo: "agenda",
-      texto: `Elimina evento: ${evento?.titulo ?? eventoId}`
+      texto: t("hooks.eventos.activity.delete", { title: evento?.titulo ?? eventoId })
     });
     await loadEventos({ silent: true });
     return { ok: true };
@@ -382,8 +389,8 @@ export function useEventos(currentUser, isCoord) {
 
   /** Marca o desmarca pago del inscrito (coordinador) vía RPC. */
   async function validarPago(eventoId, inscripcionId, pagado = true) {
-    if (!isCoord) return { ok: false, error: "Solo coordinacion." };
-    if (!inscripcionId) return { ok: false, error: "Inscripción no válida." };
+    if (!isCoord) return { ok: false, error: t("hooks.eventos.coordOnlyAlt") };
+    if (!inscripcionId) return { ok: false, error: t("hooks.eventos.invalidInscription") };
 
     const marcado = Boolean(pagado);
 
@@ -428,7 +435,7 @@ export function useEventos(currentUser, isCoord) {
     const payload = data && typeof data === "object" && !Array.isArray(data) ? data : {};
     if (payload.ok === false) {
       revert();
-      return { ok: false, error: payload.error ?? "No se pudo marcar el pago." };
+      return { ok: false, error: payload.error ?? t("hooks.eventos.paymentFailed") };
     }
 
     await reloadInscripcionesEventos({ silent: true });

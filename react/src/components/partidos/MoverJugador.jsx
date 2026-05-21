@@ -1,4 +1,5 @@
 import { getNombre } from "../../utils/nombres";
+import { t } from "../../i18n";
 
 export default function MoverJugador({ open, origenPartido, jugador, destinos, onClose, onMove }) {
   if (!open || !origenPartido || !jugador) return null;
@@ -6,9 +7,14 @@ export default function MoverJugador({ open, origenPartido, jugador, destinos, o
   return (
     <div className="overlay open">
       <div className="overlay-sheet open">
-        <div style={{ fontSize: "16px", fontWeight: 600, color: "var(--text)", marginBottom: "4px" }}>↕️ Mover jugador</div>
+        <div style={{ fontSize: "16px", fontWeight: 600, color: "var(--text)", marginBottom: "4px" }}>
+          {t("partidos.move.title")}
+        </div>
         <div style={{ fontSize: "13px", color: "var(--text2)", marginBottom: "1rem" }}>
-          Mover a <strong>{getNombre(jugador)}</strong> desde Partido {origenPartido.numeroPista || "-"} a:
+          {t("partidos.move.subtitle", {
+            name: getNombre(jugador),
+            from: origenPartido.numeroPista || "-"
+          })}
         </div>
 
         {destinos.map((d) => {
@@ -20,25 +26,25 @@ export default function MoverJugador({ open, origenPartido, jugador, destinos, o
             >
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: "13px", fontWeight: 500, color: "var(--text)" }}>
-                  Partido {d.numeroPista || "-"}
-                  {d.hora ? ` · 🕐 ${d.hora}` : ""}{" "}
-                  <span style={{ fontSize: "11px", fontWeight: 600, ...{ color: count < 4 ? "#27500A" : count === 4 ? "var(--text2)" : "#BA7517" } }}>
-                    ({count} jugadores)
-                  </span>
+                  {t("partidos.move.option", {
+                    num: d.numeroPista || "-",
+                    hora: d.hora ? ` · 🕐 ${d.hora}` : "",
+                    count
+                  })}
                 </div>
                 <div style={{ fontSize: "11px", color: "var(--text2)", marginTop: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {d.jugadores.map((j) => getNombre(j)).join(", ")}
                 </div>
               </div>
               <button className="btn btn-sm btn-primary" style={{ fontSize: "12px", flexShrink: 0, marginLeft: "10px" }} onClick={() => onMove(d.id)}>
-                Mover
+                {t("common.move")}
               </button>
             </div>
           );
         })}
 
         <button className="close-btn" onClick={onClose}>
-          Cerrar
+          {t("common.close")}
         </button>
       </div>
     </div>

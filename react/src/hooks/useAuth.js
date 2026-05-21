@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { COORDS, JUGADORES_INICIALES } from "../utils/mockData";
 import { supabase } from "../lib/supabase";
+import { t } from "../i18n";
 
 const JUGADORES_SELECT =
   "id, auth_id, nombre, nombre_completo, nickname, email, telefono, instagram, foto_url, mostrar_telefono, autoriza_instagram, es_coordinador, activo";
@@ -44,7 +45,7 @@ export function useAuth() {
       .eq("auth_id", authUserId)
       .maybeSingle();
     if (jugadorError) return { ok: false, message: jugadorError.message };
-    if (!jugador) return { ok: false, message: "Usuario no encontrado" };
+    if (!jugador) return { ok: false, message: t("auth.errors.userNotFound") };
     return { ok: true, jugador };
   }
 
@@ -74,7 +75,7 @@ export function useAuth() {
       ultimoAuthIdCargadoRef.current = authUser.id;
       if (!mismoAuthId) setAuthEpoch((n) => n + 1);
     } catch (e) {
-      setError(e?.message ?? "Error de conexion.");
+      setError(e?.message ?? t("auth.errors.connection"));
       setCurrentUser(null);
       ultimoAuthIdCargadoRef.current = null;
       try {
@@ -114,18 +115,18 @@ export function useAuth() {
 
   async function loginEmail() {
     setError("");
-    if (!privacyAccepted) return setError("Debes aceptar la politica de privacidad para continuar.");
-    if (!email || !password) return setError("Introduce tu email y contrasena.");
-    if (!email.includes("@")) return setError("El email no es valido.");
-    if (password.length < 6) return setError("La contrasena debe tener al menos 6 caracteres.");
-    if (!supabase) return setError("Faltan variables de entorno de Supabase.");
+    if (!privacyAccepted) return setError(t("auth.errors.privacyRequired"));
+    if (!email || !password) return setError(t("auth.errors.emailPasswordRequired"));
+    if (!email.includes("@")) return setError(t("auth.errors.emailInvalid"));
+    if (password.length < 6) return setError(t("auth.errors.passwordMinLength"));
+    if (!supabase) return setError(t("auth.errors.supabaseEnvMissing"));
 
     setLoading(true);
     try {
       let loginTimeoutId;
       const timeoutPromise = new Promise((_, reject) => {
         loginTimeoutId = setTimeout(
-          () => reject(new Error("Tiempo de espera agotado. Revisa la conexion.")),
+          () => reject(new Error(t("auth.errors.timeout"))),
           15000
         );
       });
@@ -149,7 +150,7 @@ export function useAuth() {
 
       const authUser = data?.user ?? data?.session?.user ?? null;
       if (!authUser) {
-        setError("No se pudo obtener la sesion. Vuelve a intentarlo.");
+        setError(t("auth.errors.sessionFailed"));
         return;
       }
 
@@ -166,7 +167,7 @@ export function useAuth() {
       ultimoAuthIdCargadoRef.current = authUser.id;
       setAuthEpoch((n) => n + 1);
     } catch (e) {
-      setError(e?.message ?? "Error de conexion al iniciar sesion.");
+      setError(e?.message ?? t("auth.errors.connectionLogin"));
       ultimoAuthIdCargadoRef.current = null;
       try {
         await supabase.auth.signOut({ scope: "local" });
@@ -180,16 +181,16 @@ export function useAuth() {
 
   function loginDemo() {
     setError("");
-    if (!privacyAccepted) return setError("Debes aceptar la politica de privacidad para continuar.");
+    if (!privacyAccepted) return setError(t("auth.errors.privacyRequired"));
     const selected = demoUsers.find((u) => u.id === Number(demoId));
-    if (!selected) return setError("Selecciona un usuario demo.");
+    if (!selected) return setError(t("auth.errors.selectDemo"));
     setCurrentUser({ ...selected, fromFallback: true });
   }
 
   async function loginGoogle() {
     setError("");
-    if (!privacyAccepted) return setError("Debes aceptar la politica de privacidad para continuar.");
-    if (!supabase) return setError("Faltan variables de entorno de Supabase.");
+    if (!privacyAccepted) return setError(t("auth.errors.privacyRequired"));
+    if (!supabase) return setError(t("auth.errors.supabaseEnvMissing"));
 
     setLoading(true);
     try {
@@ -201,7 +202,7 @@ export function useAuth() {
       });
       if (authError) setError(authError.message);
     } catch (e) {
-      setError(e?.message ?? "Error al iniciar sesion con Google.");
+      setError(e?.message ?? t("auth.errors.googleLogin"));
     } finally {
       setLoading(false);
     }

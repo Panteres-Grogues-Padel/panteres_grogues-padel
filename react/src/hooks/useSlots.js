@@ -11,7 +11,8 @@ import { supabase } from "../lib/supabase";
 import { createActivityLog, createNotifications, notificacionDuplicada } from "../lib/engagement";
 import { isJugadorUuid, jugadoresCoinciden, normalizeJugadorUuid } from "../utils/jugador";
 import { getNombre } from "../utils/nombres";
-import { fechaPartidoFromSlot, formatDiaPartidoLabel, hoyLocalStr } from "../utils/dates";
+import { DATE_LOCALE, fechaPartidoFromSlot, formatDiaPartidoLabel, hoyLocalStr } from "../utils/dates";
+import { t } from "../i18n";
 
 // --- Utilidades de fecha UTC ---
 
@@ -41,7 +42,7 @@ function normalizeSemana(v) {
 
 function formatTsStr(isoTs) {
   if (!isoTs) return "";
-  return new Date(isoTs).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+  return new Date(isoTs).toLocaleTimeString(DATE_LOCALE, { hour: "2-digit", minute: "2-digit" });
 }
 
 function jugadorCoincide(insJugadorId, userId) {
@@ -123,7 +124,7 @@ export function useSlots(currentUser, authEpoch = 0) {
         if (cancelled) return;
 
         if (slotsErr || !slotsData?.length) {
-          setSlotsNotice(slotsErr?.message ?? "No hay slots activos. Se muestran slots de respaldo.");
+          setSlotsNotice(slotsErr?.message ?? t("hooks.slots.noActiveSlots"));
           setSlots(SLOTS_INICIALES);
         } else {
           setSlotsNotice("");
@@ -154,13 +155,13 @@ export function useSlots(currentUser, authEpoch = 0) {
         if (cancelled) return;
 
         if (inscErr) {
-          setSlotsNotice("Error al cargar inscripciones: " + inscErr.message);
+          setSlotsNotice(t("hooks.slots.loadInscriptionsError", { error: inscErr.message }));
         } else {
           const conNombres = await cargarNombres(inscData ?? []);
           if (!cancelled) setInscripciones(conNombres);
         }
       } catch (err) {
-        if (!cancelled) setSlotsNotice("Error al cargar datos: " + (err?.message ?? String(err)));
+        if (!cancelled) setSlotsNotice(t("hooks.slots.loadDataError", { error: err?.message ?? String(err) }));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -205,8 +206,8 @@ export function useSlots(currentUser, authEpoch = 0) {
         if (recordatoriosInscRef.current.has(dedupeKey)) continue;
 
         const diaLabel = formatDiaPartidoLabel(fechaPartido);
-        const texto = `Tienes partido el ${diaLabel} en ${slot.club}. ¡Recuerda estar pendiente!`;
-        const titulo = "Recordatorio de partido";
+        const texto = t("hooks.slots.notifications.matchReminderText", { day: diaLabel, club: slot.club });
+        const titulo = t("hooks.slots.notifications.matchReminderTitle");
 
         const duplicada = await notificacionDuplicada({
           jugadorId: userId,
@@ -240,7 +241,7 @@ export function useSlots(currentUser, authEpoch = 0) {
       const now = new Date();
       const lunes = getMondayUtc(now);
       const lunesProximo = formatDateUTC(addDaysUtc(lunes, 7));
-      const titulo = "¡Ya puedes apuntarte!";
+      const titulo = t("hooks.slots.notifications.listOpenTitle");
 
       for (const slot of slots) {
         if (cancelled) return;
@@ -253,8 +254,8 @@ export function useSlots(currentUser, authEpoch = 0) {
         const diaLabel =
           formatDiaPartidoLabel(fechaPartidoFromSlot(semanaObjetivo, slot.diaSemana)) ||
           slot.label ||
-          "tu día";
-        const texto = `Se ha abierto la lista para ${diaLabel} en ${slot.club}. ¡Corre a apuntarte!`;
+          t("hooks.slots.notifications.yourDay");
+        const texto = t("hooks.slots.notifications.listOpenText", { day: diaLabel, club: slot.club });
 
         const dedupeKey = `${userId}:apertura:${slot.id}:${semanaObjetivo}`;
         if (aperturaListaNotifRef.current.has(dedupeKey)) continue;
@@ -387,14 +388,14 @@ export function useSlots(currentUser, authEpoch = 0) {
   }
 
   async function apuntarEnSlot(slotId, options = {}) {
-    if (!currentUser || !supabase) return { ok: false, error: "No hay sesión activa." };
+    if (!currentUser || !supabase) return { ok: false, error: t("hooks.slots.noSession") };
 
     const slot = slotsJugar.find((s) => s.id === slotId);
-    if (!slot) return { ok: false, error: "Slot no encontrado." };
-    if (!slot.abierto) return { ok: false, error: "La lista aún no está abierta." };
+    if (!slot) return { ok: false, error: t("hooks.slots.slotNotFound") };
+    if (!slot.abierto) return { ok: false, error: t("hooks.slots.listNotOpen") };
 
     const jugadorId = normalizeJugadorUuid(currentUser.id);
-    if (!isJugadorUuid(jugadorId)) return { ok: false, error: "ID de jugador no válido." };
+    if (!isJugadorUuid(jugadorId)) return { ok: false, error: t("hooks.slots.invalidPlayerId") };
 
     const dbSlotId = slot.baseId ?? slot.id;
     const semana = slot.semanaObjetivo;
@@ -403,7 +404,10 @@ export function useSlots(currentUser, authEpoch = 0) {
       (s) => s.id !== slotId && s.apuntado && s.semanaObjetivo === semana && sameDiaSemanaSlot(s, slot)
     );
     if (yaMismoDia) {
-      return { ok: false, error: `Ya estás apuntado en ${yaMismoDia.label} — ${yaMismoDia.club}.` };
+      return {
+        ok: false,
+        error: t("hooks.slots.alreadyEnrolled", { label: yaMismoDia.label, club: yaMismoDia.club })
+      };
     }
 
     const { error } = await supabase.from("inscripciones").insert({
@@ -440,33 +444,33 @@ export function useSlots(currentUser, authEpoch = 0) {
     void createActivityLog({
       jugadorId: currentUser.id,
       tipo: "jugar",
-      texto: `Se apunta a ${slot.label} · ${slot.club} (${semana})`
+      texto: t("hooks.slots.activity.signUp", { label: slot.label, club: slot.club, week: semana })
     });
     void createNotifications([
       {
         jugadorId,
         tipo: "jugar",
-        titulo: "¡Apuntado!",
-        texto: "Recuerda estar pendiente del horario."
+        titulo: t("hooks.slots.notifications.enrolledTitle"),
+        texto: t("hooks.slots.notifications.enrolledText")
       }
     ]);
     return { ok: true };
   }
 
   async function bajaEnSlot(slotId) {
-    if (!currentUser || !supabase) return { ok: false, error: "No hay sesión activa." };
+    if (!currentUser || !supabase) return { ok: false, error: t("hooks.slots.noSession") };
 
     const slot = slotsJugar.find((s) => s.id === slotId);
-    if (!slot) return { ok: false, error: "Slot no encontrado." };
+    if (!slot) return { ok: false, error: t("hooks.slots.slotNotFound") };
 
     const jugadorId = normalizeJugadorUuid(currentUser.id);
-    if (!isJugadorUuid(jugadorId)) return { ok: false, error: "ID de jugador no válido." };
+    if (!isJugadorUuid(jugadorId)) return { ok: false, error: t("hooks.slots.invalidPlayerId") };
 
     const dbSlotId = slot.baseId ?? slot.id;
     const semana = normalizeSemana(slot.semanaObjetivo);
 
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return { ok: false, error: "Sesión expirada. Vuelve a iniciar sesión." };
+    if (!session) return { ok: false, error: t("hooks.slots.sessionExpired") };
 
     const { error: rpcErr } = await supabase.rpc("borrar_inscripcion", {
       p_jugador_id: jugadorId,
@@ -491,19 +495,23 @@ export function useSlots(currentUser, authEpoch = 0) {
     void createActivityLog({
       jugadorId,
       tipo: "jugar",
-      texto: `Se da de baja de ${slot.label} · ${slot.club} (${slot.semanaObjetivo})`
+      texto: t("hooks.slots.activity.unregister", {
+        label: slot.label,
+        club: slot.club,
+        week: slot.semanaObjetivo
+      })
     });
     void createNotifications([
       {
         jugadorId,
         tipo: "jugar",
-        titulo: "Baja confirmada",
-        texto: "¡Hasta la próxima!"
+        titulo: t("hooks.slots.notifications.unregisterTitle"),
+        texto: t("hooks.slots.notifications.unregisterText")
       }
     ]);
 
     if (slot.semana === "actual" && isBajaWarning({ diaSemana: slot.diaSemana })) {
-      return { ok: true, warning: "Si te das de baja hoy, por favor busca un@ sustitut@." };
+      return { ok: true, warning: t("hooks.slots.bajaWarningShort") };
     }
     return { ok: true };
   }

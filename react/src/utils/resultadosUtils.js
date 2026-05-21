@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { ayerLocalStr, enVentanaCoordResultados, hoyLocalStr } from "./dates";
 import { getNombre } from "./nombres";
 
@@ -31,14 +32,9 @@ export function getEstadoResultado(resultado) {
   return "pendiente";
 }
 
-const ESTADO_LABEL = {
-  sin: "Sin resultado",
-  pendiente: "Pendiente de validación",
-  validado: "Validado"
-};
-
 export function getEstadoLabel(estado) {
-  return ESTADO_LABEL[estado] ?? "";
+  const key = { sin: "none", pendiente: "pending", validado: "validated" }[estado];
+  return key ? t(`resultados.status.${key}`) : "";
 }
 
 export function getPermisosResultado({ partido, resultado, currentUser, isCoord, now = new Date() }) {

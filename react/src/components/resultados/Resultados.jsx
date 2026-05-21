@@ -7,6 +7,7 @@ import {
 } from "../../utils/resultadosUtils";
 import ResultadosCalendario from "./ResultadosCalendario";
 import { getNombre } from "../../utils/nombres";
+import { t } from "../../i18n";
 
 function emptySets() {
   return [
@@ -43,9 +44,9 @@ function PartidoResultadoCard({
             {partido.slotLabel} · {partido.club}
           </strong>
           <p className="slot-meta">
-            Pista {partido.numeroPista}
+            {t("common.courtNumber", { num: partido.numeroPista })}
             {partido.hora ? ` · ${partido.hora}` : ""}
-            {partido.indoor ? " · Indoor" : ""}
+            {partido.indoor ? ` · ${t("common.indoor")}` : ""}
           </p>
         </div>
         <span className={`res-estado-badge res-estado-badge--${permisos.estado}`}>
@@ -70,7 +71,7 @@ function PartidoResultadoCard({
         <div className="res-sets-edit">
           {rotaciones.map((rot, idx) => (
             <div key={idx} className="score-card">
-              <div className="score-card-title">Set {idx + 1}</div>
+              <div className="score-card-title">{t("common.setNumber", { num: idx + 1 })}</div>
               <p className="res-rot-label">{rot.label}</p>
               <div className="score-row-ctrl">
                 <div className="score-side">
@@ -116,10 +117,10 @@ function PartidoResultadoCard({
             </div>
           ))}
           <button type="button" className="btn btn-primary btn-sm btn-block" onClick={() => onGuardar(partido.id, sets)}>
-            {resultado ? "Guardar cambios" : "Guardar resultado"}
+            {resultado ? t("resultados.saveChanges") : t("resultados.saveResult")}
           </button>
           {!isCoord && !resultado ? (
-            <p className="slot-meta res-hint">El coordinador deberá validarlo</p>
+            <p className="slot-meta res-hint">{t("resultados.coordMustValidate")}</p>
           ) : null}
         </div>
       ) : (
@@ -130,7 +131,7 @@ function PartidoResultadoCard({
               const [izq, der] = rot.label.split(" vs ");
               return (
                 <div key={idx} className="rot-row">
-                  <span className="rot-lbl">Set {idx + 1}</span>
+                  <span className="rot-lbl">{t("common.setNumber", { num: idx + 1 })}</span>
                   <span className="rot-side">{izq}</span>
                   <span className="rot-score">
                     {s.p1} – {s.p2}
@@ -140,25 +141,25 @@ function PartidoResultadoCard({
               );
             })
           ) : (
-            <p className="slot-meta res-sin-resultado">Aún no hay resultado registrado</p>
+            <p className="slot-meta res-sin-resultado">{t("resultados.noResultYet")}</p>
           )}
         </div>
       )}
 
       {permisos.puedeModificar ? (
         <button type="button" className="btn btn-sm btn-block res-modificar-btn" onClick={() => onModificar(partido.id)}>
-          Modificar resultado
+          {t("resultados.modifyResult")}
         </button>
       ) : null}
 
       {isCoord && permisos.puedeValidar ? (
         <button type="button" className="btn btn-primary btn-sm btn-block res-validar-btn" onClick={() => onValidar(partido.id)}>
-          Validar resultado
+          {t("resultados.validateResult")}
         </button>
       ) : null}
 
       {!isCoord && permisos.estado === "pendiente" ? (
-        <p className="slot-meta res-hint">Pendiente de validación por el coordinador</p>
+        <p className="slot-meta res-hint">{t("resultados.pendingCoordValidation")}</p>
       ) : null}
     </article>
   );
@@ -231,14 +232,12 @@ export default function Resultados({
 
   return (
     <div className="resultados-page">
-      <h2 className="section-title">Resultados</h2>
+      <h2 className="section-title">{t("resultados.title")}</h2>
 
       {isCoord ? (
-        <p className="slot-meta res-ventana-hint">Semana pasada y hoy · sin partidos futuros</p>
+        <p className="slot-meta res-ventana-hint">{t("resultados.coordHint")}</p>
       ) : (
-        <p className="slot-meta res-ventana-hint">
-          Puedes introducir resultados solo en tus partidos de hoy o ayer. Consulta cualquier día.
-        </p>
+        <p className="slot-meta res-ventana-hint">{t("resultados.playerHint")}</p>
       )}
 
       <div id="resultados-days">
@@ -249,17 +248,17 @@ export default function Resultados({
             onSelectFecha={setFechaSel}
           />
         ) : (
-          <p className="slot-meta">No hay partidos con resultados en esta ventana</p>
+          <p className="slot-meta">{t("resultados.noMatchesWindow")}</p>
         )}
       </div>
 
       {!diasDisponibles.length ? (
         <div className="card">
-          <div className="empty-state">Genera partidos en la pestaña Partidos para poder registrar resultados</div>
+          <div className="empty-state">{t("resultados.noMatchesGenerate")}</div>
         </div>
       ) : !partidosDia.length ? (
         <div className="card">
-          <div className="empty-state">No hay partidos este día</div>
+          <div className="empty-state">{t("resultados.noMatchesDay")}</div>
         </div>
       ) : (
         partidosDia.map((p) => {

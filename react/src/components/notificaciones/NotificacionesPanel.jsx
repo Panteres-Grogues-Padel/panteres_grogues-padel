@@ -3,6 +3,7 @@ import {
   iconoNotificacionTipo,
   tabFromNotificacionTipo
 } from "../../hooks/useNotificaciones";
+import { t } from "../../i18n";
 
 export default function NotificacionesPanel({
   open,
@@ -28,7 +29,7 @@ export default function NotificacionesPanel({
       className="profile-overlay open"
       role="dialog"
       aria-modal="true"
-      aria-label="Notificaciones"
+      aria-label={t("notificaciones.title")}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -36,19 +37,19 @@ export default function NotificacionesPanel({
       <div className="profile-sheet notif-sheet">
         <div className="profile-handle" />
         <div className="notif-header">
-          <h2 className="notif-title">Notificaciones</h2>
+          <h2 className="notif-title">{t("notificaciones.title")}</h2>
           {notificaciones.some((n) => !n.leida) ? (
             <button type="button" className="btn btn-sm notif-mark-all" onClick={() => onMarcarTodasLeidas()}>
-              Marcar todas leídas
+              {t("notificaciones.markAllRead")}
             </button>
           ) : null}
         </div>
 
-        {loading ? <p className="notif-empty">Cargando...</p> : null}
+        {loading ? <p className="notif-empty">{t("common.loading")}</p> : null}
         {error ? <p className="error-box">{error}</p> : null}
 
         {!loading && !error && notificaciones.length === 0 ? (
-          <p className="notif-empty">Sin notificaciones</p>
+          <p className="notif-empty">{t("notificaciones.empty")}</p>
         ) : null}
 
         <div className="notif-list">
@@ -73,7 +74,7 @@ export default function NotificacionesPanel({
         </div>
 
         <button type="button" className="close-btn" onClick={onClose}>
-          Cerrar
+          {t("common.close")}
         </button>
       </div>
     </div>

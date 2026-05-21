@@ -2,22 +2,25 @@ import { useEffect, useRef, useState } from "react";
 import { isJugadorUuid, jugadoresCoinciden } from "../../utils/jugador";
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
 import { getNombre } from "../../utils/nombres";
-
-const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
-const MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+import { monthShortName, weekdayName } from "../../utils/dates";
+import { t, pluralSuffix } from "../../i18n";
 
 function dayOpenLabel(slot) {
   if (!slot) return "";
-  if (slot.semana === "actual") return "Abierta · semana actual";
-  if (slot.abierto) return "Abierta · semana próxima";
+  if (slot.semana === "actual") return t("jugar.detalle.openCurrentWeek");
+  if (slot.abierto) return t("jugar.detalle.openNextWeek");
   const dow = slot.diaSemana;
   if (dow !== undefined && slot.semanaObjetivo) {
     const targetLun = new Date(slot.semanaObjetivo + "T00:00:00Z");
     const openDate = new Date(targetLun);
     openDate.setUTCDate(openDate.getUTCDate() - 7 + dow);
-    return `Cerrada · abre el ${DIAS[dow]} ${openDate.getUTCDate()} ${MESES[openDate.getUTCMonth()]} a las 19:00`;
+    return t("jugar.detalle.closedOpens", {
+      day: weekdayName(dow),
+      date: openDate.getUTCDate(),
+      month: monthShortName(openDate.getUTCMonth())
+    });
   }
-  return "Cerrada";
+  return t("jugar.detalle.closed");
 }
 
 function filaEsUsuarioActual(p, currentUser) {
@@ -55,19 +58,27 @@ export default function DetalleSlot({
   const maxTit = Math.max(0, Number(slot.pistas ?? 0) * 4);
   const titulares = maxTit > 0 ? sorted.slice(0, maxTit) : [];
   const reserva = maxTit > 0 ? sorted.slice(maxTit) : sorted;
-  const badge = enrolled ? "Apuntado" : slot.abierto ? "Abierta" : "Cerrada";
+  const badge = enrolled
+    ? t("jugar.detalle.enrolled")
+    : slot.abierto
+      ? t("jugar.detalle.open")
+      : t("jugar.detalle.closed");
   const sociosCount = sorted.filter((p) => p.socio).length;
 
   const labelPistas = esDom
-    ? "📍 Ubicación por WhatsApp · Americana"
+    ? t("jugar.detalle.locationAmericana")
     : esSinPistas
-      ? "Lista abierta · partidos por confirmar"
-      : `${slot.pistas} pista${slot.pistas !== 1 ? "s" : ""} · ${maxTit} titulares máx.`;
+      ? t("jugar.detalle.listOpenConfirm")
+      : t("jugar.detalle.courtsTitulars", {
+          count: slot.pistas,
+          plural: pluralSuffix(slot.pistas),
+          max: maxTit
+        });
 
   return (
     <article className="card">
       <button type="button" className="btn btn-sm" style={{ marginBottom: "1rem" }} onClick={onBack}>
-        ← Volver
+        {t("jugar.detalle.back")}
       </button>
 
       <div className="slot-head">
@@ -86,8 +97,10 @@ export default function DetalleSlot({
 
       {!enrolled && slot.abierto && rivalSlot ? (
         <div className="baja-locked">
-          Ya estás apuntado en <strong>{rivalSlot.label} — {rivalSlot.club}</strong>. Date de baja primero y luego
-          apúntate aquí.
+          {t("jugar.detalle.alreadyEnrolledElsewhere", {
+            label: rivalSlot.label,
+            club: rivalSlot.club
+          })}
         </div>
       ) : null}
 
@@ -95,9 +108,9 @@ export default function DetalleSlot({
         <div className="enroll-box">
           <div className="checkbox-row">
             <input type="checkbox" id="sc-slot" />
-            <label htmlFor="sc-slot">Soy socio del Club Cornellà Up</label>
+            <label htmlFor="sc-slot">{t("jugar.detalle.memberCheckbox")}</label>
           </div>
-          <div className="checkbox-sub">Márcalo si eres socio del Up</div>
+          <div className="checkbox-sub">{t("jugar.detalle.memberHint")}</div>
           <button
             type="button"
             className="btn btn-primary btn-sm btn-block"
@@ -115,37 +128,33 @@ export default function DetalleSlot({
               }
             }}
           >
-            {procesando ? "Enviando…" : "Confirmar inscripción"}
+            {procesando ? t("common.sending") : t("jugar.detalle.confirmEnrollment")}
           </button>
         </div>
       ) : null}
 
       {enrolled ? (
         <>
-          {warning ? (
-            <div className="baja-locked">
-              ⚠️ Si te das de baja hoy, por favor busca un@sustitut@ para el partido antes de confirmar la baja.
-            </div>
-          ) : null}
+          {warning ? <div className="baja-locked">{t("jugar.detalle.bajaWarning")}</div> : null}
           <button
             type="button"
             className="btn btn-danger btn-sm btn-block mt-8"
             onClick={() => onBaja(slot.id)}
           >
-            Darme de baja
+            {t("jugar.detalle.unregister")}
           </button>
         </>
       ) : null}
 
       <div className="players-list">
         <div className="players-label">
-          <span>Apuntados ({sorted.length})</span>
-          <span>{slot.sociosCount ?? sociosCount} socios Up</span>
+          <span>{t("jugar.detalle.enrolledList", { count: sorted.length })}</span>
+          <span>{t("jugar.detalle.membersUp", { count: slot.sociosCount ?? sociosCount })}</span>
         </div>
 
         {sorted.length === 0 ? (
           <div style={{ fontSize: "13px", color: "var(--text2)", textAlign: "center", padding: "1.5rem 0" }}>
-            Nadie apuntado todavía
+            {t("jugar.detalle.nobodyYet")}
           </div>
         ) : esDom || esSinPistas ? (
           sorted.map((p, idx) => (
@@ -164,7 +173,7 @@ export default function DetalleSlot({
           <>
             {maxTit > 0 ? (
               <div className="players-label" style={{ marginTop: "4px" }}>
-                <span>Titulares (máx. {maxTit})</span>
+                <span>{t("jugar.detalle.titulars", { max: maxTit })}</span>
                 <span>
                   {titulares.length} / {sorted.length}
                 </span>
@@ -184,7 +193,7 @@ export default function DetalleSlot({
             ))}
             {reserva.length > 0 ? (
               <>
-                <div className="reserva-sep">Reserva ({reserva.length})</div>
+                <div className="reserva-sep">{t("jugar.detalle.reserve", { count: reserva.length })}</div>
                 {reserva.map((p, idx) => (
                   <div className="player-row" key={`${slot.id}-r-${idx}-${p.nombre}`}>
                     <span className="ppos">R{idx + 1}</span>

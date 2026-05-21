@@ -3,9 +3,10 @@ import { hoyLocalStr } from "../../utils/dates";
 import {
   buildMesesCalendarioResultados,
   celdasMesCalendario,
-  DOW_CORTO,
-  MESES_RESULTADOS
+  dowCalendarioCorto,
+  mesCalendarioResultados
 } from "../../utils/resultadosCalendar";
+import { t } from "../../i18n";
 
 export default function ResultadosCalendario({ fechasConPartidos, fechaSel, onSelectFecha }) {
   const hoy = hoyLocalStr();
@@ -19,11 +20,11 @@ export default function ResultadosCalendario({ fechasConPartidos, fechaSel, onSe
   }, [fechaSel]);
 
   if (!fechasConPartidos.length) {
-    return <p className="slot-meta resultados-cal-empty">No hay partidos con resultados en esta ventana</p>;
+    return <p className="slot-meta resultados-cal-empty">{t("resultados.noMatchesWindow")}</p>;
   }
 
   return (
-    <div className="resultados-cal-scroll" role="region" aria-label="Calendario de partidos">
+    <div className="resultados-cal-scroll" role="region" aria-label={t("resultados.calendarLabel")}>
       {meses.map(({ year, month }) => {
         const mesKey = `${year}-${month}`;
         const esMesSeleccionado =
@@ -36,12 +37,12 @@ export default function ResultadosCalendario({ fechasConPartidos, fechaSel, onSe
             className="resultados-cal-month"
           >
             <h3 className="resultados-cal-month__title">
-              {MESES_RESULTADOS[month]} {year}
+              {mesCalendarioResultados(month)} {year}
             </h3>
             <div className="cal-grid resultados-cal-grid">
-              {DOW_CORTO.map((d) => (
+              {[0, 1, 2, 3, 4, 5, 6].map((d) => (
                 <div key={d} className="cal-dow">
-                  {d}
+                  {dowCalendarioCorto(d)}
                 </div>
               ))}
               {celdasMesCalendario(year, month).map((cell) => {
@@ -77,7 +78,10 @@ export default function ResultadosCalendario({ fechasConPartidos, fechaSel, onSe
                     type="button"
                     className={className}
                     aria-pressed={isSelected}
-                    aria-label={`${cell.day} de ${MESES_RESULTADOS[month]}, con partidos`}
+                    aria-label={t("resultados.calendarDayAria", {
+                      day: cell.day,
+                      month: mesCalendarioResultados(month)
+                    })}
                     onClick={() => onSelectFecha(cell.fecha)}
                   >
                     <span className="cal-num">{cell.day}</span>

@@ -19,6 +19,7 @@ import { useResultados } from "./hooks/useResultados";
 import { useNotificaciones } from "./hooks/useNotificaciones";
 import { isJugadorUuid, jugadoresCoinciden } from "./utils/jugador";
 import PerfilJugador from "./components/ranking/PerfilJugador";
+import { t } from "./i18n";
 
 export default function App() {
   const auth = useAuth();
@@ -116,9 +117,9 @@ export default function App() {
 
   async function handleGenerar(slotId, semana, options = {}) {
     const slot = slots.find((s) => s.id === slotId);
-    if (!slot) return showMessage("Slot no encontrado");
+    if (!slot) return showMessage(t("app.toasts.slotNotFound"));
     if (!isJugadorUuid(auth.currentUser?.id)) {
-      return showMessage("Tu perfil no tiene un id de jugador válido para generar partidos en Supabase.");
+      return showMessage(t("app.toasts.invalidPlayerIdGenerate"));
     }
     const res = await generarPartidos({
       jugadoresRanking: ranking,
@@ -129,7 +130,7 @@ export default function App() {
       slotMeta: { label: slot.label, club: slot.club, diaSemana: slot.diaSemana }
     });
     if (!res.ok) return showMessage(res.error);
-    showMessage(`Partidos generados: ${res.cantidad}`);
+    showMessage(t("app.toasts.matchesGenerated", { count: res.cantidad }));
   }
 
   return (
@@ -161,8 +162,8 @@ export default function App() {
           ) : null}
           {activeTab === "ranking" ? (
             <>
-              {rankingLoading ? <p className="info-box">Cargando ranking...</p> : null}
-              {rankingError ? <p className="error-box">Error ranking: {rankingError}</p> : null}
+              {rankingLoading ? <p className="info-box">{t("app.toasts.loadingRanking")}</p> : null}
+              {rankingError ? <p className="error-box">{t("app.toasts.rankingError", { error: rankingError })}</p> : null}
               <Ranking ranking={ranking} currentUser={auth.currentUser} onSelect={(j) => setPerfilJugador(j)} />
             </>
           ) : null}
@@ -193,7 +194,7 @@ export default function App() {
               }}
               onMover={async (origenId, destinoId, jugadorId) => {
                 const ok = await moverJugador(origenId, destinoId, jugadorId);
-                if (!ok) showMessage("No se pudo mover el jugador");
+                if (!ok) showMessage(t("app.toasts.movePlayerFailed"));
                 return ok;
               }}
               onConfirmar={async (partidoId, jugadorId, confirmado) => {
@@ -207,24 +208,24 @@ export default function App() {
           ) : null}
           {activeTab === "resultados" ? (
             <>
-              {resultadosLoading ? <p className="info-box">Cargando resultados...</p> : null}
-              {resultadosError ? <p className="error-box">Error resultados: {resultadosError}</p> : null}
+              {resultadosLoading ? <p className="info-box">{t("app.toasts.loadingResults")}</p> : null}
+              {resultadosError ? <p className="error-box">{t("app.toasts.resultsError", { error: resultadosError })}</p> : null}
               <Resultados
                 partidos={partidos}
                 onGuardar={async (id, fecha, sets) => {
                   const res = await guardarResultado(id, fecha, sets);
                   if (!res.ok) return showMessage(res.error);
-                  showMessage("Resultado guardado");
+                  showMessage(t("app.toasts.resultSaved"));
                 }}
                 onValidar={async (id, fecha) => {
                   const res = await validarResultado(id, fecha);
                   if (!res.ok) return showMessage(res.error);
-                  showMessage("Resultado validado");
+                  showMessage(t("app.toasts.resultValidated"));
                 }}
                 onModificar={async (id, fecha) => {
                   const res = await modificarResultado(id, fecha);
                   if (!res.ok) return showMessage(res.error);
-                  showMessage("Resultado desbloqueado para edición");
+                  showMessage(t("app.toasts.resultUnlocked"));
                 }}
                 currentUser={auth.currentUser}
                 isCoord={isCoord}
@@ -235,7 +236,7 @@ export default function App() {
           ) : null}
           {activeTab === "agenda" ? (
             <>
-              {eventosError ? <p className="error-box">Error agenda: {eventosError}</p> : null}
+              {eventosError ? <p className="error-box">{t("app.toasts.agendaError", { error: eventosError })}</p> : null}
               <Agenda
                 loading={eventosLoading}
                 eventos={eventos}
@@ -244,17 +245,17 @@ export default function App() {
                 onApuntarse={async (id) => {
                   const res = await apuntarseEvento(id);
                   if (!res.ok) return showMessage(res.error);
-                  showMessage("Inscripcion realizada");
+                  showMessage(t("app.toasts.enrollmentDone"));
                 }}
                 onSeleccionarPareja={async (eventoId, parejaJugadorId) => {
                   const res = await setParejaTorneo(eventoId, parejaJugadorId);
                   if (!res.ok) return showMessage(res.error);
-                  showMessage("Pareja guardada");
+                  showMessage(t("app.toasts.partnerSaved"));
                 }}
                 onBaja={async (id) => {
                   const res = await bajaEvento(id);
                   if (!res.ok) return showMessage(res.error);
-                  showMessage("Baja realizada");
+                  showMessage(t("app.toasts.unregisterDone"));
                 }}
                 onValidarPago={async (eventoId, inscripcionId, pagado) => {
                   const res = await validarPago(eventoId, inscripcionId, pagado);
@@ -262,12 +263,12 @@ export default function App() {
                     showMessage(res.error);
                     return res;
                   }
-                  showMessage(pagado ? "Pago marcado" : "Pago desmarcado");
+                  showMessage(pagado ? t("app.toasts.paymentMarked") : t("app.toasts.paymentUnmarked"));
                   return res;
                 }}
                 onCrearEvento={async (form) => {
                   const res = await crearEvento(form);
-                  if (res.ok) showMessage("Evento creado");
+                  if (res.ok) showMessage(t("app.toasts.eventCreated"));
                   return res;
                 }}
                 onBorrarEvento={async (eventoId) => {
@@ -276,7 +277,7 @@ export default function App() {
                     showMessage(res.error);
                     return res;
                   }
-                  showMessage("Evento eliminado");
+                  showMessage(t("app.toasts.eventDeleted"));
                   return res;
                 }}
               />

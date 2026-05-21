@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { formatHoraInput } from "../../utils/dates";
 import { jugadoresCoinciden } from "../../utils/jugador";
 import { getNombre } from "../../utils/nombres";
+import { t } from "../../i18n";
 
 const AVATAR_CLASSES = ["av-teal", "av-purple", "av-coral", "av-blue", "av-amber", "av-pink", "av-green", "av-gray"];
 
@@ -52,7 +53,9 @@ export default function PartidoCard({
         style={{ display: "flex", alignItems: "center", gap: "8px", padding: "9px 12px", background: "var(--bg2)", cursor: "pointer" }}
         onClick={() => setExpanded((v) => !v)}
       >
-        <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text)", minWidth: "68px" }}>Partido {index + 1}</span>
+        <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text)", minWidth: "68px" }}>
+          {t("common.matchNumber", { num: index + 1 })}
+        </span>
         {partido.indoor ? (
           <span style={{ fontSize: "10px", background: "var(--bg3)", color: "var(--navy)", padding: "1px 5px", borderRadius: "4px", fontWeight: 600 }}>
             🏠
@@ -61,7 +64,7 @@ export default function PartidoCard({
         {horaUi ? (
           <span style={{ fontSize: "12px", fontWeight: 500, color: "var(--navy)" }}>🕐 {horaUi}</span>
         ) : (
-          <span style={{ fontSize: "11px", color: "var(--text3)" }}>Sin hora</span>
+          <span style={{ fontSize: "11px", color: "var(--text3)" }}>{t("common.noTime")}</span>
         )}
         {allConfirmed ? <span style={{ fontSize: "11px", color: "#27500A", fontWeight: 600 }}>✅</span> : null}
         <span style={{ fontSize: "11px", color: "var(--text2)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -88,7 +91,7 @@ export default function PartidoCard({
                   <span style={{ fontSize: "11px", color: "#27500A", fontWeight: 600 }}>✓</span>
                 ) : isSelf ? (
                   <button className="btn btn-sm" style={{ fontSize: "11px", padding: "2px 8px" }} onClick={() => onConfirmar(partido.id, j.jugadorId, true)}>
-                    Confirmar
+                    {t("partidos.card.confirm")}
                   </button>
                 ) : (
                   <span style={{ fontSize: "11px", color: "var(--text3)" }}>—</span>
@@ -115,7 +118,7 @@ export default function PartidoCard({
                 style={{ fontSize: "12px", height: "30px", padding: "2px 8px", border: "0.5px solid var(--border2)", borderRadius: "var(--radius)", background: "var(--bg)", width: "100px" }}
               />
               <button className="btn btn-sm" style={{ fontSize: "11px", padding: "3px 9px" }} onClick={() => onIndoor(partido.id)}>
-                {partido.indoor ? "🏠 Quitar indoor" : "Marcar indoor"}
+                {partido.indoor ? t("partidos.card.removeIndoor") : t("partidos.card.markIndoor")}
               </button>
             </div>
           ) : null}

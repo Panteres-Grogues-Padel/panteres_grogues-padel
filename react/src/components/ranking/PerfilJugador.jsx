@@ -4,6 +4,7 @@ import { jugadoresCoinciden } from "../../utils/jugador";
 import { getNombre, nombreCorto } from "../../utils/nombres";
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
 import { numeroSocioPanteres } from "../../utils/socio";
+import { t } from "../../i18n";
 
 function igUrl(igRaw) {
   const h = (igRaw ?? "").replace(/^@/, "").trim();
@@ -63,11 +64,11 @@ export default function PerfilJugador({ jugador, currentUser, open, onClose, onJ
     if (p > 0) {
       return (
         <div style={{ fontSize: 12, color: "#BA7517" }}>
-          Penalización -{Math.round(p * 100)}% (pocos partidos)
+          {t("ranking.profile.penaltyFewMatches", { pct: Math.round(p * 100) })}
         </div>
       );
     }
-    return <div style={{ fontSize: 12, color: "#27500A" }}>Sin penalización</div>;
+    return <div style={{ fontSize: 12, color: "#27500A" }}>{t("ranking.profile.noPenalty")}</div>;
   }, [jugador]);
 
   const showTel = isOwn || jugador?.mostrar_telefono;
@@ -126,7 +127,7 @@ export default function PerfilJugador({ jugador, currentUser, open, onClose, onJ
               <div className="profile-name">
                 {isOwn ? jugador.nombreCompleto || jugador.nombre : corto || getNombre(jugador)}
               </div>
-              {isOwn ? <span className="own-badge">Tú</span> : null}
+              {isOwn ? <span className="own-badge">{t("ranking.profile.you")}</span> : null}
             </div>
             {isOwn && jugador.nickname ? (
               <div className="profile-nickname">@{jugador.nickname}</div>
@@ -134,12 +135,12 @@ export default function PerfilJugador({ jugador, currentUser, open, onClose, onJ
             <div className="profile-sub">
               {isOwn
                 ? jugador.nickname
-                  ? `Nombre en app: ${jugador.nombre}`
+                  ? t("ranking.profile.appName", { name: jugador.nombre })
                   : jugador.nombre
                 : getNombre(jugador)}
             </div>
             <div className="profile-socio-line">
-              <span className="profile-socio-label">N.º socio Panteres</span>
+              <span className="profile-socio-label">{t("ranking.profile.memberNumber")}</span>
               <span className="profile-socio-val">{numeroSocioPanteres(jugador.id)}</span>
             </div>
             <div className="profile-links" style={{ marginTop: 5 }}>
@@ -151,12 +152,12 @@ export default function PerfilJugador({ jugador, currentUser, open, onClose, onJ
               ) : showIg ? (
                 <span className="profile-link hidden">
                   <IconInsta />
-                  Sin cuenta indicada
+                  {t("ranking.profile.noInstagram")}
                 </span>
               ) : (
                 <span className="profile-link hidden">
                   <IconInsta />
-                  Instagram no visible
+                  {t("ranking.profile.instagramHidden")}
                 </span>
               )}
               {showTel && tel ? (
@@ -167,7 +168,7 @@ export default function PerfilJugador({ jugador, currentUser, open, onClose, onJ
               ) : (
                 <span className="profile-link hidden">
                   <IconLockPhone />
-                  Teléfono oculto
+                  {t("ranking.profile.phoneHidden")}
                 </span>
               )}
             </div>
@@ -176,30 +177,30 @@ export default function PerfilJugador({ jugador, currentUser, open, onClose, onJ
 
         <div className="profile-stats-grid">
           <div className="profile-stat-cell">
-            <div className="profile-stat-label">Partidos jugados</div>
+            <div className="profile-stat-label">{t("ranking.profile.matchesPlayed")}</div>
             <div className="profile-stat-val">{jugador.pj ?? 0}</div>
           </div>
           <div className="profile-stat-cell">
-            <div className="profile-stat-label">Partidos ganados</div>
+            <div className="profile-stat-label">{t("ranking.profile.matchesWon")}</div>
             <div className="profile-stat-val">{jugador.pg ?? 0}</div>
           </div>
           <div className="profile-stat-cell">
-            <div className="profile-stat-label">Juegos jugados</div>
+            <div className="profile-stat-label">{t("ranking.profile.gamesPlayed")}</div>
             <div className="profile-stat-val">{jugador.jj ?? 0}</div>
           </div>
           <div className="profile-stat-cell">
-            <div className="profile-stat-label">Juegos ganados</div>
+            <div className="profile-stat-label">{t("ranking.profile.gamesWon")}</div>
             <div className="profile-stat-val">{jugador.jg ?? 0}</div>
           </div>
           <div className="profile-stat-cell profile-stat-wide">
-            <div className="profile-stat-label">Eficacia</div>
+            <div className="profile-stat-label">{t("ranking.profile.efficiency")}</div>
             <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 2 }}>
               <div className="profile-stat-val">{((jugador.eficacia ?? 0) * 100).toFixed(1)}%</div>
               {penStr}
             </div>
           </div>
           <div className="profile-stat-cell profile-stat-wide">
-            <div className="profile-stat-label">Score ranking</div>
+            <div className="profile-stat-label">{t("ranking.profile.scoreRanking")}</div>
             <div className="profile-stat-val" style={{ marginTop: 2 }}>
               {(jugador.score ?? 0).toFixed(4)}
             </div>
@@ -210,7 +211,7 @@ export default function PerfilJugador({ jugador, currentUser, open, onClose, onJ
           <>
             <div className="sheet-divider" />
             <div className="privacy-section">
-              <div className="privacy-title">⚙️ Privacidad</div>
+              <div className="privacy-title">{t("ranking.profile.privacy")}</div>
               <div className="privacy-row profile-privacy-row">
                 <input
                   type="checkbox"
@@ -219,8 +220,8 @@ export default function PerfilJugador({ jugador, currentUser, open, onClose, onJ
                   onChange={(e) => void persistPrivacy("mostrar_telefono", e.target.checked)}
                 />
                 <div>
-                  <div className="privacy-row-label">Mostrar mi teléfono</div>
-                  <div className="privacy-row-sub">Visible para otros jugadores</div>
+                  <div className="privacy-row-label">{t("ranking.profile.showPhone")}</div>
+                  <div className="privacy-row-sub">{t("ranking.profile.phoneVisible")}</div>
                 </div>
               </div>
               <div className="privacy-row profile-privacy-row">
@@ -231,8 +232,8 @@ export default function PerfilJugador({ jugador, currentUser, open, onClose, onJ
                   onChange={(e) => void persistPrivacy("autoriza_instagram", e.target.checked)}
                 />
                 <div>
-                  <div className="privacy-row-label">Autorizo etiquetas en Instagram</div>
-                  <div className="privacy-row-sub">La sección puede etiquetarme en el perfil oficial</div>
+                  <div className="privacy-row-label">{t("ranking.profile.authorizeInstagram")}</div>
+                  <div className="privacy-row-sub">{t("ranking.profile.instagramTagHint")}</div>
                 </div>
               </div>
             </div>
@@ -240,7 +241,7 @@ export default function PerfilJugador({ jugador, currentUser, open, onClose, onJ
         ) : null}
 
         <button type="button" className="close-btn" onClick={onClose}>
-          Cerrar
+          {t("common.close")}
         </button>
       </div>
     </div>

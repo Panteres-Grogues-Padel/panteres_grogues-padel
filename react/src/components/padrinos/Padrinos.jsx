@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { usePadrinos } from "../../hooks/usePadrinos";
 import { jugadoresCoinciden } from "../../utils/jugador";
 import { getNombre } from "../../utils/nombres";
+import { DATE_LOCALE } from "../../utils/dates";
+import { t } from "../../i18n";
 
 function displayNombre(j) {
-  return getNombre(j) || j?.nombreCompleto || j?.nombre || "Jugador";
+  return getNombre(j) || j?.nombreCompleto || j?.nombre || t("common.player");
 }
 
 function PadrinosCard({ title, children }) {
@@ -36,7 +38,7 @@ export default function Padrinos({ currentUser, isCoord }) {
   const listaGestion = useMemo(
     () =>
       [...jugadores].sort((a, b) =>
-        displayNombre(a).localeCompare(displayNombre(b), "es")
+        displayNombre(a).localeCompare(displayNombre(b), DATE_LOCALE)
       ),
     [jugadores]
   );
@@ -57,15 +59,15 @@ export default function Padrinos({ currentUser, isCoord }) {
 
   async function handleAsignar() {
     if (!ahijadoSel || !padrinoSel) {
-      setMsg("Selecciona un ahijado/a y un padrino/madrina.");
+      setMsg(t("padrinos.selectBoth"));
       return;
     }
     setMsg("");
     setGuardando(true);
     const res = await asignarPadrino(ahijadoSel, padrinoSel);
     setGuardando(false);
-    if (!res.ok) setMsg(res.error ?? "No se pudo asignar.");
-    else setMsg("Padrino/madrina asignado correctamente.");
+    if (!res.ok) setMsg(res.error ?? t("padrinos.assignFailed"));
+    else setMsg(t("padrinos.assignSuccess"));
   }
 
   async function handleQuitar() {
@@ -74,28 +76,28 @@ export default function Padrinos({ currentUser, isCoord }) {
     setGuardando(true);
     const res = await desasignarPadrino(ahijadoSel);
     setGuardando(false);
-    if (!res.ok) setMsg(res.error ?? "No se pudo quitar el padrino/madrina.");
+    if (!res.ok) setMsg(res.error ?? t("padrinos.removeFailed"));
     else {
       setPadrinoSel("");
-      setMsg("Padrino/madrina desasignado.");
+      setMsg(t("padrinos.removeSuccess"));
     }
   }
 
   return (
     <div className="padrinos-page">
-      {loading ? <p className="info-box">Cargando jugadores…</p> : null}
+      {loading ? <p className="info-box">{t("padrinos.loadingPlayers")}</p> : null}
       {error ? <p className="error-box">{error}</p> : null}
       {msg ? <p className="info-box">{msg}</p> : null}
 
-      <PadrinosCard title="Tu padrino/madrina">
+      <PadrinosCard title={t("padrinos.yourGodparent")}>
         {miPadrino ? (
           <p className="padrinos-nombre">{displayNombre(miPadrino)}</p>
         ) : (
-          <p className="padrinos-muted">De momento no tienes padrino/madrina asignado 🏳️‍🌈</p>
+          <p className="padrinos-muted">{t("padrinos.noGodparent")}</p>
         )}
       </PadrinosCard>
 
-      <PadrinosCard title="Tus ahijados/as">
+      <PadrinosCard title={t("padrinos.yourGodchildren")}>
         {misAhijados.length > 0 ? (
           <ul className="padrinos-lista">
             {misAhijados.map((a) => (
@@ -103,23 +105,23 @@ export default function Padrinos({ currentUser, isCoord }) {
             ))}
           </ul>
         ) : (
-          <p className="padrinos-muted">De momento no tienes ahijados/as asignados</p>
+          <p className="padrinos-muted">{t("padrinos.noGodchildren")}</p>
         )}
       </PadrinosCard>
 
       {isCoord ? (
         <>
-          <div className="padrinos-section-label">Gestionar asignaciones</div>
+          <div className="padrinos-section-label">{t("padrinos.manageAssignments")}</div>
           <div className="padrinos-gestion-form card">
             <label className="padrinos-field">
-              <span className="padrinos-field__label">Selecciona un ahijado/a</span>
+              <span className="padrinos-field__label">{t("padrinos.selectGodchild")}</span>
               <select
                 className="padrinos-select"
                 value={ahijadoSel}
                 disabled={guardando || loading}
                 onChange={(ev) => setAhijadoSel(ev.target.value)}
               >
-                <option value="">— Elige un jugador —</option>
+                <option value="">{t("common.choosePlayer")}</option>
                 {listaGestion.map((j) => (
                   <option key={j.id} value={j.id}>
                     {displayNombre(j)}
@@ -131,14 +133,14 @@ export default function Padrinos({ currentUser, isCoord }) {
             {ahijadoSel ? (
               <>
                 <label className="padrinos-field">
-                  <span className="padrinos-field__label">Selecciona su padrino/madrina</span>
+                  <span className="padrinos-field__label">{t("padrinos.selectGodparent")}</span>
                   <select
                     className="padrinos-select"
                     value={padrinoSel}
                     disabled={guardando}
                     onChange={(ev) => setPadrinoSel(ev.target.value)}
                   >
-                    <option value="">— Elige padrino/madrina —</option>
+                    <option value="">{t("common.chooseGodparent")}</option>
                     {candidatos.map((c) => (
                       <option key={c.id} value={c.id}>
                         {displayNombre(c)}
@@ -149,7 +151,7 @@ export default function Padrinos({ currentUser, isCoord }) {
 
                 {ahijado?.padrinoId ? (
                   <p className="padrinos-muted padrinos-gestion-actual">
-                    Actual: {ahijado.padrinoNombre ?? "Asignado"}
+                    {t("common.current", { name: ahijado.padrinoNombre ?? t("common.assigned") })}
                   </p>
                 ) : null}
 
@@ -160,7 +162,7 @@ export default function Padrinos({ currentUser, isCoord }) {
                     disabled={guardando || !padrinoSel}
                     onClick={() => void handleAsignar()}
                   >
-                    Asignar
+                    {t("padrinos.assign")}
                   </button>
                   {ahijado?.padrinoId ? (
                     <button
@@ -169,7 +171,7 @@ export default function Padrinos({ currentUser, isCoord }) {
                       disabled={guardando}
                       onClick={() => void handleQuitar()}
                     >
-                      Quitar padrino/madrina
+                      {t("padrinos.removeGodparent")}
                     </button>
                   ) : null}
                 </div>

@@ -1,0 +1,523 @@
+{
+  "_meta": {
+    "locale": "ca",
+    "description": "Textos en català (UI). Claus amb {{param}} admeten interpolació."
+  },
+
+  "common": {
+    "close": "Tancar",
+    "cancel": "Cancel·lar",
+    "confirm": "Confirmar",
+    "save": "Desar",
+    "delete": "Esborrar",
+    "loading": "Carregant...",
+    "loadingEllipsis": "Carregant…",
+    "saving": "Desant…",
+    "sending": "Enviant…",
+    "all": "Tots",
+    "player": "Jugador/a",
+    "playerFallback": "jugador/a",
+    "coordShort": "Coord.",
+    "email": "Email",
+    "password": "Contrasenya",
+    "optional": "opcional",
+    "today": "avui",
+    "yesterday": "ahir",
+    "indoor": "Indoor",
+    "outdoor": "Outdoor",
+    "whatsapp": "WhatsApp",
+    "copy": "Copiar",
+    "court": "Pista",
+    "courtNumber": "Pista {{num}}",
+    "matchNumber": "Partit {{num}}",
+    "setNumber": "Set {{num}}",
+    "fringeNumber": "Franja {{num}}",
+    "noTime": "Sense hora",
+    "howToGetThere": "Com arribar-hi",
+    "emergencies": "Emergències generals",
+    "choosePlayer": "— Tria un/a jugador/a —",
+    "chooseGodparent": "— Tria padrí/mare —",
+    "selectPlaceholder": "— Seleccionar —",
+    "noLimit": "Sense límit",
+    "assigned": "Assignat/da",
+    "current": "Actual: {{name}}",
+    "moreCount": "(+{{count}} més)",
+    "positionOrdinal": "{{pos}}º",
+    "move": "Moure"
+  },
+
+  "nav": {
+    "jugar": "Jugar",
+    "partidos": "Partits",
+    "resultados": "Resultats",
+    "ranking": "Rànquing",
+    "agenda": "Agenda",
+    "coordinacion": "Coordinació",
+    "logout": "Sortir"
+  },
+
+  "topbar": {
+    "backToWelcome": "Tornar a la benvinguda",
+    "notifications": "Notificacions",
+    "notificationsUnread": "{{count}} notificacions sense llegir"
+  },
+
+  "auth": {
+    "appTitle": "Panteres Grogues Padel",
+    "subtitle": "Inicia sessió per continuar",
+    "passwordLabel": "Contrasenya",
+    "emailPlaceholder": "tu@email.com",
+    "privacyAccept": "Accepto la política de privacitat",
+    "enter": "Entrar",
+    "entering": "Entrant...",
+    "enterGoogle": "Entrar amb Google",
+    "demoDivider": "o accés demo",
+    "selectDemoUser": "Selecciona un usuari demo...",
+    "enterAsDemo": "Entrar com a demo",
+    "coordMarker": " (Coord.)",
+    "errors": {
+      "userNotFound": "Usuari/ària no trobat/da",
+      "connection": "Error de connexió.",
+      "connectionLogin": "Error de connexió en iniciar sessió.",
+      "privacyRequired": "Has d'acceptar la política de privacitat per continuar.",
+      "emailPasswordRequired": "Introdueix el teu email i contrasenya.",
+      "emailInvalid": "L'email no és vàlid.",
+      "passwordMinLength": "La contrasenya ha de tenir almenys 6 caràcters.",
+      "supabaseEnvMissing": "Falten variables d'entorn de Supabase.",
+      "timeout": "Temps d'espera esgotat. Revisa la connexió.",
+      "sessionFailed": "No s'ha pogut obtenir la sessió. Torna-ho a provar.",
+      "selectDemo": "Selecciona un usuari demo.",
+      "googleLogin": "Error en iniciar sessió amb Google."
+    }
+  },
+
+  "bienvenida": {
+    "greetingMorning": "Bon dia",
+    "greetingAfternoon": "Bona tarda",
+    "greetingEvening": "Bona nit",
+    "greetingSuffix": ", {{name}}!",
+    "welcomeSubtitle": "Benvingut/da a Panteres Grogues Pàdel 🏳️‍🌈",
+    "playTomorrow": "Demà jugues",
+    "ctaTitle": "¡A Jugaaarrr !!!!",
+    "ctaSubtitle": "Apunta't al teu proper partit",
+    "rankingPillTitle": "La teva posició al rànquing",
+    "rankingPillSub": "Eficàcia: {{eficacia}} · {{pj}} partits",
+    "utilities": "Utilitats",
+    "utilitiesSub": "Clubs, assegurança, hospitals, més...",
+    "godparents": "Padrins",
+    "godparentsSub": "El teu padrí/mare i fillols/les",
+    "activity": "Activitat",
+    "history": "Historial",
+    "activityRecent": "Activitat recent",
+    "myActivity": "La meva activitat",
+    "loadingActivity": "Carregant activitat...",
+    "noActivity": "Sense activitat registrada encara",
+    "openProfile": "Obrir el meu perfil",
+    "utilitiesSheetTitle": "🗺️ Utilitats",
+    "orgTitle": "Panteres Grogues",
+    "clubsSection": "Clubs",
+    "insuranceSection": "Assegurança mèdica",
+    "insuranceSport": "🏥 Assegurança esportiva",
+    "insurancePolicy": "Pòlissa federativa — Federació Catalana de Pàdel",
+    "insuranceContact": "Contacta amb el/la coordinador/a per obtenir les dades de la teva pòlissa",
+    "urgenciesSection": "Urgències properes",
+    "urgency112": "Urgències · 112",
+    "godparentsSheetTitle": "🤝 Padrins"
+  },
+
+  "jugar": {
+    "title": "Jugar",
+    "noSlots": "No hi ha slots disponibles.",
+    "currentWeek": "Setmana actual · {{range}}",
+    "nextWeek": "Setmana propera · {{range}}",
+    "viewList": "Veure llista",
+    "signUp": "Apuntar-me",
+    "enrolled": "✓ Apuntat/da",
+    "enrolledAtClub": "Apuntat/da a {{club}}",
+    "enrolledCount": "{{count}} apuntats/des",
+    "closed": "Tancada 🔒",
+    "detalle": {
+      "back": "← Tornar",
+      "openCurrentWeek": "Oberta · setmana actual",
+      "openNextWeek": "Oberta · setmana propera",
+      "closedOpens": "Tancada · obre el {{day}} {{date}} {{month}} a les 19:00",
+      "closed": "Tancada",
+      "enrolled": "Apuntat/da",
+      "open": "Oberta",
+      "locationAmericana": "📍 Ubicació per WhatsApp · Americana",
+      "listOpenConfirm": "Llista oberta · partits per confirmar",
+      "courtsTitulars": "{{count}} pista{{plural}} · {{max}} titulars màx.",
+      "alreadyEnrolledElsewhere": "Ja estàs apuntat/da a {{label}} — {{club}}. Dona't de baixa primer i després apunta't aquí.",
+      "memberCheckbox": "Sóc soci/a del Club Cornellà Up",
+      "memberHint": "Marca-ho si ets soci/a de l'Up",
+      "confirmEnrollment": "Confirmar inscripció",
+      "bajaWarning": "⚠️ Si et dones de baixa avui, si us plau busca un/a substitut/a per al partit abans de confirmar la baixa.",
+      "unregister": "Donar-me de baixa",
+      "enrolledList": "Apuntats/des ({{count}})",
+      "membersUp": "{{count}} socis Up",
+      "nobodyYet": "Ningú apuntat/da encara",
+      "titulars": "Titulars (màx. {{max}})",
+      "reserve": "Reserva ({{count}})"
+    }
+  },
+
+  "partidos": {
+    "title": "Partits",
+    "todayLabel": "{{day}} — {{club}} (avui)",
+    "noSlotsToday": "No hi ha slots per avui",
+    "coordBox": "Coord.",
+    "regenerateConfirm": "Regenerar els partits d'aquesta setmana?",
+    "deleteFringe": "Eliminar franja",
+    "addFringe": "+ Afegir franja horària",
+    "summaryCourts": "{{pistas}} pista{{pistasPlural}} ({{indoor}} indoor) · {{titulares}} titulars · {{reserva}} reserva",
+    "regenerateMatches": "Regenerar partits",
+    "generateMatches": "Generar partits",
+    "notGeneratedYet": "Els partits encara no s'han generat",
+    "nobodySignedUp": "No hi ha ningú apuntat/da",
+    "reserveBox": "Reserva ({{count}})",
+    "waHeader": "WhatsApp",
+    "waTemplateHeader": "Partits: {{count}} · Jugadors/es: {{players}}",
+    "waIndoorCount": "{{count}} partit{{plural}} Indoor",
+    "waMatchLine": "*Partit {{num}}* · 🕐 {{hora}}{{indoorSuffix}}",
+    "waReserve": "*Reserva:* {{names}}",
+    "card": {
+      "confirm": "Confirmar",
+      "removeIndoor": "🏠 Treure indoor",
+      "markIndoor": "Marcar indoor"
+    },
+    "move": {
+      "title": "↕️ Moure jugador/a",
+      "subtitle": "Moure a {{name}} des del Partit {{from}} a:",
+      "option": "Partit {{num}} · 🕐 {{hora}} ({{count}} jugadors/es)"
+    }
+  },
+
+  "resultados": {
+    "title": "Resultats",
+    "coordHint": "Setmana passada i avui · sense partits futurs",
+    "playerHint": "Pots introduir resultats només als teus partits d'avui o d'ahir. Consulta qualsevol dia.",
+    "noMatchesWindow": "No hi ha partits amb resultats en aquesta finestra",
+    "noMatchesGenerate": "Genera partits a la pestanya Partits per poder registrar resultats",
+    "noMatchesDay": "No hi ha partits aquest dia",
+    "calendarLabel": "Calendari de partits",
+    "calendarDayAria": "{{day}} de {{month}}, amb partits",
+    "saveChanges": "Desar canvis",
+    "saveResult": "Desar resultat",
+    "coordMustValidate": "El/la coordinador/a haurà de validar-lo",
+    "noResultYet": "Encara no hi ha resultat registrat",
+    "modifyResult": "Modificar resultat",
+    "validateResult": "Validar resultat",
+    "pendingCoordValidation": "Pendent de validació per el/la coordinador/a",
+    "status": {
+      "none": "Sense resultat",
+      "pending": "Pendent de validació",
+      "validated": "Validat"
+    }
+  },
+
+  "agenda": {
+    "title": "Agenda",
+    "createEvent": "Crear esdeveniment",
+    "yearBack": "← Any",
+    "eventCount": "{{count}} esdeveniment{{plural}}",
+    "noEventsInMonth": "No hi ha esdeveniments a {{month}}",
+    "formTitle": "Crear esdeveniment",
+    "fieldTitle": "Títol *",
+    "fieldTitlePlaceholder": "Nom de l'esdeveniment",
+    "fieldStartDate": "Data inici *",
+    "fieldEndDate": "Data fi *",
+    "fieldTime": "Hora",
+    "fieldDescription": "Descripció",
+    "fieldDescriptionPlaceholder": "Detalls de l'esdeveniment (opcional)",
+    "fieldCapacity": "Aforament màxim",
+    "saveEvent": "Desar esdeveniment",
+    "createEventFailed": "No s'ha pogut crear l'esdeveniment.",
+    "inscribedPaid": "{{inscritos}} inscrits/des · {{pagados}} pagats/des",
+    "withPartner": "amb {{name}}",
+    "paid": "Pagat/da",
+    "paymentPending": "Pagament pendent",
+    "partner": "Parella: {{name}}",
+    "choosePartner": "Triar parella (entre inscrits/des)",
+    "unregister": "Donar-me de baixa",
+    "signUp": "Apuntar-me",
+    "eventFull": "Esdeveniment complet (aforament màxim assolit).",
+    "viewInscribed": "Veure inscrits/des ({{count}}) · {{paid}} pagats/des ↑",
+    "inscribedSummary": "{{count}} inscrit/da{{plural}} · {{paid}} pagats/des",
+    "places": "{{current}}/{{max}} places",
+    "individual": "Individual",
+    "signedUp": "✓ Apuntat/da",
+    "paymentConfirmed": "✅ Pagament confirmat",
+    "paymentPendingEmoji": "⏳ Pagament pendent",
+    "deleteConfirm": "Segur que vols esborrar aquest esdeveniment?",
+    "types": {
+      "torneo": "Torneig",
+      "social": "Social",
+      "otro": "Activitat"
+    },
+    "legendOther": "Altre"
+  },
+
+  "ranking": {
+    "title": "Rànquing",
+    "columns": {
+      "player": "Jugador/a",
+      "pj": "PJ",
+      "pg": "PG",
+      "jj": "JJ",
+      "jg": "JG",
+      "efficiency": "Efic.",
+      "penalty": "Pen.",
+      "score": "Score"
+    },
+    "formulaNote": "Ordenat per score · Eficàcia, penalització i score en %",
+    "profile": {
+      "you": "Tu",
+      "appName": "Nom a l'app: {{name}}",
+      "memberNumber": "N.º soci Panteres",
+      "noInstagram": "Sense compte indicat",
+      "instagramHidden": "Instagram no visible",
+      "phoneHidden": "Telèfon ocult",
+      "matchesPlayed": "Partits jugats",
+      "matchesWon": "Partits guanyats",
+      "gamesPlayed": "Jocs jugats",
+      "gamesWon": "Jocs guanyats",
+      "efficiency": "Eficàcia",
+      "scoreRanking": "Score rànquing",
+      "penaltyFewMatches": "Penalització -{{pct}}% (pocs partits)",
+      "noPenalty": "Sense penalització",
+      "privacy": "⚙️ Privacitat",
+      "showPhone": "Mostrar el meu telèfon",
+      "phoneVisible": "Visible per a altres jugadors/es",
+      "authorizeInstagram": "Autoritzo etiquetes a Instagram",
+      "instagramTagHint": "La secció em pot etiquetar al perfil oficial"
+    }
+  },
+
+  "padrinos": {
+    "loadingPlayers": "Carregant jugadors/es…",
+    "yourGodparent": "El teu padrí/mare",
+    "noGodparent": "De moment no tens padrí/mare assignat/da 🏳️‍🌈",
+    "yourGodchildren": "Els teus fillols/les",
+    "noGodchildren": "De moment no tens fillols/les assignats/des",
+    "manageAssignments": "Gestionar assignacions",
+    "selectGodchild": "Selecciona un/a fillol/a",
+    "selectGodparent": "Selecciona el seu padrí/mare",
+    "assign": "Assignar",
+    "removeGodparent": "Treure padrí/mare",
+    "selectBoth": "Selecciona un/a fillol/a i un padrí/mare.",
+    "assignFailed": "No s'ha pogut assignar.",
+    "assignSuccess": "Padrí/mare assignat/da correctament.",
+    "removeFailed": "No s'ha pogut treure el padrí/mare.",
+    "removeSuccess": "Padrí/mare desassignat/da.",
+    "errors": {
+      "invalidPlayer": "Jugador/a no vàlid/a.",
+      "invalidGodparent": "Padrí/mare no vàlid/a.",
+      "selfGodparent": "Un/a jugador/a no pot ser el seu propi padrí/mare."
+    }
+  },
+
+  "notificaciones": {
+    "title": "Notificacions",
+    "markAllRead": "Marcar totes llegides",
+    "empty": "Sense notificacions"
+  },
+
+  "seccion": {
+    "title": "Coordinació",
+    "generalCoord": "Coordinació general",
+    "managementArea": "Àrea de gestió",
+    "sportsArea": "Àrea esportiva i competició",
+    "commsArea": "Àrea de comunicació"
+  },
+
+  "app": {
+    "toasts": {
+      "slotNotFound": "Slot no trobat",
+      "invalidPlayerIdGenerate": "El teu perfil no té un id de jugador/a vàlid per generar partits a Supabase.",
+      "matchesGenerated": "Partits generats: {{count}}",
+      "movePlayerFailed": "No s'ha pogut moure el/la jugador/a",
+      "loadingRanking": "Carregant rànquing...",
+      "rankingError": "Error rànquing: {{error}}",
+      "loadingResults": "Carregant resultats...",
+      "resultsError": "Error resultats: {{error}}",
+      "resultSaved": "Resultat desat",
+      "resultValidated": "Resultat validat",
+      "resultUnlocked": "Resultat desbloquejat per edició",
+      "agendaError": "Error agenda: {{error}}",
+      "enrollmentDone": "Inscripció realitzada",
+      "partnerSaved": "Parella desada",
+      "unregisterDone": "Baixa realitzada",
+      "paymentMarked": "Pagament marcat",
+      "paymentUnmarked": "Pagament desmarcat",
+      "eventCreated": "Esdeveniment creat",
+      "eventDeleted": "Esdeveniment esborrat"
+    }
+  },
+
+  "hooks": {
+    "slots": {
+      "noActiveSlots": "No hi ha slots actius. Es mostren slots de recanvi.",
+      "loadInscriptionsError": "Error en carregar inscripcions: {{error}}",
+      "loadDataError": "Error en carregar dades: {{error}}",
+      "noSession": "No hi ha sessió activa.",
+      "slotNotFound": "Slot no trobat.",
+      "listNotOpen": "La llista encara no està oberta.",
+      "invalidPlayerId": "ID de jugador/a no vàlid.",
+      "alreadyEnrolled": "Ja estàs apuntat/da a {{label}} — {{club}}.",
+      "sessionExpired": "Sessió expirada. Torna a iniciar sessió.",
+      "bajaWarningShort": "Si et dones de baixa avui, si us plau busca un/a substitut/a.",
+      "notifications": {
+        "matchReminderTitle": "Recordatori de partit",
+        "matchReminderText": "Tens partit el {{day}} a {{club}}. Recorda estar pendent!",
+        "listOpenTitle": "Ja et pots apuntar!",
+        "listOpenText": "S'ha obert la llista per al {{day}} a {{club}}. Corre a apuntar-te!",
+        "yourDay": "el teu dia",
+        "enrolledTitle": "Apuntat/da!",
+        "enrolledText": "Recorda estar pendent de l'horari.",
+        "unregisterTitle": "Baixa confirmada",
+        "unregisterText": "Fins la propera!"
+      },
+      "activity": {
+        "signUp": "S'apunta a {{label}} · {{club}} ({{week}})",
+        "unregister": "Es dona de baixa de {{label}} · {{club}} ({{week}})"
+      }
+    },
+    "partidos": {
+      "invalidPlayerId": "El teu perfil no té un id de jugador/a vàlid per a Supabase.",
+      "notEnoughPlayers": "No hi ha prou jugadors/es per generar pistes de 4.",
+      "notEnoughCourts": "Hi ha {{groups}} partits possibles però només {{courts}} pistes a les franges. Afegeix més pistes.",
+      "matchNotFound": "Partit no trobat.",
+      "notifications": {
+        "regeneratedTitle": "Partits regenerats!",
+        "generatedTitle": "Partits generats!",
+        "generatedText": "Ja són els partits del {{day}} a {{club}}. Si us plau confirma la teva assistència.",
+        "slotDay": "dia del slot",
+        "courtCompleteTitle": "Pista completa!",
+        "courtCompleteText": "Els 4 jugadors/es de la teva pista han confirmat assistència per al {{day}} a {{club}}."
+      },
+      "activity": {
+        "regenerate": "Regeneració de partits",
+        "generate": "Partits generats per a {{slot}} ({{week}}) · {{courts}} pistes"
+      }
+    },
+    "resultados": {
+      "dateUnavailable": "Data de partit no disponible.",
+      "coordWindow": "Només pots gestionar resultats de la setmana passada i avui.",
+      "cannotReport": "No pots reportar aquest partit.",
+      "todayYesterdayOnly": "Només pots introduir resultats d'avui o d'ahir.",
+      "cannotModifyIntroduced": "No pots modificar un resultat ja introduït.",
+      "mustLogin": "Has d'iniciar sessió.",
+      "matchNotFound": "Partit no trobat.",
+      "coordOnlyValidate": "Només el/la coordinador/a pot validar resultats.",
+      "noResultToValidate": "No hi ha resultat per validar.",
+      "outsideCoordWindow": "Fora de la finestra de resultats del/de la coordinador/a.",
+      "coordOnlyModify": "Només el/la coordinador/a pot modificar resultats validats.",
+      "noResultToModify": "No hi ha resultat per modificar.",
+      "notifications": {
+        "pendingTitle": "Resultat pendent de validació",
+        "pendingText": "S'ha pujat un resultat al teu partit ({{date}}).",
+        "validatedTitle": "Resultat validat",
+        "validatedText": "El resultat del teu partit ({{date}}) ja està validat."
+      },
+      "activity": {
+        "modify": "Modifica resultat a pista {{id}} ({{date}})",
+        "introduce": "Introduïx resultat a pista {{id}} ({{date}})",
+        "validate": "Valida resultat a pista {{id}} ({{date}})",
+        "unlock": "Desbloqueja resultat a pista {{id}} ({{date}}) per edició"
+      }
+    },
+    "eventos": {
+      "mustLogin": "Has d'iniciar sessió.",
+      "coordOnly": "Només coordinació.",
+      "coordOnlyAlt": "Només coordinació.",
+      "titleRequired": "El títol és obligatori.",
+      "startDateRequired": "La data d'inici és obligatòria.",
+      "endDateRequired": "La data de fi és obligatòria.",
+      "endBeforeStart": "La data de fi no pot ser anterior a la d'inici.",
+      "capacityInvalid": "L'aforament ha de ser un nombre enter major que 0.",
+      "eventNotFound": "Esdeveniment no trobat.",
+      "eventFull": "L'esdeveniment està complet (aforament màxim assolit).",
+      "invalidPartner": "Selecciona una parella vàlida.",
+      "cannotPartnerSelf": "No et pots emparellar amb tu mateix/a.",
+      "tournamentOnly": "Només s'aplica a tornejos.",
+      "partnerNotInscribed": "Aquesta persona no està inscrita en aquest torneig.",
+      "invalidInscription": "Inscripció no vàlida.",
+      "paymentFailed": "No s'ha pogut marcar el pagament.",
+      "activity": {
+        "create": "Crea esdeveniment: {{title}} ({{dates}})",
+        "signUp": "S'apunta a {{title}} ({{date}})",
+        "unregister": "Es dona de baixa de {{title}} ({{date}})",
+        "delete": "Elimina esdeveniment: {{title}}"
+      }
+    },
+    "franjas": {
+      "addOne": "Afegeix almenys una franja horària.",
+      "timeRequired": "Indica l'hora de cada franja.",
+      "courtPerFringe": "Cada franja ha de tenir almenys una pista.",
+      "configureCourts": "Configura almenys una pista a les franges."
+    }
+  },
+
+  "dates": {
+    "weekdays": {
+      "monday": "Dilluns",
+      "tuesday": "Dimarts",
+      "wednesday": "Dimecres",
+      "thursday": "Dijous",
+      "friday": "Divendres",
+      "saturday": "Dissabte",
+      "sunday": "Diumenge"
+    },
+    "weekdaysShort": {
+      "mon": "Dl",
+      "tue": "Dt",
+      "wed": "Dc",
+      "thu": "Dj",
+      "fri": "Dv",
+      "sat": "Ds",
+      "sun": "Dg"
+    },
+    "months": {
+      "january": "Gener",
+      "february": "Febrer",
+      "march": "Març",
+      "april": "Abril",
+      "may": "Maig",
+      "june": "Juny",
+      "july": "Juliol",
+      "august": "Agost",
+      "september": "Setembre",
+      "october": "Octubre",
+      "november": "Novembre",
+      "december": "Desembre"
+    },
+    "monthsShort": {
+      "jan": "gen",
+      "feb": "feb",
+      "mar": "mar",
+      "apr": "abr",
+      "may": "mai",
+      "jun": "jun",
+      "jul": "jul",
+      "aug": "ago",
+      "sep": "set",
+      "oct": "oct",
+      "nov": "nov",
+      "dec": "des"
+    },
+    "monthsShortCapital": {
+      "jan": "Gen",
+      "feb": "Feb",
+      "mar": "Mar",
+      "apr": "Abr",
+      "may": "Mai",
+      "jun": "Jun",
+      "jul": "Jul",
+      "aug": "Ago",
+      "sep": "Set",
+      "oct": "Oct",
+      "nov": "Nov",
+      "dec": "Des"
+    }
+  }
+}

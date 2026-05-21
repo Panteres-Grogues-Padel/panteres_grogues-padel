@@ -1,0 +1,520 @@
+{
+  "_meta": {
+    "locale": "es",
+    "description": "Textos originales en castellano (base i18n). Claves con {{param}} admiten interpolación."
+  },
+
+  "common": {
+    "close": "Cerrar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Guardar",
+    "delete": "Borrar",
+    "loading": "Cargando...",
+    "loadingEllipsis": "Cargando…",
+    "saving": "Guardando…",
+    "sending": "Enviando…",
+    "all": "Todos",
+    "player": "Jugador",
+    "playerFallback": "jugador",
+    "coordShort": "Coord.",
+    "email": "Email",
+    "password": "Contraseña",
+    "optional": "opcional",
+    "today": "hoy",
+    "yesterday": "ayer",
+    "indoor": "Indoor",
+    "outdoor": "Outdoor",
+    "whatsapp": "WhatsApp",
+    "copy": "Copiar",
+    "court": "Pista",
+    "courtNumber": "Pista {{num}}",
+    "matchNumber": "Partido {{num}}",
+    "setNumber": "Set {{num}}",
+    "fringeNumber": "Franja {{num}}",
+    "noTime": "Sin hora",
+    "howToGetThere": "Cómo llegar",
+    "emergencies": "Emergencias generales",
+    "choosePlayer": "— Elige un jugador —",
+    "chooseGodparent": "— Elige padrino/madrina —",
+    "selectPlaceholder": "— Seleccionar —",
+    "noLimit": "Sin límite",
+    "assigned": "Asignado",
+    "current": "Actual: {{name}}",
+    "moreCount": "(+{{count}} más)",
+    "positionOrdinal": "{{pos}}º"
+  },
+
+  "nav": {
+    "jugar": "Jugar",
+    "partidos": "Partidos",
+    "resultados": "Resultados",
+    "ranking": "Ranking",
+    "agenda": "Agenda",
+    "coordinacion": "Coordinación",
+    "logout": "Salir"
+  },
+
+  "topbar": {
+    "backToWelcome": "Volver a la bienvenida",
+    "notifications": "Notificaciones",
+    "notificationsUnread": "{{count}} notificaciones sin leer"
+  },
+
+  "auth": {
+    "appTitle": "Panteres Grogues Padel",
+    "subtitle": "Inicia sesion para continuar",
+    "passwordLabel": "Contrasena",
+    "emailPlaceholder": "tu@email.com",
+    "privacyAccept": "Acepto la politica de privacidad",
+    "enter": "Entrar",
+    "entering": "Entrando...",
+    "enterGoogle": "Entrar con Google",
+    "demoDivider": "o acceso demo",
+    "selectDemoUser": "Selecciona un usuario demo...",
+    "enterAsDemo": "Entrar como demo",
+    "coordMarker": " (Coord.)",
+    "errors": {
+      "userNotFound": "Usuario no encontrado",
+      "connection": "Error de conexion.",
+      "connectionLogin": "Error de conexion al iniciar sesion.",
+      "privacyRequired": "Debes aceptar la politica de privacidad para continuar.",
+      "emailPasswordRequired": "Introduce tu email y contrasena.",
+      "emailInvalid": "El email no es valido.",
+      "passwordMinLength": "La contrasena debe tener al menos 6 caracteres.",
+      "supabaseEnvMissing": "Faltan variables de entorno de Supabase.",
+      "timeout": "Tiempo de espera agotado. Revisa la conexion.",
+      "sessionFailed": "No se pudo obtener la sesion. Vuelve a intentarlo.",
+      "selectDemo": "Selecciona un usuario demo.",
+      "googleLogin": "Error al iniciar sesion con Google."
+    }
+  },
+
+  "bienvenida": {
+    "greetingMorning": "¡Buenos días",
+    "greetingAfternoon": "¡Buenas tardes",
+    "greetingEvening": "¡Buenas noches",
+    "greetingSuffix": ", {{name}}!",
+    "welcomeSubtitle": "Bienvenide a Panteres Grogues Pàdel 🏳️‍🌈",
+    "playTomorrow": "Mañana juegas",
+    "ctaTitle": "¡A Jugaaarrr !!!!",
+    "ctaSubtitle": "Apúntate a tu próximo partido",
+    "rankingPillTitle": "Tu posición en el ranking",
+    "rankingPillSub": "Eficacia: {{eficacia}} · {{pj}} partidos",
+    "utilities": "Utilidades",
+    "utilitiesSub": "Clubs, seguro, hospitales, más...",
+    "godparents": "Padrinos",
+    "godparentsSub": "Tu padrino/madrina y ahijados/as",
+    "activity": "Actividad",
+    "history": "Historial",
+    "activityRecent": "Actividad reciente",
+    "myActivity": "Mi actividad",
+    "loadingActivity": "Cargando actividad...",
+    "noActivity": "Sin actividad registrada todavía",
+    "openProfile": "Abrir mi perfil",
+    "utilitiesSheetTitle": "🗺️ Utilidades",
+    "orgTitle": "Panteres Grogues",
+    "clubsSection": "Clubs",
+    "insuranceSection": "Seguro médico",
+    "insuranceSport": "🏥 Seguro deportivo",
+    "insurancePolicy": "Póliza federativa — Federació Catalana de Pàdel",
+    "insuranceContact": "Contacta con el coordinador para obtener los datos de tu póliza",
+    "urgenciesSection": "Urgencias cercanas",
+    "urgency112": "Urgencias · 112",
+    "godparentsSheetTitle": "🤝 Padrinos"
+  },
+
+  "jugar": {
+    "title": "Jugar",
+    "noSlots": "No hay slots disponibles.",
+    "currentWeek": "Semana actual · {{range}}",
+    "nextWeek": "Semana próxima · {{range}}",
+    "viewList": "Ver lista",
+    "signUp": "Apuntarme",
+    "enrolled": "✓ Apuntado",
+    "enrolledAtClub": "Apuntado en {{club}}",
+    "enrolledCount": "{{count}} apuntados",
+    "closed": "Cerrada 🔒",
+    "detalle": {
+      "back": "← Volver",
+      "openCurrentWeek": "Abierta · semana actual",
+      "openNextWeek": "Abierta · semana próxima",
+      "closedOpens": "Cerrada · abre el {{day}} {{date}} {{month}} a las 19:00",
+      "closed": "Cerrada",
+      "enrolled": "Apuntado",
+      "open": "Abierta",
+      "locationAmericana": "📍 Ubicación por WhatsApp · Americana",
+      "listOpenConfirm": "Lista abierta · partidos por confirmar",
+      "courtsTitulars": "{{count}} pista{{plural}} · {{max}} titulares máx.",
+      "alreadyEnrolledElsewhere": "Ya estás apuntado en {{label}} — {{club}}. Date de baja primero y luego apúntate aquí.",
+      "memberCheckbox": "Soy socio del Club Cornellà Up",
+      "memberHint": "Márcalo si eres socio del Up",
+      "confirmEnrollment": "Confirmar inscripción",
+      "bajaWarning": "⚠️ Si te das de baja hoy, por favor busca un@sustitut@ para el partido antes de confirmar la baja.",
+      "unregister": "Darme de baja",
+      "enrolledList": "Apuntados ({{count}})",
+      "membersUp": "{{count}} socios Up",
+      "nobodyYet": "Nadie apuntado todavía",
+      "titulars": "Titulares (máx. {{max}})",
+      "reserve": "Reserva ({{count}})"
+    }
+  },
+
+  "partidos": {
+    "title": "Partidos",
+    "todayLabel": "{{day}} — {{club}} (hoy)",
+    "noSlotsToday": "No hay slots para hoy",
+    "coordBox": "Coord.",
+    "regenerateConfirm": "¿Regenerar los partidos de esta semana?",
+    "deleteFringe": "Eliminar franja",
+    "addFringe": "+ Añadir franja horaria",
+    "summaryCourts": "{{pistas}} pista{{pistasPlural}} ({{indoor}} indoor) · {{titulares}} titulares · {{reserva}} reserva",
+    "regenerateMatches": "Regenerar partidos",
+    "generateMatches": "Generar partidos",
+    "notGeneratedYet": "Los partidos aún no se han generado",
+    "nobodySignedUp": "No hay nadie apuntado",
+    "reserveBox": "Reserva ({{count}})",
+    "waHeader": "WhatsApp",
+    "waTemplateHeader": "Partidos: {{count}} · Jugadores: {{players}}",
+    "waIndoorCount": "{{count}} partido{{plural}} Indoor",
+    "waMatchLine": "*Partido {{num}}* · 🕐 {{hora}}{{indoorSuffix}}",
+    "waReserve": "*Reserva:* {{names}}",
+    "card": {
+      "confirm": "Confirmar",
+      "removeIndoor": "🏠 Quitar indoor",
+      "markIndoor": "Marcar indoor"
+    },
+    "move": {
+      "title": "↕️ Mover jugador",
+      "subtitle": "Mover a {{name}} desde Partido {{from}} a:",
+      "option": "Partido {{num}} · 🕐 {{hora}} ({{count}} jugadores)"
+    }
+  },
+
+  "resultados": {
+    "title": "Resultados",
+    "coordHint": "Semana pasada y hoy · sin partidos futuros",
+    "playerHint": "Puedes introducir resultados solo en tus partidos de hoy o ayer. Consulta cualquier día.",
+    "noMatchesWindow": "No hay partidos con resultados en esta ventana",
+    "noMatchesGenerate": "Genera partidos en la pestaña Partidos para poder registrar resultados",
+    "noMatchesDay": "No hay partidos este día",
+    "calendarLabel": "Calendario de partidos",
+    "calendarDayAria": "{{day}} de {{month}}, con partidos",
+    "saveChanges": "Guardar cambios",
+    "saveResult": "Guardar resultado",
+    "coordMustValidate": "El coordinador deberá validarlo",
+    "noResultYet": "Aún no hay resultado registrado",
+    "modifyResult": "Modificar resultado",
+    "validateResult": "Validar resultado",
+    "pendingCoordValidation": "Pendiente de validación por el coordinador",
+    "status": {
+      "none": "Sin resultado",
+      "pending": "Pendiente de validación",
+      "validated": "Validado"
+    }
+  },
+
+  "agenda": {
+    "title": "Agenda",
+    "createEvent": "Crear evento",
+    "yearBack": "← Año",
+    "eventCount": "{{count}} evento{{plural}}",
+    "noEventsInMonth": "No hay eventos en {{month}}",
+    "formTitle": "Crear evento",
+    "fieldTitle": "Título *",
+    "fieldTitlePlaceholder": "Nombre del evento",
+    "fieldStartDate": "Fecha inicio *",
+    "fieldEndDate": "Fecha fin *",
+    "fieldTime": "Hora",
+    "fieldDescription": "Descripción",
+    "fieldDescriptionPlaceholder": "Detalles del evento (opcional)",
+    "fieldCapacity": "Aforo máximo",
+    "saveEvent": "Guardar evento",
+    "createEventFailed": "No se pudo crear el evento.",
+    "inscribedPaid": "{{inscritos}} inscritos · {{pagados}} pagados",
+    "withPartner": "con {{name}}",
+    "paid": "Pagado",
+    "paymentPending": "Pago pendiente",
+    "partner": "Pareja: {{name}}",
+    "choosePartner": "Elegir pareja (entre inscrit@s)",
+    "unregister": "Darme de baja",
+    "signUp": "Apuntarme",
+    "eventFull": "Evento completo (aforo máximo alcanzado).",
+    "viewInscribed": "Ver inscritos ({{count}}) · {{paid}} pagados ↑",
+    "inscribedSummary": "{{count}} inscrito{{plural}} · {{paid}} pagados",
+    "places": "{{current}}/{{max}} plazas",
+    "individual": "Individual",
+    "signedUp": "✓ Apuntado",
+    "paymentConfirmed": "✅ Pago confirmado",
+    "paymentPendingEmoji": "⏳ Pago pendiente",
+    "deleteConfirm": "¿Seguro que quieres borrar este evento?",
+    "types": {
+      "torneo": "Torneo",
+      "social": "Social",
+      "otro": "Actividad"
+    }
+  },
+
+  "ranking": {
+    "title": "Ranking",
+    "columns": {
+      "player": "Jugador",
+      "pj": "PJ",
+      "pg": "PG",
+      "jj": "JJ",
+      "jg": "JG",
+      "efficiency": "Efic.",
+      "penalty": "Pen.",
+      "score": "Score"
+    },
+    "formulaNote": "Ordenado por score · Eficacia, penalización y score en %",
+    "profile": {
+      "you": "Tú",
+      "appName": "Nombre en app: {{name}}",
+      "memberNumber": "N.º socio Panteres",
+      "noInstagram": "Sin cuenta indicada",
+      "instagramHidden": "Instagram no visible",
+      "phoneHidden": "Teléfono oculto",
+      "matchesPlayed": "Partidos jugados",
+      "matchesWon": "Partidos ganados",
+      "gamesPlayed": "Juegos jugados",
+      "gamesWon": "Juegos ganados",
+      "efficiency": "Eficacia",
+      "scoreRanking": "Score ranking",
+      "penaltyFewMatches": "Penalización -{{pct}}% (pocos partidos)",
+      "noPenalty": "Sin penalización",
+      "privacy": "⚙️ Privacidad",
+      "showPhone": "Mostrar mi teléfono",
+      "phoneVisible": "Visible para otros jugadores",
+      "authorizeInstagram": "Autorizo etiquetas en Instagram",
+      "instagramTagHint": "La sección puede etiquetarme en el perfil oficial"
+    }
+  },
+
+  "padrinos": {
+    "loadingPlayers": "Cargando jugadores…",
+    "yourGodparent": "Tu padrino/madrina",
+    "noGodparent": "De momento no tienes padrino/madrina asignado 🏳️‍🌈",
+    "yourGodchildren": "Tus ahijados/as",
+    "noGodchildren": "De momento no tienes ahijados/as asignados",
+    "manageAssignments": "Gestionar asignaciones",
+    "selectGodchild": "Selecciona un ahijado/a",
+    "selectGodparent": "Selecciona su padrino/madrina",
+    "assign": "Asignar",
+    "removeGodparent": "Quitar padrino/madrina",
+    "selectBoth": "Selecciona un ahijado/a y un padrino/madrina.",
+    "assignFailed": "No se pudo asignar.",
+    "assignSuccess": "Padrino/madrina asignado correctamente.",
+    "removeFailed": "No se pudo quitar el padrino/madrina.",
+    "removeSuccess": "Padrino/madrina desasignado.",
+    "errors": {
+      "invalidPlayer": "Jugador no válido.",
+      "invalidGodparent": "Padrino/madrina no válido.",
+      "selfGodparent": "Un jugador no puede ser su propio padrino/madrina."
+    }
+  },
+
+  "notificaciones": {
+    "title": "Notificaciones",
+    "markAllRead": "Marcar todas leídas",
+    "empty": "Sin notificaciones"
+  },
+
+  "seccion": {
+    "title": "Coordinación",
+    "generalCoord": "Coordinación general",
+    "managementArea": "Área de gestión",
+    "sportsArea": "Área deportiva y competición",
+    "commsArea": "Área de comunicación"
+  },
+
+  "app": {
+    "toasts": {
+      "slotNotFound": "Slot no encontrado",
+      "invalidPlayerIdGenerate": "Tu perfil no tiene un id de jugador válido para generar partidos en Supabase.",
+      "matchesGenerated": "Partidos generados: {{count}}",
+      "movePlayerFailed": "No se pudo mover el jugador",
+      "loadingRanking": "Cargando ranking...",
+      "rankingError": "Error ranking: {{error}}",
+      "loadingResults": "Cargando resultados...",
+      "resultsError": "Error resultados: {{error}}",
+      "resultSaved": "Resultado guardado",
+      "resultValidated": "Resultado validado",
+      "resultUnlocked": "Resultado desbloqueado para edición",
+      "agendaError": "Error agenda: {{error}}",
+      "enrollmentDone": "Inscripcion realizada",
+      "partnerSaved": "Pareja guardada",
+      "unregisterDone": "Baja realizada",
+      "paymentMarked": "Pago marcado",
+      "paymentUnmarked": "Pago desmarcado",
+      "eventCreated": "Evento creado",
+      "eventDeleted": "Evento eliminado"
+    }
+  },
+
+  "hooks": {
+    "slots": {
+      "noActiveSlots": "No hay slots activos. Se muestran slots de respaldo.",
+      "loadInscriptionsError": "Error al cargar inscripciones: {{error}}",
+      "loadDataError": "Error al cargar datos: {{error}}",
+      "noSession": "No hay sesión activa.",
+      "slotNotFound": "Slot no encontrado.",
+      "listNotOpen": "La lista aún no está abierta.",
+      "invalidPlayerId": "ID de jugador no válido.",
+      "alreadyEnrolled": "Ya estás apuntado en {{label}} — {{club}}.",
+      "sessionExpired": "Sesión expirada. Vuelve a iniciar sesión.",
+      "bajaWarningShort": "Si te das de baja hoy, por favor busca un@ sustitut@.",
+      "notifications": {
+        "matchReminderTitle": "Recordatorio de partido",
+        "matchReminderText": "Tienes partido el {{day}} en {{club}}. ¡Recuerda estar pendiente!",
+        "listOpenTitle": "¡Ya puedes apuntarte!",
+        "listOpenText": "Se ha abierto la lista para {{day}} en {{club}}. ¡Corre a apuntarte!",
+        "yourDay": "tu día",
+        "enrolledTitle": "¡Apuntado!",
+        "enrolledText": "Recuerda estar pendiente del horario.",
+        "unregisterTitle": "Baja confirmada",
+        "unregisterText": "¡Hasta la próxima!"
+      },
+      "activity": {
+        "signUp": "Se apunta a {{label}} · {{club}} ({{week}})",
+        "unregister": "Se da de baja de {{label}} · {{club}} ({{week}})"
+      }
+    },
+    "partidos": {
+      "invalidPlayerId": "Tu perfil no tiene un id de jugador válido para Supabase.",
+      "notEnoughPlayers": "No hay suficientes jugadores para generar pistas de 4.",
+      "notEnoughCourts": "Hay {{groups}} partidos posibles pero solo {{courts}} pistas en las franjas. Añade más pistas.",
+      "matchNotFound": "Partido no encontrado.",
+      "notifications": {
+        "regeneratedTitle": "¡Partidos regenerados!",
+        "generatedTitle": "¡Partidos generados!",
+        "generatedText": "Ya están los partidos del {{day}} en {{club}}. Por favor confirma tu asistencia.",
+        "slotDay": "día del slot",
+        "courtCompleteTitle": "¡Pista completa!",
+        "courtCompleteText": "Los 4 jugadores de tu pista han confirmado asistencia para el {{day}} en {{club}}."
+      },
+      "activity": {
+        "regenerate": "Regeneracion de partidos",
+        "generate": "Partidos generados para {{slot}} ({{week}}) · {{courts}} pistas"
+      }
+    },
+    "resultados": {
+      "dateUnavailable": "Fecha de partido no disponible.",
+      "coordWindow": "Solo puedes gestionar resultados de la semana pasada y hoy.",
+      "cannotReport": "No puedes reportar este partido.",
+      "todayYesterdayOnly": "Solo puedes introducir resultados de hoy o ayer.",
+      "cannotModifyIntroduced": "No puedes modificar un resultado ya introducido.",
+      "mustLogin": "Debes iniciar sesion.",
+      "matchNotFound": "Partido no encontrado.",
+      "coordOnlyValidate": "Solo el coordinador puede validar resultados.",
+      "noResultToValidate": "No hay resultado para validar.",
+      "outsideCoordWindow": "Fuera de la ventana de resultados del coordinador.",
+      "coordOnlyModify": "Solo el coordinador puede modificar resultados validados.",
+      "noResultToModify": "No hay resultado para modificar.",
+      "notifications": {
+        "pendingTitle": "Resultado pendiente de validacion",
+        "pendingText": "Se ha subido un resultado en tu partido ({{date}}).",
+        "validatedTitle": "Resultado validado",
+        "validatedText": "El resultado de tu partido ({{date}}) ya esta validado."
+      },
+      "activity": {
+        "modify": "Modifica resultado en pista {{id}} ({{date}})",
+        "introduce": "Introduce resultado en pista {{id}} ({{date}})",
+        "validate": "Valida resultado en pista {{id}} ({{date}})",
+        "unlock": "Desbloquea resultado en pista {{id}} ({{date}}) para edicion"
+      }
+    },
+    "eventos": {
+      "coordOnly": "Solo coordinación.",
+      "coordOnlyAlt": "Solo coordinacion.",
+      "titleRequired": "El título es obligatorio.",
+      "startDateRequired": "La fecha de inicio es obligatoria.",
+      "endDateRequired": "La fecha de fin es obligatoria.",
+      "endBeforeStart": "La fecha de fin no puede ser anterior a la de inicio.",
+      "capacityInvalid": "El aforo debe ser un número entero mayor que 0.",
+      "eventNotFound": "Evento no encontrado.",
+      "eventFull": "El evento está completo (aforo máximo alcanzado).",
+      "invalidPartner": "Selecciona una pareja válida.",
+      "cannotPartnerSelf": "No puedes emparejarte contigo mism@.",
+      "tournamentOnly": "Solo aplica a torneos.",
+      "partnerNotInscribed": "Esa persona no está inscrita en este torneo.",
+      "invalidInscription": "Inscripción no válida.",
+      "paymentFailed": "No se pudo marcar el pago.",
+      "activity": {
+        "create": "Crea evento: {{title}} ({{dates}})",
+        "signUp": "Se apunta a {{title}} ({{date}})",
+        "unregister": "Se da de baja de {{title}} ({{date}})",
+        "delete": "Elimina evento: {{title}}"
+      }
+    },
+    "franjas": {
+      "addOne": "Añade al menos una franja horaria.",
+      "timeRequired": "Indica la hora de cada franja.",
+      "courtPerFringe": "Cada franja debe tener al menos una pista.",
+      "configureCourts": "Configura al menos una pista en las franjas."
+    }
+  },
+
+  "dates": {
+    "weekdays": {
+      "monday": "Lunes",
+      "tuesday": "Martes",
+      "wednesday": "Miércoles",
+      "thursday": "Jueves",
+      "friday": "Viernes",
+      "saturday": "Sábado",
+      "sunday": "Domingo"
+    },
+    "weekdaysShort": {
+      "mon": "Lun",
+      "tue": "Mar",
+      "wed": "Mié",
+      "thu": "Jue",
+      "fri": "Vie",
+      "sat": "Sáb",
+      "sun": "Dom"
+    },
+    "months": {
+      "january": "Enero",
+      "february": "Febrero",
+      "march": "Marzo",
+      "april": "Abril",
+      "may": "Mayo",
+      "june": "Junio",
+      "july": "Julio",
+      "august": "Agosto",
+      "september": "Septiembre",
+      "october": "Octubre",
+      "november": "Noviembre",
+      "december": "Diciembre"
+    },
+    "monthsShort": {
+      "jan": "ene",
+      "feb": "feb",
+      "mar": "mar",
+      "apr": "abr",
+      "may": "may",
+      "jun": "jun",
+      "jul": "jul",
+      "aug": "ago",
+      "sep": "sep",
+      "oct": "oct",
+      "nov": "nov",
+      "dec": "dic"
+    },
+    "monthsShortCapital": {
+      "jan": "Ene",
+      "feb": "Feb",
+      "mar": "Mar",
+      "apr": "Abr",
+      "may": "May",
+      "jun": "Jun",
+      "jul": "Jul",
+      "aug": "Ago",
+      "sep": "Sep",
+      "oct": "Oct",
+      "nov": "Nov",
+      "dec": "Dic"
+    }
+  }
+}

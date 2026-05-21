@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { isJugadorUuid, jugadoresCoinciden, normalizeJugadorUuid } from "../utils/jugador";
+import { t } from "../i18n";
 
 function rowsFromRpc(data) {
   if (data == null) return [];
@@ -10,9 +11,9 @@ function rowsFromRpc(data) {
 function mapJugadorRow(row) {
   return {
     id: normalizeJugadorUuid(row.id),
-    nombre: row.nombre ?? "Jugador",
+    nombre: row.nombre ?? t("common.player"),
     nickname: row.nickname?.trim() || null,
-    nombreCompleto: row.nombre_completo ?? row.nombre ?? "Jugador",
+    nombreCompleto: row.nombre_completo ?? row.nombre ?? t("common.player"),
     padrinoId: row.padrino_id ? normalizeJugadorUuid(row.padrino_id) : null,
     padrinoNombre: row.padrino_nombre ?? null
   };
@@ -65,8 +66,8 @@ export function usePadrinos(currentUser) {
     if (hit) return hit;
     return {
       id: yo.padrinoId,
-      nombre: yo.padrinoNombre ?? "Jugador",
-      nombreCompleto: yo.padrinoNombre ?? "Jugador"
+      nombre: yo.padrinoNombre ?? t("common.player"),
+      nombreCompleto: yo.padrinoNombre ?? t("common.player")
     };
   }, [jugadores, yo]);
 
@@ -84,12 +85,12 @@ export function usePadrinos(currentUser) {
   );
 
   async function asignarPadrino(ahijadoId, padrinoId) {
-    if (!isJugadorUuid(ahijadoId)) return { ok: false, error: "Jugador no válido." };
+    if (!isJugadorUuid(ahijadoId)) return { ok: false, error: t("padrinos.errors.invalidPlayer") };
     if (padrinoId != null && !isJugadorUuid(padrinoId)) {
-      return { ok: false, error: "Padrino/madrina no válido." };
+      return { ok: false, error: t("padrinos.errors.invalidGodparent") };
     }
     if (padrinoId != null && jugadoresCoinciden(ahijadoId, padrinoId)) {
-      return { ok: false, error: "Un jugador no puede ser su propio padrino/madrina." };
+      return { ok: false, error: t("padrinos.errors.selfGodparent") };
     }
 
     if (useFallback) {

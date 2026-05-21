@@ -13,6 +13,7 @@ import {
   normalizeSemanaDate
 } from "../utils/dates";
 import { expandFranjasToPistas, shufflePistasPlan, validarFranjas } from "../utils/franjasPartidos";
+import { t } from "../i18n";
 import { isJugadorUuid } from "../utils/jugador";
 import { getNombre } from "../utils/nombres";
 
@@ -51,9 +52,9 @@ function flattenPartidos(data) {
         .map((jp) => ({
           id: jp.id,
           jugadorId: jp.jugador_id,
-          nombre: getNombre(jp.jugadores) || "Jugador",
+          nombre: getNombre(jp.jugadores) || t("common.player"),
           nickname: jp.jugadores?.nickname?.trim() || null,
-          nombreCompleto: jp.jugadores?.nombre_completo ?? jp.jugadores?.nombre ?? "Jugador",
+          nombreCompleto: jp.jugadores?.nombre_completo ?? jp.jugadores?.nombre ?? t("common.player"),
           posicion: jp.posicion,
           confirmado: Boolean(jp.confirmado)
         }));
@@ -351,7 +352,7 @@ export function usePartidos(currentUser) {
     const semanaNorm = getLunesSemanaActual();
 
     if (!isJugadorUuid(currentUserId)) {
-      return { ok: false, error: "Tu perfil no tiene un id de jugador válido para Supabase." };
+      return { ok: false, error: t("hooks.partidos.invalidPlayerId") };
     }
 
     const { data: inscripciones, error: insError } = await supabase
@@ -371,8 +372,8 @@ export function usePartidos(currentUser) {
       const j = ins.jugadores;
       return {
         id: jid,
-        nombre: j?.nombre ?? "Jugador",
-        nombreCompleto: j?.nombre_completo ?? j?.nombre ?? "Jugador",
+        nombre: j?.nombre ?? t("common.player"),
+        nombreCompleto: j?.nombre_completo ?? j?.nombre ?? t("common.player"),
         rankIdx: rankIndexById.has(jid) ? rankIndexById.get(jid) : Number.MAX_SAFE_INTEGER,
         inscritoTs: ins.inscrito_at ? new Date(ins.inscrito_at).getTime() : 0
       };
@@ -398,12 +399,12 @@ export function usePartidos(currentUser) {
     const titulares = maxTit > 0 ? candidatos.slice(0, maxTit) : candidatos;
     const grupos = groupsOf4(titulares);
     if (!grupos.length) {
-      return { ok: false, error: "No hay suficientes jugadores para generar pistas de 4." };
+      return { ok: false, error: t("hooks.partidos.notEnoughPlayers") };
     }
     if (grupos.length > pistasPlan.length) {
       return {
         ok: false,
-        error: `Hay ${grupos.length} partidos posibles pero solo ${pistasPlan.length} pistas en las franjas. Añade más pistas.`
+        error: t("hooks.partidos.notEnoughCourts", { groups: grupos.length, courts: pistasPlan.length })
       };
     }
 
@@ -490,19 +491,27 @@ export function usePartidos(currentUser) {
     if (loadRes && loadRes.ok === false && loadRes.error) {
       console.warn("[generarPartidos] loadPartidosForSlot falló tras insertar; UI usa filas optimistas.", loadRes.error);
     }
-    const generatedType = delRes.deleted ? "Regeneracion de partidos" : "Partidos generados";
+    const activityText = delRes.deleted
+      ? t("hooks.partidos.activity.regenerate")
+      : t("hooks.partidos.activity.generate", {
+          slot: slotId,
+          week: semanaNorm,
+          courts: grupos.length
+        });
     await createActivityLog({
       jugadorId: currentUserId,
       tipo: "partidos",
-      texto: `${generatedType} para ${slotId} (${semanaNorm}) · ${grupos.length} pistas`
+      texto: activityText
     });
     const club = slotMeta?.club ?? "";
     const diaLabel =
       formatDiaPartidoLabel(fechaPartidoFromSlot(semanaNorm, slotMeta?.diaSemana)) ||
       slotMeta?.label ||
-      "día del slot";
-    const notifTitulo = delRes.deleted ? "¡Partidos regenerados!" : "¡Partidos generados!";
-    const notifTexto = `Ya están los partidos del ${diaLabel} en ${club}. Por favor confirma tu asistencia.`;
+      t("hooks.partidos.notifications.slotDay");
+    const notifTitulo = delRes.deleted
+      ? t("hooks.partidos.notifications.regeneratedTitle")
+      : t("hooks.partidos.notifications.generatedTitle");
+    const notifTexto = t("hooks.partidos.notifications.generatedText", { day: diaLabel, club });
     const notifications = grupos
       .flatMap((g) => g)
       .map((j) => ({
@@ -540,7 +549,7 @@ export function usePartidos(currentUser) {
       return { ok: true };
     }
     const partido = partidos.find((p) => p.id === partidoId);
-    if (!partido) return { ok: false, error: "Partido no encontrado." };
+    if (!partido) return { ok: false, error: t("hooks.partidos.matchNotFound") };
     const { error: updateError } = await supabase
       .from("pistas_partido")
       .update({ es_indoor: !partido.indoor })
@@ -616,8 +625,11 @@ export function usePartidos(currentUser) {
     if (pistaCompletaSentRef.current.has(partido.id)) return;
 
     const diaLabel = formatDiaPartidoLabel(partido.fechaPartido);
-    const titulo = "¡Pista completa!";
-    const texto = `Los 4 jugadores de tu pista han confirmado asistencia para el ${diaLabel} en ${partido.club}.`;
+    const titulo = t("hooks.partidos.notifications.courtCompleteTitle");
+    const texto = t("hooks.partidos.notifications.courtCompleteText", {
+      day: diaLabel,
+      club: partido.club
+    });
 
     const pending = [];
     for (const j of partido.jugadores) {
