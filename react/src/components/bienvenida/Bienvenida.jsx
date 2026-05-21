@@ -18,6 +18,9 @@ import { t } from "../../i18n";
 
 const LANDING_TABLER_ICON_SIZE = 34;
 
+const INSURANCE_PROTOCOL_URL =
+  "https://fulqczmbmmakdxylejgw.supabase.co/storage/v1/object/public/documents/Protocol%20expres%20d'accidents%20Panteres.pdf";
+
 function LandingTablerIcon({ Icon }) {
   return (
     <span className="landing-tabler-icon-box" aria-hidden>
@@ -539,9 +542,15 @@ export default function Bienvenida({
               border: "0.5px solid var(--border)"
             }}
           >
-            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)", marginBottom: 4 }}>
-              {t("bienvenida.insuranceSport")}
-            </div>
+            <a
+              href={INSURANCE_PROTOCOL_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="btn btn-sm"
+              style={{ fontSize: 13, textDecoration: "none", marginBottom: 10, display: "inline-block" }}
+            >
+              🏥 {t("bienvenida.insuranceProtocolBtn")}
+            </a>
             <div style={{ fontSize: 12, color: "var(--text2)", marginBottom: 4 }}>
               {t("bienvenida.insurancePolicy")}
             </div>
