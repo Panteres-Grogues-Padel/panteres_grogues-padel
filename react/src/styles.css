@@ -534,6 +534,7 @@ select {
 }
 
 .hero-pride {
+  position: relative;
   background: linear-gradient(135deg, #000 0%, #784f17 10%, #55cdfc 20%, #f7a8b8 30%, #fff 38%, #f7a8b8 46%, #55cdfc 54%, #e40303 62%, #ff8c00 70%, #ffed00 78%, #008026 86%, #004dff 93%, #750787 100%);
   border-radius: var(--radius-lg);
   padding: 1.25rem 1.5rem;
@@ -544,6 +545,22 @@ select {
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
+  overflow: hidden;
+}
+
+.hero-pride::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hero-pride > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* Misma altura visual que sin aviso: tipografía más compacta para la 3ª línea */
@@ -580,12 +597,15 @@ select {
 }
 
 .hero-manana {
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.15;
+  display: inline-block;
   margin-top: 1px;
-  color: #fde047;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+  padding: 0.35rem 0.875rem;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.3);
 }
 
 .hero-avatar {

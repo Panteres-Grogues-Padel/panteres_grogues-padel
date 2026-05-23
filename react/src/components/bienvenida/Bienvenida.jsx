@@ -12,6 +12,8 @@ import {
 import Padrinos from "../padrinos/Padrinos";
 import { useMananaJuegas } from "../../hooks/useMananaJuegas";
 import { supabase } from "../../lib/supabase";
+import PlayerAvatar from "../common/PlayerAvatar";
+import { useCurrentJugador } from "../../context/CurrentJugadorContext";
 import { DATE_LOCALE } from "../../utils/dates";
 import { t } from "../../i18n";
 
@@ -84,6 +86,7 @@ function activityDescription(entry, includeJugador) {
 export default function Bienvenida({
   currentUser,
   ranking,
+  onOpenPerfil,
   onGoToJugar,
   onGoToPartidos,
   onGoToAgenda,
@@ -97,6 +100,7 @@ export default function Bienvenida({
   const [activityLoading, setActivityLoading] = useState(false);
   const [activityError, setActivityError] = useState("");
   const [logFiltro, setLogFiltro] = useState("");
+  const { jugador: yo } = useCurrentJugador();
   const nombre = currentUser?.nombreCompleto?.split(" ")[0] || currentUser?.nombre || t("common.playerFallback");
   const pos = Math.max(1, ranking.findIndex((j) => j.id === currentUser?.id) + 1);
   const rk = ranking.find((j) => j.id === currentUser?.id);
@@ -158,6 +162,19 @@ export default function Bienvenida({
   return (
     <div>
       <div className={`hero-pride${mananaJuegas ? " hero-pride--manana" : ""}`}>
+        <button
+          type="button"
+          className="hero-avatar-btn"
+          onClick={() => onOpenPerfil?.()}
+          aria-label={t("bienvenida.openProfile")}
+        >
+          <PlayerAvatar
+            jugador={yo}
+            nombre={currentUser?.nombre}
+            size={80}
+            className="hero-player-avatar"
+          />
+        </button>
         <div className="hero-title">
           {saludoPorHora()}
           {t("bienvenida.greetingSuffix", { name: nombre })}
