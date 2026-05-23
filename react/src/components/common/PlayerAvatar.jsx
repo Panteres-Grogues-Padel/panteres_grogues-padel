@@ -1,4 +1,6 @@
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
+import { avatarUrl } from "../../utils/avatarUrl";
+import { useJugadorConFoto } from "../../context/CurrentJugadorContext";
 import { getNombre } from "../../utils/nombres";
 
 export default function PlayerAvatar({
@@ -9,8 +11,11 @@ export default function PlayerAvatar({
   className = "",
   style = {}
 }) {
-  const displayName = nombre ?? (jugador ? getNombre(jugador) || jugador.nombreCompleto || jugador.nombre : "");
-  const foto = fotoUrl ?? jugador?.foto_url ?? null;
+  const jugadorResuelto = useJugadorConFoto(jugador);
+  const displayName =
+    nombre ??
+    (jugadorResuelto ? getNombre(jugadorResuelto) || jugadorResuelto.nombreCompleto || jugadorResuelto.nombre : "");
+  const foto = fotoUrl ?? jugadorResuelto?.foto_url ?? avatarUrl(jugador?.foto_url) ?? null;
   const initials = initialsFromNombre(displayName);
   const avClass = avatarClassFromNombre(displayName);
   const boxStyle = {

@@ -19,10 +19,28 @@ import { useResultados } from "./hooks/useResultados";
 import { useNotificaciones } from "./hooks/useNotificaciones";
 import { isJugadorUuid, jugadoresCoinciden } from "./utils/jugador";
 import PerfilJugador from "./components/ranking/PerfilJugador";
+import { CurrentJugadorProvider, useCurrentJugador } from "./context/CurrentJugadorContext";
 import { t } from "./i18n";
 
 export default function App() {
   const auth = useAuth();
+
+  if (!auth.currentUser) return <LoginScreen auth={auth} />;
+
+  return (
+    <CurrentJugadorProvider
+      jugador={auth.currentUser}
+      avatarVersion={auth.avatarVersion}
+      refreshJugador={auth.refreshCurrentJugador}
+      patchJugador={auth.patchCurrentUser}
+    >
+      <AppAuthed auth={auth} />
+    </CurrentJugadorProvider>
+  );
+}
+
+function AppAuthed({ auth }) {
+  const { jugador: yo } = useCurrentJugador();
   const apuntarInFlightRef = useRef(false);
   const [activeTab, setActiveTab] = useState("bienvenida");
   const [flashMessage, setFlashMessage] = useState("");
@@ -69,8 +87,6 @@ export default function App() {
     marcarTodasLeidas
   } = useNotificaciones(auth.currentUser);
 
-  if (!auth.currentUser) return <LoginScreen auth={auth} />;
-
   function showMessage(msg) {
     setFlashMessage(msg);
     window.setTimeout(() => setFlashMessage(""), 2500);
@@ -95,6 +111,7 @@ export default function App() {
 
   function perfilDesdeUsuarioSesion(u) {
     const rk = ranking.find((j) => jugadoresCoinciden(j.id, u.id));
+    const fotoBase = auth.currentUser?.foto_url ?? u.foto_url ?? u.foto ?? null;
     return {
       id: u.id,
       nombre: u.nombre,
@@ -102,7 +119,7 @@ export default function App() {
       nombreCompleto: u.nombreCompleto ?? u.nombre,
       telefono: u.telefono ?? u.tel ?? "",
       instagram: u.instagram ?? u.ig ?? "",
-      foto_url: u.foto_url ?? u.foto ?? null,
+      foto_url: fotoBase,
       mostrar_telefono: Boolean(u.mostrar_telefono ?? u.mostrarTel),
       autoriza_instagram: Boolean(u.autoriza_instagram ?? u.autorizaIG),
       pj: rk?.pj ?? 0,
@@ -137,7 +154,6 @@ export default function App() {
     <div className="app-root">
       <div className="app-shell">
         <Topbar
-          currentUser={auth.currentUser}
           setActiveTab={setActiveTab}
           noLeidas={noLeidas}
           onOpenNotificaciones={() => setNotifOpen(true)}
@@ -152,7 +168,7 @@ export default function App() {
             <Bienvenida
               currentUser={auth.currentUser}
               ranking={ranking}
-              onOpenPerfil={() => setPerfilJugador(perfilDesdeUsuarioSesion(auth.currentUser))}
+              onOpenPerfil={() => setPerfilJugador(perfilDesdeUsuarioSesion(yo ?? auth.currentUser))}
               onGoToJugar={() => setActiveTab("jugar")}
               onGoToPartidos={() => setActiveTab("partidos")}
               onGoToAgenda={() => setActiveTab("agenda")}
@@ -291,7 +307,6 @@ export default function App() {
       {flashMessage ? <div className="toast">{flashMessage}</div> : null}
       <PerfilJugador
         jugador={perfilJugador}
-        currentUser={auth.currentUser}
         open={Boolean(perfilJugador)}
         onClose={() => setPerfilJugador(null)}
         onJugadorUpdated={(patch) => {

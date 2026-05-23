@@ -1,4 +1,5 @@
 import { t } from "../i18n";
+import { avatarUrlBase } from "./avatarUrl";
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MAX_BYTES = 2 * 1024 * 1024;
@@ -26,7 +27,7 @@ export async function uploadProfilePhoto(client, jugadorId, file) {
   }
 
   const { data: urlData } = client.storage.from("avatars").getPublicUrl(path);
-  const foto_url = `${urlData.publicUrl}?v=${Date.now()}`;
+  const foto_url = avatarUrlBase(urlData.publicUrl);
 
   const { error: dbError } = await client.from("jugadores").update({ foto_url }).eq("id", jugadorId);
   if (dbError) {

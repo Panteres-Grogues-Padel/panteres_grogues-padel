@@ -1,6 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { COORDS, JUGADORES_INICIALES } from "../utils/mockData";
 import { supabase } from "../lib/supabase";
+import { avatarUrlBase } from "../utils/avatarUrl";
+import { fetchPerfilJugadorRpc } from "../utils/perfilJugador";
+import { isJugadorUuid, normalizeJugadorUuid } from "../utils/jugador";
 import { t } from "../i18n";
 
 const JUGADORES_SELECT =
@@ -11,23 +14,42 @@ function jugadorToState(jugador) {
     ...jugador,
     id: jugador.id != null ? String(jugador.id) : jugador.id,
     auth_id: jugador.auth_id ?? null,
-    nombreCompleto: jugador.nombre_completo,
+    nombreCompleto: jugador.nombre_completo ?? jugador.nombreCompleto,
     nickname: jugador.nickname?.trim() || null,
+    foto_url: avatarUrlBase(jugador.foto_url) ?? null,
     fromFallback: false
+  };
+}
+
+function mergeJugadorConPerfil(base, perfil) {
+  if (!perfil) return base;
+  return {
+    ...base,
+    ...perfil,
+    id: base.id ?? perfil.id,
+    auth_id: base.auth_id,
+    email: base.email,
+    activo: base.activo,
+    foto_url: perfil.foto_url ?? base.foto_url ?? null
   };
 }
 
 export function useAuth() {
   const [currentUser, setCurrentUser] = useState(null);
+  const [avatarVersion, setAvatarVersion] = useState(0);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [demoId, setDemoId] = useState("");
-  /** Incrementa en cada login/logout para que useSlots vuelva a cargar inscripciones. */
   const [authEpoch, setAuthEpoch] = useState(0);
   const ultimoAuthIdCargadoRef = useRef(null);
+  const currentUserRef = useRef(null);
+
+  useEffect(() => {
+    currentUserRef.current = currentUser;
+  }, [currentUser]);
 
   const demoUsers = useMemo(
     () =>
@@ -38,6 +60,27 @@ export function useAuth() {
     []
   );
 
+  const bumpAvatarVersion = useCallback(() => {
+    setAvatarVersion(Date.now());
+  }, []);
+
+  const refreshCurrentJugador = useCallback(async () => {
+    const u = currentUserRef.current;
+    const jugadorId = normalizeJugadorUuid(u?.id);
+    if (!supabase || !isJugadorUuid(jugadorId) || u?.fromFallback) {
+      return { ok: false };
+    }
+
+    const { ok, perfil, error: rpcError } = await fetchPerfilJugadorRpc(supabase, jugadorId);
+    if (!ok || !perfil) {
+      return { ok: false, error: rpcError };
+    }
+
+    setCurrentUser((prev) => (prev ? mergeJugadorConPerfil(prev, perfil) : prev));
+    bumpAvatarVersion();
+    return { ok: true, perfil };
+  }, [bumpAvatarVersion]);
+
   async function fetchJugadorPorAuthId(authUserId) {
     const { data: jugador, error: jugadorError } = await supabase
       .from("jugadores")
@@ -46,13 +89,20 @@ export function useAuth() {
       .maybeSingle();
     if (jugadorError) return { ok: false, message: jugadorError.message };
     if (!jugador) return { ok: false, message: t("auth.errors.userNotFound") };
-    return { ok: true, jugador };
+
+    const base = jugadorToState(jugador);
+    const { ok, perfil } = await fetchPerfilJugadorRpc(supabase, base.id);
+    if (ok && perfil) {
+      return { ok: true, jugador: mergeJugadorConPerfil(base, perfil) };
+    }
+    return { ok: true, jugador: base };
   }
 
   async function aplicarSesionSupabase(authUser) {
     if (!authUser) {
       ultimoAuthIdCargadoRef.current = null;
       setCurrentUser(null);
+      setAvatarVersion(0);
       setError("");
       setAuthEpoch((n) => n + 1);
       return;
@@ -66,17 +116,20 @@ export function useAuth() {
       if (!result.ok) {
         setError(result.message);
         setCurrentUser(null);
+        setAvatarVersion(0);
         ultimoAuthIdCargadoRef.current = null;
         await supabase.auth.signOut({ scope: "local" });
         return;
       }
       setError("");
-      setCurrentUser(jugadorToState(result.jugador));
+      setCurrentUser(result.jugador);
+      bumpAvatarVersion();
       ultimoAuthIdCargadoRef.current = authUser.id;
       if (!mismoAuthId) setAuthEpoch((n) => n + 1);
     } catch (e) {
       setError(e?.message ?? t("auth.errors.connection"));
       setCurrentUser(null);
+      setAvatarVersion(0);
       ultimoAuthIdCargadoRef.current = null;
       try {
         await supabase.auth.signOut({ scope: "local" });
@@ -101,6 +154,7 @@ export function useAuth() {
       } else {
         ultimoAuthIdCargadoRef.current = null;
         setCurrentUser(null);
+        setAvatarVersion(0);
         setError("");
         setLoading(false);
         setAuthEpoch((n) => n + 1);
@@ -163,7 +217,8 @@ export function useAuth() {
       }
 
       setError("");
-      setCurrentUser(jugadorToState(result.jugador));
+      setCurrentUser(result.jugador);
+      bumpAvatarVersion();
       ultimoAuthIdCargadoRef.current = authUser.id;
       setAuthEpoch((n) => n + 1);
     } catch (e) {
@@ -184,7 +239,8 @@ export function useAuth() {
     if (!privacyAccepted) return setError(t("auth.errors.privacyRequired"));
     const selected = demoUsers.find((u) => u.id === Number(demoId));
     if (!selected) return setError(t("auth.errors.selectDemo"));
-    setCurrentUser({ ...selected, fromFallback: true });
+    setCurrentUser({ ...selected, fromFallback: true, foto_url: null });
+    setAvatarVersion(0);
   }
 
   async function loginGoogle() {
@@ -209,6 +265,11 @@ export function useAuth() {
   }
 
   function patchCurrentUser(partial) {
+    if (!partial) return;
+    if (partial.foto_url != null) {
+      partial = { ...partial, foto_url: avatarUrlBase(partial.foto_url) };
+      bumpAvatarVersion();
+    }
     setCurrentUser((u) => (u && partial ? { ...u, ...partial } : u));
   }
 
@@ -217,6 +278,7 @@ export function useAuth() {
     setAuthEpoch((n) => n + 1);
     setLoading(false);
     setCurrentUser(null);
+    setAvatarVersion(0);
     setPassword("");
     setEmail("");
     setError("");
@@ -231,6 +293,7 @@ export function useAuth() {
 
   return {
     currentUser,
+    avatarVersion,
     authEpoch,
     email,
     setEmail,
@@ -247,6 +310,7 @@ export function useAuth() {
     loginDemo,
     loginGoogle,
     logout,
-    patchCurrentUser
+    patchCurrentUser,
+    refreshCurrentJugador
   };
 }

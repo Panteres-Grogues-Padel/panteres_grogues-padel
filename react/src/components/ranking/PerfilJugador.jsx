@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { isJugadorUuid, jugadoresCoinciden } from "../../utils/jugador";
 import { getNombre, nombreCorto } from "../../utils/nombres";
-import { mapPerfilFromRpc } from "../../utils/perfilJugador";
+import { useCurrentJugador } from "../../context/CurrentJugadorContext";
+import { fetchPerfilJugadorRpc, mergePerfilView } from "../../utils/perfilJugador";
 import { uploadProfilePhoto } from "../../utils/profilePhoto";
 import { numeroSocioPanteres } from "../../utils/socio";
 import PlayerAvatar from "../common/PlayerAvatar";
@@ -41,7 +42,8 @@ function IconLockPhone() {
   );
 }
 
-export default function PerfilJugador({ jugador, currentUser, open, onClose, onJugadorUpdated }) {
+export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated }) {
+  const { jugador: yo, refreshJugador } = useCurrentJugador();
   const [view, setView] = useState(null);
   const [local, setLocal] = useState(null);
   const [fotoError, setFotoError] = useState("");
@@ -50,24 +52,25 @@ export default function PerfilJugador({ jugador, currentUser, open, onClose, onJ
 
   useEffect(() => {
     if (jugador && open) {
-      setView(jugador);
+      const esPropi =
+        yo && jugadoresCoinciden(jugador.id, yo.id) ? mergePerfilView(jugador, yo) : jugador;
+      setView(esPropi);
       setLocal({
-        mostrar_telefono: Boolean(jugador.mostrar_telefono),
-        autoriza_instagram: Boolean(jugador.autoriza_instagram)
+        mostrar_telefono: Boolean(esPropi.mostrar_telefono),
+        autoriza_instagram: Boolean(esPropi.autoriza_instagram)
       });
       setFotoError("");
     }
-  }, [jugador, open]);
+  }, [jugador, open, yo]);
 
   useEffect(() => {
     if (!open || !jugador?.id || !supabase || !isJugadorUuid(jugador.id)) return undefined;
 
     let cancelled = false;
     void (async () => {
-      const { data, error } = await supabase.rpc("get_perfil_jugador", { p_jugador_id: jugador.id });
-      if (cancelled || error || !data) return;
-      const mapped = mapPerfilFromRpc(data);
-      if (mapped) setView((prev) => (prev ? { ...prev, ...mapped } : mapped));
+      const { ok, perfil } = await fetchPerfilJugadorRpc(supabase, jugador.id);
+      if (cancelled || !ok || !perfil) return;
+      setView((prev) => mergePerfilView(prev, perfil));
     })();
 
     return () => {
@@ -76,9 +79,11 @@ export default function PerfilJugador({ jugador, currentUser, open, onClose, onJ
   }, [open, jugador?.id]);
 
   const isOwn = useMemo(
-    () => Boolean(currentUser && view && jugadoresCoinciden(view.id, currentUser.id)),
-    [currentUser, view]
+    () => Boolean(yo && view && jugadoresCoinciden(view.id, yo.id)),
+    [yo, view]
   );
+
+  const avatarJugador = isOwn && yo ? { ...view, foto_url: yo.foto_url } : view;
 
   const corto = view?.nombreCompleto ? nombreCorto(view.nombreCompleto) : "";
 
@@ -116,7 +121,7 @@ export default function PerfilJugador({ jugador, currentUser, open, onClose, onJ
     [isOwn, view, onJugadorUpdated]
   );
 
-  const canChangePhoto = isOwn && supabase && isJugadorUuid(view?.id) && !currentUser?.fromFallback;
+  const canChangePhoto = isOwn && supabase && isJugadorUuid(view?.id) && !yo?.fromFallback;
 
   const handlePhotoSelect = useCallback(
     async (event) => {
@@ -127,17 +132,25 @@ export default function PerfilJugador({ jugador, currentUser, open, onClose, onJ
       setFotoError("");
       setFotoUploading(true);
       const result = await uploadProfilePhoto(supabase, view.id, file);
-      setFotoUploading(false);
-
       if (!result.ok) {
+        setFotoUploading(false);
         setFotoError(result.error ?? t("ranking.profile.photoErrors.uploadFailed"));
         return;
       }
 
-      setView((prev) => (prev ? { ...prev, foto_url: result.foto_url } : prev));
-      onJugadorUpdated?.({ id: view.id, foto_url: result.foto_url });
+      const refresh = await refreshJugador();
+      setFotoUploading(false);
+
+      if (!refresh.ok) {
+        setFotoError(t("ranking.profile.photoErrors.updateFailed"));
+        return;
+      }
+
+      const perfil = refresh.perfil ?? { foto_url: result.foto_url };
+      setView((prev) => mergePerfilView(prev, perfil));
+      onJugadorUpdated?.({ id: view.id, ...perfil });
     },
-    [canChangePhoto, view, onJugadorUpdated]
+    [canChangePhoto, view, onJugadorUpdated, refreshJugador]
   );
 
   if (!open || !view) return null;
@@ -153,7 +166,7 @@ export default function PerfilJugador({ jugador, currentUser, open, onClose, onJ
         <div className="profile-handle" />
         <div className="profile-header">
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-            <PlayerAvatar jugador={view} size={72} />
+            <PlayerAvatar jugador={avatarJugador} size={72} />
             {canChangePhoto ? (
               <>
                 <input

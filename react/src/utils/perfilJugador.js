@@ -1,3 +1,4 @@
+import { avatarUrl, avatarUrlBase } from "./avatarUrl";
 import { normalizeJugadorUuid } from "./jugador";
 
 export function mapPerfilFromRpc(row) {
@@ -9,9 +10,10 @@ export function mapPerfilFromRpc(row) {
     nombreCompleto: row.nombre_completo ?? row.nombre ?? "",
     telefono: row.telefono ?? "",
     instagram: row.instagram ?? "",
-    foto_url: row.foto_url ?? null,
+    foto_url: avatarUrlBase(row.foto_url) ?? null,
     mostrar_telefono: Boolean(row.mostrar_telefono),
     autoriza_instagram: Boolean(row.autoriza_instagram),
+    es_coordinador: Boolean(row.es_coordinador),
     pj: row.partidos_jugados ?? 0,
     pg: row.partidos_ganados ?? 0,
     jj: row.juegos_jugados ?? 0,
@@ -20,4 +22,19 @@ export function mapPerfilFromRpc(row) {
     penalizacion: row.penalizacion ?? 0,
     score: row.score ?? 0
   };
+}
+
+/** Fusiona dades de perfil sense perdre foto_url vàlida. */
+export function mergePerfilView(prev, mapped) {
+  if (!mapped) return prev;
+  if (!prev) return mapped;
+  const fotoBase = mapped.foto_url || prev.foto_url || null;
+  return { ...prev, ...mapped, foto_url: fotoBase };
+}
+
+export async function fetchPerfilJugadorRpc(client, jugadorId) {
+  if (!client || !jugadorId) return { ok: false, perfil: null };
+  const { data, error } = await client.rpc("get_perfil_jugador", { p_jugador_id: jugadorId });
+  if (error) return { ok: false, error: error.message, perfil: null };
+  return { ok: true, perfil: mapPerfilFromRpc(data) };
 }

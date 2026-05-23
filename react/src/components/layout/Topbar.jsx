@@ -1,4 +1,5 @@
 import PlayerAvatar from "../common/PlayerAvatar";
+import { useCurrentJugador } from "../../context/CurrentJugadorContext";
 import { t } from "../../i18n";
 
 /** Igual que en index.html (`nombreCorto`): "Jose García Blanco" → "Jose G. B." */
@@ -33,7 +34,8 @@ function IconBell() {
   );
 }
 
-export default function Topbar({ currentUser, setActiveTab, onLogout, noLeidas = 0, onOpenNotificaciones }) {
+export default function Topbar({ setActiveTab, onLogout, noLeidas = 0, onOpenNotificaciones }) {
+  const { jugador: currentUser } = useCurrentJugador();
   const irBienvenida = () => setActiveTab("bienvenida");
   const badgeLabel = noLeidas > 99 ? "99+" : String(noLeidas);
 
