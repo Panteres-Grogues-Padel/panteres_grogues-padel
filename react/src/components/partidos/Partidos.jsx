@@ -49,14 +49,10 @@ function formatFechaPartido(d) {
 }
 
 function etiquetaOpcion(o) {
-  const day = weekdayName(o.diaSemana) || diaSlotCa(o.slot.label);
-  if (o.modo === "ayer") {
-    return `${day} — ${o.slot.club} (${t("common.yesterday")})`;
-  }
-  if (o.modo === "hoy") {
-    return t("partidos.todayLabel", { day, club: o.slot.club });
-  }
-  return `${day} — ${o.slot.club} (${formatFechaPartido(o.fechaPartido)})`;
+  return t("partidos.todayLabel", {
+    day: weekdayName(o.diaSemana) || diaSlotCa(o.slot.label),
+    club: o.slot.club
+  });
 }
 
 export default function Partidos({
@@ -90,9 +86,7 @@ export default function Partidos({
 
   const slotId = seleccion?.slotId ?? "";
   const semanaObjetivo = seleccion?.semanaObjetivo ?? null;
-  const esSoloConsulta = seleccion?.modo === "ayer";
-  const esHoy = seleccion?.modo === "hoy";
-  const puedeGestionar = esHoy || seleccion?.modo === "proximo";
+  const esHoy = Boolean(seleccion);
 
   const jugadoresSlot = useMemo(() => {
     if (!slotId || !semanaObjetivo) return [];
@@ -174,11 +168,11 @@ export default function Partidos({
 
   const yaGenerado = partidosFiltrados.length > 0;
   const hayInscritos = (slotActual?.jugadores?.length ?? 0) > 0;
-  const mostrarRegenerar = yaGenerado || (isCoord && esHoy);
-  const mostrarGenerar = !mostrarRegenerar && hayInscritos && puedeGestionar;
+  const mostrarRegenerar = yaGenerado;
+  const mostrarGenerar = !mostrarRegenerar && hayInscritos && esHoy;
 
   function handleGenerarClick(regenerar) {
-    if (!slotId || !semanaObjetivo || !puedeGestionar) return;
+    if (!slotId || !semanaObjetivo || !esHoy) return;
     if (regenerar) {
       const ok = window.confirm(t("partidos.regenerateConfirm"));
       if (!ok) return;
@@ -187,13 +181,13 @@ export default function Partidos({
   }
 
   const reservas = useMemo(() => {
-    if (!slotActual || esSoloConsulta) return [];
+    if (!slotActual) return [];
     const idsAsignados = new Set(partidosFiltrados.flatMap((p) => p.jugadores.map((j) => j.jugadorId)));
     const candidates = (ranking ?? []).filter((r) =>
       slotActual.jugadores?.some((j) => j.nombre === r.nombre && !idsAsignados.has(r.id))
     );
     return candidates;
-  }, [slotActual, partidosFiltrados, ranking, esSoloConsulta]);
+  }, [slotActual, partidosFiltrados, ranking]);
 
   function buildWaText() {
     if (!slotActual || !partidosFiltrados.length) return "";
@@ -230,7 +224,6 @@ export default function Partidos({
   }
 
   function onOpenMover(origenPartido, jugador) {
-    if (esSoloConsulta) return;
     setMoverState({ open: true, origen: origenPartido, jugador });
   }
 
@@ -264,17 +257,11 @@ export default function Partidos({
             ))}
           </select>
         ) : (
-          <p className="slot-meta">{t("partidos.noSlotsWindow")}</p>
+          <p className="slot-meta">{t("partidos.noSlotsToday")}</p>
         )}
       </div>
 
-      {esSoloConsulta && seleccion ? (
-        <p className="slot-meta" style={{ marginBottom: "1rem" }}>
-          {t("partidos.yesterdayReadOnly")}
-        </p>
-      ) : null}
-
-      {puedeGestionar && isCoord ? (
+      {isCoord && esHoy ? (
         <div className="coord-box">
           <div className="coord-box-title">
             <span className="coord-pill">{t("partidos.coordBox")}</span> {diaSlotCa(slotActual?.label)} — {slotActual?.club}
@@ -379,11 +366,9 @@ export default function Partidos({
       {!partidosFiltrados.length ? (
         <div className="card">
           <div className="empty-state">
-            {esSoloConsulta
-              ? t("partidos.notGeneratedYesterday")
-              : slotActual?.jugadores?.length
-                ? t("partidos.notGeneratedYet")
-                : t("partidos.nobodySignedUp")}
+            {slotActual?.jugadores?.length
+              ? t("partidos.notGeneratedYet")
+              : t("partidos.nobodySignedUp")}
           </div>
         </div>
       ) : (
@@ -399,11 +384,11 @@ export default function Partidos({
                 key={p.id}
                 partido={p}
                 index={i}
-                isCoord={isCoord && !esSoloConsulta}
+                isCoord={isCoord}
                 currentUser={currentUser}
                 onConfirmar={onConfirmar}
-                onHora={esSoloConsulta ? undefined : onHora}
-                onIndoor={esSoloConsulta ? undefined : onIndoor}
+                onHora={onHora}
+                onIndoor={onIndoor}
                 onOpenMover={onOpenMover}
                 rankingPosByJugador={rankingPosByJugador}
               />
