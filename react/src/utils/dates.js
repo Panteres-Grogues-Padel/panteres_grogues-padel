@@ -180,34 +180,77 @@ export function getLunesDeSemanaLocal(fecha) {
 }
 
 /**
- * Fechas de la ventana Partidos: solo el día de hoy.
+ * Fechas de la ventana Partidos: ayer, hoy y los 2 próximos días calendario con slot.
  */
-export function getFechasVentanaPartidos(_slotsCatalog, now = new Date()) {
-  return [startOfLocalDay(now)];
+export function getFechasVentanaPartidos(slotsCatalog, now = new Date()) {
+  const slots = slotsCatalog ?? [];
+  const today = startOfLocalDay(now);
+  const yesterday = addDaysLocal(today, -1);
+  const fechas = [yesterday, today];
+
+  let cursor = addDaysLocal(today, 1);
+  while (fechas.filter((f) => f > today).length < 2) {
+    const ds = getDiaSemanaLocal(cursor);
+    if (slots.some((s) => Number(s.diaSemana) === ds)) {
+      fechas.push(new Date(cursor));
+    }
+    cursor = addDaysLocal(cursor, 1);
+    if ((cursor - today) / 86400000 > 21) break;
+  }
+
+  return fechas;
 }
 
 /**
- * Opciones del dropdown Partidos: slots del día de hoy únicamente.
+ * Opciones del dropdown Partidos: cada slot en ayer, hoy y próximos 2 días con slot.
+ * modo: 'ayer' (solo consulta) | 'hoy' | 'proximo'
  */
 export function buildOpcionesDropdownPartidos(slotsCatalog, now = new Date()) {
   const slots = [...(slotsCatalog ?? [])];
   const today = startOfLocalDay(now);
-  const ds = getDiaSemanaLocal(today);
-  const semanaObjetivo = getLunesDeSemanaLocal(today);
-  const fechaKey = formatFechaLocal(today);
+  const yesterday = addDaysLocal(today, -1);
 
-  return slots
-    .filter((slot) => Number(slot.diaSemana) === ds)
-    .map((slot) => ({
-      id: `${slot.id}:${fechaKey}`,
-      slotId: slot.id,
-      semanaObjetivo,
-      fechaPartido: today,
-      modo: "hoy",
-      slot,
-      diaSemana: ds
-    }))
-    .sort((a, b) => String(a.slot.club).localeCompare(String(b.slot.club)));
+  const ventana = [
+    { fecha: yesterday, modo: "ayer" },
+    { fecha: today, modo: "hoy" }
+  ];
+
+  let cursor = addDaysLocal(today, 1);
+  while (ventana.filter((v) => v.modo === "proximo").length < 2) {
+    const ds = getDiaSemanaLocal(cursor);
+    if (slots.some((s) => Number(s.diaSemana) === ds)) {
+      ventana.push({ fecha: new Date(cursor), modo: "proximo" });
+    }
+    cursor = addDaysLocal(cursor, 1);
+    if ((cursor - today) / 86400000 > 21) break;
+  }
+
+  const opciones = [];
+  for (const { fecha, modo } of ventana) {
+    const ds = getDiaSemanaLocal(fecha);
+    const semanaObjetivo = getLunesDeSemanaLocal(fecha);
+    const fechaKey = formatFechaLocal(fecha);
+    for (const slot of slots) {
+      if (Number(slot.diaSemana) !== ds) continue;
+      opciones.push({
+        id: `${slot.id}:${fechaKey}`,
+        slotId: slot.id,
+        semanaObjetivo,
+        fechaPartido: startOfLocalDay(fecha),
+        modo,
+        slot,
+        diaSemana: ds
+      });
+    }
+  }
+
+  opciones.sort(
+    (a, b) =>
+      a.fechaPartido - b.fechaPartido ||
+      Number(a.diaSemana) - Number(b.diaSemana) ||
+      String(a.slot.club).localeCompare(String(b.slot.club))
+  );
+  return opciones;
 }
 
 /**
