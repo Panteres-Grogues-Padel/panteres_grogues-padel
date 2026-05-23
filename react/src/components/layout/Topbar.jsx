@@ -1,4 +1,3 @@
-import PlayerAvatar from "../common/PlayerAvatar";
 import { useCurrentJugador } from "../../context/CurrentJugadorContext";
 import { t } from "../../i18n";
 
@@ -45,10 +44,9 @@ export default function Topbar({ setActiveTab, onLogout, noLeidas = 0, onOpenNot
         <button type="button" className="topbar-logo" onClick={irBienvenida} aria-label={t("topbar.backToWelcome")}>
           <img src="/icons/landing-logo.png" alt="" width={28} height={28} />
         </button>
-        <PlayerAvatar jugador={currentUser} nombre={currentUser?.nombreCompleto} size={32} className="topbar-avatar" />
         <div>
           <button type="button" className="app-name topbar-brand-btn" onClick={irBienvenida}>
-            Panteres Grogues
+            Pàdel PG
           </button>
           <div className="topbar-name-sub">{nombreCorto(currentUser?.nombreCompleto)}</div>
         </div>

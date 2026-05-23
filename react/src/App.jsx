@@ -168,7 +168,6 @@ function AppAuthed({ auth }) {
             <Bienvenida
               currentUser={auth.currentUser}
               ranking={ranking}
-              onOpenPerfil={() => setPerfilJugador(perfilDesdeUsuarioSesion(yo ?? auth.currentUser))}
               onGoToJugar={() => setActiveTab("jugar")}
               onGoToPartidos={() => setActiveTab("partidos")}
               onGoToAgenda={() => setActiveTab("agenda")}
