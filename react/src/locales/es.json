@@ -291,7 +291,15 @@
       "showPhone": "Mostrar mi teléfono",
       "phoneVisible": "Visible para otros jugadores",
       "authorizeInstagram": "Autorizo etiquetas en Instagram",
-      "instagramTagHint": "La sección puede etiquetarme en el perfil oficial"
+      "instagramTagHint": "La sección puede etiquetarme en el perfil oficial",
+      "changePhoto": "Cambiar foto",
+      "photoUploading": "Subiendo foto…",
+      "photoErrors": {
+        "invalidType": "Formato no válido. Solo JPEG, PNG o WebP.",
+        "tooLarge": "La imagen es demasiado grande (máx. 2 MB).",
+        "uploadFailed": "No se ha podido subir la foto. Inténtalo de nuevo.",
+        "updateFailed": "Se subió la foto pero no se pudo actualizar el perfil."
+      }
     }
   },
 

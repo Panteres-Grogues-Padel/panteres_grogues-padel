@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../../lib/supabase";
-import { jugadoresCoinciden } from "../../utils/jugador";
+import { isJugadorUuid, jugadoresCoinciden } from "../../utils/jugador";
 import { getNombre, nombreCorto } from "../../utils/nombres";
-import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
+import { mapPerfilFromRpc } from "../../utils/perfilJugador";
+import { uploadProfilePhoto } from "../../utils/profilePhoto";
 import { numeroSocioPanteres } from "../../utils/socio";
+import PlayerAvatar from "../common/PlayerAvatar";
 import { t } from "../../i18n";
 
 function igUrl(igRaw) {
@@ -40,27 +42,49 @@ function IconLockPhone() {
 }
 
 export default function PerfilJugador({ jugador, currentUser, open, onClose, onJugadorUpdated }) {
+  const [view, setView] = useState(null);
   const [local, setLocal] = useState(null);
+  const [fotoError, setFotoError] = useState("");
+  const [fotoUploading, setFotoUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (jugador && open) {
+      setView(jugador);
       setLocal({
         mostrar_telefono: Boolean(jugador.mostrar_telefono),
         autoriza_instagram: Boolean(jugador.autoriza_instagram)
       });
+      setFotoError("");
     }
   }, [jugador, open]);
 
+  useEffect(() => {
+    if (!open || !jugador?.id || !supabase || !isJugadorUuid(jugador.id)) return undefined;
+
+    let cancelled = false;
+    void (async () => {
+      const { data, error } = await supabase.rpc("get_perfil_jugador", { p_jugador_id: jugador.id });
+      if (cancelled || error || !data) return;
+      const mapped = mapPerfilFromRpc(data);
+      if (mapped) setView((prev) => (prev ? { ...prev, ...mapped } : mapped));
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, jugador?.id]);
+
   const isOwn = useMemo(
-    () => Boolean(currentUser && jugador && jugadoresCoinciden(jugador.id, currentUser.id)),
-    [currentUser, jugador]
+    () => Boolean(currentUser && view && jugadoresCoinciden(view.id, currentUser.id)),
+    [currentUser, view]
   );
 
-  const corto = jugador?.nombreCompleto ? nombreCorto(jugador.nombreCompleto) : "";
+  const corto = view?.nombreCompleto ? nombreCorto(view.nombreCompleto) : "";
 
   const penStr = useMemo(() => {
-    if (!jugador) return null;
-    const p = jugador.penalizacion ?? 0;
+    if (!view) return null;
+    const p = view.penalizacion ?? 0;
     if (p > 0) {
       return (
         <div style={{ fontSize: 12, color: "#BA7517" }}>
@@ -69,34 +93,54 @@ export default function PerfilJugador({ jugador, currentUser, open, onClose, onJ
       );
     }
     return <div style={{ fontSize: 12, color: "#27500A" }}>{t("ranking.profile.noPenalty")}</div>;
-  }, [jugador]);
+  }, [view]);
 
-  const showTel = isOwn || jugador?.mostrar_telefono;
-  const showIg = isOwn || jugador?.autoriza_instagram;
-  const tel = jugador?.telefono ?? "";
-  const ig = jugador?.instagram ?? "";
+  const showTel = isOwn || view?.mostrar_telefono;
+  const showIg = isOwn || view?.autoriza_instagram;
+  const tel = view?.telefono ?? "";
+  const ig = view?.instagram ?? "";
 
   const persistPrivacy = useCallback(
     async (field, checked) => {
-      if (!isOwn || !jugador?.id || !supabase) return;
+      if (!isOwn || !view?.id || !supabase) return;
       const payload = field === "mostrar_telefono" ? { mostrar_telefono: checked } : { autoriza_instagram: checked };
-      const { error } = await supabase.from("jugadores").update(payload).eq("id", jugador.id);
+      const { error } = await supabase.from("jugadores").update(payload).eq("id", view.id);
       if (error) {
         console.warn("[PerfilJugador]", error.message);
         return;
       }
       setLocal((prev) => ({ ...prev, [field]: checked }));
-      onJugadorUpdated?.({ id: jugador.id, ...payload });
+      setView((prev) => (prev ? { ...prev, ...payload } : prev));
+      onJugadorUpdated?.({ id: view.id, ...payload });
     },
-    [isOwn, jugador, onJugadorUpdated]
+    [isOwn, view, onJugadorUpdated]
   );
 
-  if (!open || !jugador) return null;
+  const canChangePhoto = isOwn && supabase && isJugadorUuid(view?.id) && !currentUser?.fromFallback;
 
-  const foto = jugador.foto_url;
-  const displayName = getNombre(jugador) || jugador.nombre || "";
-  const initials = initialsFromNombre(displayName);
-  const avClass = avatarClassFromNombre(displayName);
+  const handlePhotoSelect = useCallback(
+    async (event) => {
+      const file = event.target.files?.[0];
+      event.target.value = "";
+      if (!file || !canChangePhoto || !view?.id) return;
+
+      setFotoError("");
+      setFotoUploading(true);
+      const result = await uploadProfilePhoto(supabase, view.id, file);
+      setFotoUploading(false);
+
+      if (!result.ok) {
+        setFotoError(result.error ?? t("ranking.profile.photoErrors.uploadFailed"));
+        return;
+      }
+
+      setView((prev) => (prev ? { ...prev, foto_url: result.foto_url } : prev));
+      onJugadorUpdated?.({ id: view.id, foto_url: result.foto_url });
+    },
+    [canChangePhoto, view, onJugadorUpdated]
+  );
+
+  if (!open || !view) return null;
 
   return (
     <div
@@ -109,39 +153,48 @@ export default function PerfilJugador({ jugador, currentUser, open, onClose, onJ
         <div className="profile-handle" />
         <div className="profile-header">
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-            {foto ? (
-              <div style={{ width: 72, height: 72, borderRadius: "50%", overflow: "hidden", flexShrink: 0 }}>
-                <img src={foto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              </div>
-            ) : (
-              <div
-                className={`profile-av ${avClass}`}
-                style={{ width: 72, height: 72, fontSize: 24, position: "relative" }}
-              >
-                {initials}
-              </div>
-            )}
+            <PlayerAvatar jugador={view} size={72} />
+            {canChangePhoto ? (
+              <>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  hidden
+                  onChange={(e) => void handlePhotoSelect(e)}
+                />
+                <button
+                  type="button"
+                  className="profile-photo-btn"
+                  disabled={fotoUploading}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {fotoUploading ? t("ranking.profile.photoUploading") : t("ranking.profile.changePhoto")}
+                </button>
+                {fotoError ? <p className="profile-photo-error">{fotoError}</p> : null}
+              </>
+            ) : null}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
               <div className="profile-name">
-                {isOwn ? jugador.nombreCompleto || jugador.nombre : corto || getNombre(jugador)}
+                {isOwn ? view.nombreCompleto || view.nombre : corto || getNombre(view)}
               </div>
               {isOwn ? <span className="own-badge">{t("ranking.profile.you")}</span> : null}
             </div>
-            {isOwn && jugador.nickname ? (
-              <div className="profile-nickname">@{jugador.nickname}</div>
+            {isOwn && view.nickname ? (
+              <div className="profile-nickname">@{view.nickname}</div>
             ) : null}
             <div className="profile-sub">
               {isOwn
-                ? jugador.nickname
-                  ? t("ranking.profile.appName", { name: jugador.nombre })
-                  : jugador.nombre
-                : getNombre(jugador)}
+                ? view.nickname
+                  ? t("ranking.profile.appName", { name: view.nombre })
+                  : view.nombre
+                : getNombre(view)}
             </div>
             <div className="profile-socio-line">
               <span className="profile-socio-label">{t("ranking.profile.memberNumber")}</span>
-              <span className="profile-socio-val">{numeroSocioPanteres(jugador.id)}</span>
+              <span className="profile-socio-val">{numeroSocioPanteres(view.id)}</span>
             </div>
             <div className="profile-links" style={{ marginTop: 5 }}>
               {showIg && ig ? (
@@ -178,31 +231,31 @@ export default function PerfilJugador({ jugador, currentUser, open, onClose, onJ
         <div className="profile-stats-grid">
           <div className="profile-stat-cell">
             <div className="profile-stat-label">{t("ranking.profile.matchesPlayed")}</div>
-            <div className="profile-stat-val">{jugador.pj ?? 0}</div>
+            <div className="profile-stat-val">{view.pj ?? 0}</div>
           </div>
           <div className="profile-stat-cell">
             <div className="profile-stat-label">{t("ranking.profile.matchesWon")}</div>
-            <div className="profile-stat-val">{jugador.pg ?? 0}</div>
+            <div className="profile-stat-val">{view.pg ?? 0}</div>
           </div>
           <div className="profile-stat-cell">
             <div className="profile-stat-label">{t("ranking.profile.gamesPlayed")}</div>
-            <div className="profile-stat-val">{jugador.jj ?? 0}</div>
+            <div className="profile-stat-val">{view.jj ?? 0}</div>
           </div>
           <div className="profile-stat-cell">
             <div className="profile-stat-label">{t("ranking.profile.gamesWon")}</div>
-            <div className="profile-stat-val">{jugador.jg ?? 0}</div>
+            <div className="profile-stat-val">{view.jg ?? 0}</div>
           </div>
           <div className="profile-stat-cell profile-stat-wide">
             <div className="profile-stat-label">{t("ranking.profile.efficiency")}</div>
             <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 2 }}>
-              <div className="profile-stat-val">{((jugador.eficacia ?? 0) * 100).toFixed(1)}%</div>
+              <div className="profile-stat-val">{((view.eficacia ?? 0) * 100).toFixed(1)}%</div>
               {penStr}
             </div>
           </div>
           <div className="profile-stat-cell profile-stat-wide">
             <div className="profile-stat-label">{t("ranking.profile.scoreRanking")}</div>
             <div className="profile-stat-val" style={{ marginTop: 2 }}>
-              {(jugador.score ?? 0).toFixed(4)}
+              {(view.score ?? 0).toFixed(4)}
             </div>
           </div>
         </div>

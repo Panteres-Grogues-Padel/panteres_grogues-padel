@@ -12,7 +12,7 @@ import {
 import Padrinos from "../padrinos/Padrinos";
 import { useMananaJuegas } from "../../hooks/useMananaJuegas";
 import { supabase } from "../../lib/supabase";
-import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
+import PlayerAvatar from "../common/PlayerAvatar";
 import { DATE_LOCALE } from "../../utils/dates";
 import { t } from "../../i18n";
 
@@ -166,18 +166,12 @@ export default function Bienvenida({
           onClick={() => onOpenPerfil?.()}
           aria-label={t("bienvenida.openProfile")}
         >
-          {currentUser?.foto_url ? (
-            <img
-              src={currentUser.foto_url}
-              alt=""
-              className="hero-player-avatar"
-              style={{ objectFit: "cover", display: "block" }}
-            />
-          ) : (
-            <div className={`hero-player-avatar ${avatarClassFromNombre(currentUser?.nombre ?? "")}`}>
-              {initialsFromNombre(currentUser?.nombre ?? "")}
-            </div>
-          )}
+          <PlayerAvatar
+            jugador={currentUser}
+            nombre={currentUser?.nombre}
+            size={80}
+            className="hero-player-avatar"
+          />
         </button>
         <div className="hero-title">
           {saludoPorHora()}

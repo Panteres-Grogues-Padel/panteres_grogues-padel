@@ -293,7 +293,15 @@
       "showPhone": "Mostrar el meu telèfon",
       "phoneVisible": "Visible per a altres jugadors/es",
       "authorizeInstagram": "Autoritzo etiquetes a Instagram",
-      "instagramTagHint": "La secció em pot etiquetar al perfil oficial"
+      "instagramTagHint": "La secció em pot etiquetar al perfil oficial",
+      "changePhoto": "Canviar foto",
+      "photoUploading": "Pujant foto…",
+      "photoErrors": {
+        "invalidType": "Format no vàlid. Només JPEG, PNG o WebP.",
+        "tooLarge": "La imatge és massa gran (màx. 2 MB).",
+        "uploadFailed": "No s'ha pogut pujar la foto. Torna-ho a provar.",
+        "updateFailed": "S'ha pujat la foto però no s'ha pogut actualitzar el perfil."
+      }
     }
   },
 

@@ -15,6 +15,7 @@ AS $$
         'nombre', j.nombre,
         'nombre_completo', j.nombre_completo,
         'nickname', j.nickname,
+        'foto_url', j.foto_url,
         'padrino_id', j.padrino_id,
         'padrino_nombre', p.nombre
       ) AS row_data

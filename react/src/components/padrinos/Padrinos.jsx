@@ -3,10 +3,20 @@ import { usePadrinos } from "../../hooks/usePadrinos";
 import { jugadoresCoinciden } from "../../utils/jugador";
 import { getNombre } from "../../utils/nombres";
 import { DATE_LOCALE } from "../../utils/dates";
+import PlayerAvatar from "../common/PlayerAvatar";
 import { t } from "../../i18n";
 
 function displayNombre(j) {
   return getNombre(j) || j?.nombreCompleto || j?.nombre || t("common.player");
+}
+
+function PadrinosPersonRow({ j }) {
+  return (
+    <div className="padrinos-person-row">
+      <PlayerAvatar jugador={j} size={28} />
+      <span>{displayNombre(j)}</span>
+    </div>
+  );
 }
 
 function PadrinosCard({ title, children }) {
@@ -91,7 +101,7 @@ export default function Padrinos({ currentUser, isCoord }) {
 
       <PadrinosCard title={t("padrinos.yourGodparent")}>
         {miPadrino ? (
-          <p className="padrinos-nombre">{displayNombre(miPadrino)}</p>
+          <PadrinosPersonRow j={miPadrino} />
         ) : (
           <p className="padrinos-muted">{t("padrinos.noGodparent")}</p>
         )}
@@ -101,7 +111,9 @@ export default function Padrinos({ currentUser, isCoord }) {
         {misAhijados.length > 0 ? (
           <ul className="padrinos-lista">
             {misAhijados.map((a) => (
-              <li key={a.id}>{displayNombre(a)}</li>
+              <li key={a.id}>
+                <PadrinosPersonRow j={a} />
+              </li>
             ))}
           </ul>
         ) : (

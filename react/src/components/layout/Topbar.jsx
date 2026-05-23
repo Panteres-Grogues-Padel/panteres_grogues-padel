@@ -1,3 +1,4 @@
+import PlayerAvatar from "../common/PlayerAvatar";
 import { t } from "../../i18n";
 
 /** Igual que en index.html (`nombreCorto`): "Jose García Blanco" → "Jose G. B." */
@@ -42,6 +43,7 @@ export default function Topbar({ currentUser, setActiveTab, onLogout, noLeidas =
         <button type="button" className="topbar-logo" onClick={irBienvenida} aria-label={t("topbar.backToWelcome")}>
           <img src="/icons/landing-logo.png" alt="" width={28} height={28} />
         </button>
+        <PlayerAvatar jugador={currentUser} nombre={currentUser?.nombreCompleto} size={32} className="topbar-avatar" />
         <div>
           <button type="button" className="app-name topbar-brand-btn" onClick={irBienvenida}>
             Panteres Grogues
