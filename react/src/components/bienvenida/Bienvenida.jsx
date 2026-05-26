@@ -539,14 +539,6 @@ export default function Bienvenida({
             </span>
           </a>
 
-          <a href={SANCTIONS_RULES_URL} target="_blank" rel="noreferrer" className="utility-doc-row">
-            <span className="ti ti-gavel utility-doc-icon" aria-hidden />
-            <span className="utility-doc-copy">
-              <span className="utility-doc-title">{t("bienvenida.sanctionsRules")}</span>
-              <span className="utility-doc-sub">{t("bienvenida.sanctionsRulesSub")}</span>
-            </span>
-          </a>
-
           {/* Hospitales cercanos */}
           <div
             style={{
@@ -623,6 +615,26 @@ export default function Bienvenida({
               </div>
             </div>
           </div>
+
+          <div
+            style={{
+              fontSize: 10,
+              fontWeight: 600,
+              color: "var(--text2)",
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              marginBottom: "0.625rem"
+            }}
+          >
+            {t("bienvenida.sanctionsSection")}
+          </div>
+          <a href={SANCTIONS_RULES_URL} target="_blank" rel="noreferrer" className="utility-doc-row">
+            <span className="ti ti-gavel utility-doc-icon" aria-hidden />
+            <span className="utility-doc-copy">
+              <span className="utility-doc-title">{t("bienvenida.sanctionsRules")}</span>
+              <span className="utility-doc-sub">{t("bienvenida.sanctionsRulesSub")}</span>
+            </span>
+          </a>
 
           <button type="button" className="close-btn" onClick={() => setUtilOpen(false)}>
             {t("common.close")}

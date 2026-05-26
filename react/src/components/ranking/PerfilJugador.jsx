@@ -6,7 +6,7 @@ import { useCurrentJugador } from "../../context/CurrentJugadorContext";
 import { fetchPerfilJugadorRpc, mergePerfilView } from "../../utils/perfilJugador";
 import { uploadProfilePhoto } from "../../utils/profilePhoto";
 import { numeroSocioPanteres } from "../../utils/socio";
-import { DATE_LOCALE } from "../../utils/dates";
+import { DATE_LOCALE, hoyLocalStr } from "../../utils/dates";
 import PlayerAvatar from "../common/PlayerAvatar";
 import { t } from "../../i18n";
 
@@ -105,8 +105,8 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
 
   const avatarJugador = isOwn && yo ? { ...view, foto_url: yo.foto_url } : view;
   const isCoord = Boolean(yo?.es_coordinador || yo?.isCoord);
-  const sancionatVisible = Boolean(view?.sancionat && view?.sancio_fins);
-  const showSancioSection = isCoord || sancionatVisible;
+  const sancioVigent = Boolean(view?.sancionat && view?.sancio_fins && view.sancio_fins >= hoyLocalStr());
+  const showSancioSection = isCoord || sancioVigent;
 
   const corto = view?.nombreCompleto ? nombreCorto(view.nombreCompleto) : "";
 
@@ -271,7 +271,7 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
               <span className="profile-socio-label">{t("ranking.profile.memberNumber")}</span>
               <span className="profile-socio-val">{numeroSocioPanteres(view.id)}</span>
             </div>
-            {sancionatVisible ? (
+            {sancioVigent ? (
               <div className="profile-sanction-badge">
                 {t("ranking.profile.sanctionedUntil", { date: formatProfileDate(view.sancio_fins) })}
               </div>
