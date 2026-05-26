@@ -122,6 +122,8 @@ function AppAuthed({ auth }) {
       foto_url: fotoBase,
       mostrar_telefono: Boolean(u.mostrar_telefono ?? u.mostrarTel),
       autoriza_instagram: Boolean(u.autoriza_instagram ?? u.autorizaIG),
+      sancionat: Boolean(u.sancionat),
+      sancio_fins: u.sancio_fins ?? null,
       pj: rk?.pj ?? 0,
       pg: rk?.pg ?? 0,
       jj: rk?.jj ?? 0,

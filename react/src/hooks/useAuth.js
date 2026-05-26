@@ -1,20 +1,17 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { COORDS, JUGADORES_INICIALES } from "../utils/mockData";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { avatarUrlBase } from "../utils/avatarUrl";
-import { fetchPerfilJugadorRpc } from "../utils/perfilJugador";
+import { fetchMiPerfilJugadorRpc, fetchPerfilJugadorRpc } from "../utils/perfilJugador";
 import { isJugadorUuid, normalizeJugadorUuid } from "../utils/jugador";
+import { hoyLocalStr } from "../utils/dates";
 import { t } from "../i18n";
-
-const JUGADORES_SELECT =
-  "id, auth_id, nombre, nombre_completo, nickname, email, telefono, instagram, foto_url, mostrar_telefono, autoriza_instagram, es_coordinador, activo";
 
 function jugadorToState(jugador) {
   return {
     ...jugador,
     id: jugador.id != null ? String(jugador.id) : jugador.id,
     auth_id: jugador.auth_id ?? null,
-    nombreCompleto: jugador.nombre_completo ?? jugador.nombreCompleto,
+    nombreCompleto: jugador.nombre_completo ?? jugador.nombreCompleto ?? jugador.nombre,
     nickname: jugador.nickname?.trim() || null,
     foto_url: avatarUrlBase(jugador.foto_url) ?? null,
     fromFallback: false
@@ -42,7 +39,6 @@ export function useAuth() {
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [demoId, setDemoId] = useState("");
   const [authEpoch, setAuthEpoch] = useState(0);
   const ultimoAuthIdCargadoRef = useRef(null);
   const currentUserRef = useRef(null);
@@ -50,15 +46,6 @@ export function useAuth() {
   useEffect(() => {
     currentUserRef.current = currentUser;
   }, [currentUser]);
-
-  const demoUsers = useMemo(
-    () =>
-      JUGADORES_INICIALES.map((j) => ({
-        ...j,
-        isCoord: COORDS.includes(j.nombre)
-      })),
-    []
-  );
 
   const bumpAvatarVersion = useCallback(() => {
     setAvatarVersion(Date.now());
@@ -81,21 +68,22 @@ export function useAuth() {
     return { ok: true, perfil };
   }, [bumpAvatarVersion]);
 
-  async function fetchJugadorPorAuthId(authUserId) {
-    const { data: jugador, error: jugadorError } = await supabase
-      .from("jugadores")
-      .select(JUGADORES_SELECT)
-      .eq("auth_id", authUserId)
-      .maybeSingle();
-    if (jugadorError) return { ok: false, message: jugadorError.message };
-    if (!jugador) return { ok: false, message: t("auth.errors.userNotFound") };
+  async function fetchJugadorSesion() {
+    let { ok, perfil, error: rpcError } = await fetchMiPerfilJugadorRpc(supabase);
+    if (!ok) return { ok: false, message: rpcError ?? t("auth.errors.connection") };
+    if (!perfil) return { ok: false, message: t("auth.errors.userNotFound") };
 
-    const base = jugadorToState(jugador);
-    const { ok, perfil } = await fetchPerfilJugadorRpc(supabase, base.id);
-    if (ok && perfil) {
-      return { ok: true, jugador: mergeJugadorConPerfil(base, perfil) };
+    if (perfil.sancionat && perfil.sancio_fins && perfil.sancio_fins < hoyLocalStr()) {
+      const { error: desancionarError } = await supabase.rpc("desancionar_jugador", {
+        p_jugador_id: perfil.id
+      });
+      if (desancionarError) return { ok: false, message: desancionarError.message };
+
+      const refreshed = await fetchMiPerfilJugadorRpc(supabase);
+      if (refreshed.ok && refreshed.perfil) perfil = refreshed.perfil;
     }
-    return { ok: true, jugador: base };
+
+    return { ok: true, jugador: jugadorToState(perfil) };
   }
 
   async function aplicarSesionSupabase(authUser) {
@@ -112,7 +100,7 @@ export function useAuth() {
 
     setLoading(true);
     try {
-      const result = await fetchJugadorPorAuthId(authUser.id);
+      const result = await fetchJugadorSesion();
       if (!result.ok) {
         setError(result.message);
         setCurrentUser(null);
@@ -208,7 +196,7 @@ export function useAuth() {
         return;
       }
 
-      const result = await fetchJugadorPorAuthId(authUser.id);
+      const result = await fetchJugadorSesion();
       if (!result.ok) {
         setError(result.message);
         ultimoAuthIdCargadoRef.current = null;
@@ -232,15 +220,6 @@ export function useAuth() {
     } finally {
       setLoading(false);
     }
-  }
-
-  function loginDemo() {
-    setError("");
-    if (!privacyAccepted) return setError(t("auth.errors.privacyRequired"));
-    const selected = demoUsers.find((u) => u.id === Number(demoId));
-    if (!selected) return setError(t("auth.errors.selectDemo"));
-    setCurrentUser({ ...selected, fromFallback: true, foto_url: null });
-    setAvatarVersion(0);
   }
 
   async function loginGoogle() {
@@ -282,7 +261,6 @@ export function useAuth() {
     setPassword("");
     setEmail("");
     setError("");
-    setDemoId("");
     setPrivacyAccepted(false);
     try {
       if (supabase) await supabase.auth.signOut({ scope: "local" });
@@ -303,11 +281,7 @@ export function useAuth() {
     setPrivacyAccepted,
     error,
     loading,
-    demoId,
-    setDemoId,
-    demoUsers,
     loginEmail,
-    loginDemo,
     loginGoogle,
     logout,
     patchCurrentUser,

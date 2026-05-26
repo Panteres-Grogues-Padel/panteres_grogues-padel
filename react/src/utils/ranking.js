@@ -20,7 +20,9 @@ export function rankearJugadores(jugadores) {
         instagram: jugador.instagram ?? jugador.ig ?? "",
         mostrar_telefono: jugador.mostrar_telefono ?? jugador.mostrarTel ?? false,
         autoriza_instagram: jugador.autoriza_instagram ?? jugador.autorizaIG ?? false,
-        foto_url: jugador.foto_url ?? jugador.foto ?? null
+        foto_url: jugador.foto_url ?? jugador.foto ?? null,
+        sancionat: Boolean(jugador.sancionat),
+        sancio_fins: jugador.sancio_fins ?? null
       };
       return { ...normalized, ...calcularRanking(normalized) };
     })

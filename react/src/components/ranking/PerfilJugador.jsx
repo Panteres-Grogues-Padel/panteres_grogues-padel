@@ -6,6 +6,7 @@ import { useCurrentJugador } from "../../context/CurrentJugadorContext";
 import { fetchPerfilJugadorRpc, mergePerfilView } from "../../utils/perfilJugador";
 import { uploadProfilePhoto } from "../../utils/profilePhoto";
 import { numeroSocioPanteres } from "../../utils/socio";
+import { DATE_LOCALE, hoyLocalStr } from "../../utils/dates";
 import PlayerAvatar from "../common/PlayerAvatar";
 import { t } from "../../i18n";
 
@@ -42,10 +43,20 @@ function IconLockPhone() {
   );
 }
 
+function formatProfileDate(value) {
+  if (!value) return "";
+  const d = new Date(`${String(value).slice(0, 10)}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleDateString(DATE_LOCALE);
+}
+
 export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated }) {
   const { jugador: yo, refreshJugador } = useCurrentJugador();
   const [view, setView] = useState(null);
   const [local, setLocal] = useState(null);
+  const [sancioLocal, setSancioLocal] = useState({ sancionat: false, sancio_fins: "" });
+  const [sancioSaving, setSancioSaving] = useState(false);
+  const [sancioError, setSancioError] = useState("");
   const [fotoError, setFotoError] = useState("");
   const [fotoUploading, setFotoUploading] = useState(false);
   const fileInputRef = useRef(null);
@@ -59,6 +70,11 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
         mostrar_telefono: Boolean(esPropi.mostrar_telefono),
         autoriza_instagram: Boolean(esPropi.autoriza_instagram)
       });
+      setSancioLocal({
+        sancionat: Boolean(esPropi.sancionat),
+        sancio_fins: esPropi.sancio_fins ?? ""
+      });
+      setSancioError("");
       setFotoError("");
     }
   }, [jugador, open, yo]);
@@ -71,6 +87,10 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
       const { ok, perfil } = await fetchPerfilJugadorRpc(supabase, jugador.id);
       if (cancelled || !ok || !perfil) return;
       setView((prev) => mergePerfilView(prev, perfil));
+      setSancioLocal({
+        sancionat: Boolean(perfil.sancionat),
+        sancio_fins: perfil.sancio_fins ?? ""
+      });
     })();
 
     return () => {
@@ -84,6 +104,8 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
   );
 
   const avatarJugador = isOwn && yo ? { ...view, foto_url: yo.foto_url } : view;
+  const isCoord = Boolean(yo?.es_coordinador || yo?.isCoord);
+  const sancioVigent = Boolean(view?.sancionat && view?.sancio_fins && view.sancio_fins >= hoyLocalStr());
 
   const corto = view?.nombreCompleto ? nombreCorto(view.nombreCompleto) : "";
 
@@ -153,6 +175,45 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
     [canChangePhoto, view, onJugadorUpdated, refreshJugador]
   );
 
+  const handleSaveSancio = useCallback(async () => {
+    if (!isCoord || !view?.id || !supabase) return;
+    setSancioError("");
+
+    if (sancioLocal.sancionat && !sancioLocal.sancio_fins) {
+      setSancioError(t("ranking.profile.sanctions.dateRequired"));
+      return;
+    }
+
+    setSancioSaving(true);
+    const rpcName = sancioLocal.sancionat ? "sancionar_jugador" : "desancionar_jugador";
+    const params = sancioLocal.sancionat
+      ? { p_jugador_id: view.id, p_fins: sancioLocal.sancio_fins }
+      : { p_jugador_id: view.id };
+    const { error } = await supabase.rpc(rpcName, params);
+
+    if (error) {
+      setSancioSaving(false);
+      setSancioError(error.message);
+      return;
+    }
+
+    const { ok, perfil, error: reloadError } = await fetchPerfilJugadorRpc(supabase, view.id);
+    setSancioSaving(false);
+
+    if (!ok || !perfil) {
+      setSancioError(reloadError ?? t("ranking.profile.sanctions.saveError"));
+      return;
+    }
+
+    setView((prev) => mergePerfilView(prev, perfil));
+    setSancioLocal({
+      sancionat: Boolean(perfil.sancionat),
+      sancio_fins: perfil.sancio_fins ?? ""
+    });
+    onJugadorUpdated?.({ id: view.id, ...perfil });
+    if (isOwn) void refreshJugador();
+  }, [isCoord, isOwn, onJugadorUpdated, refreshJugador, sancioLocal, view]);
+
   if (!open || !view) return null;
 
   return (
@@ -209,6 +270,11 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
               <span className="profile-socio-label">{t("ranking.profile.memberNumber")}</span>
               <span className="profile-socio-val">{numeroSocioPanteres(view.id)}</span>
             </div>
+            {sancioVigent ? (
+              <div className="profile-sanction-badge">
+                {t("ranking.profile.sanctionedUntil", { date: formatProfileDate(view.sancio_fins) })}
+              </div>
+            ) : null}
             <div className="profile-links" style={{ marginTop: 5 }}>
               {showIg && ig ? (
                 <a className="profile-link" href={igUrl(ig) ?? "#"} target="_blank" rel="noreferrer">
@@ -302,6 +368,57 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
                   <div className="privacy-row-sub">{t("ranking.profile.instagramTagHint")}</div>
                 </div>
               </div>
+            </div>
+          </>
+        ) : null}
+
+        {isCoord ? (
+          <>
+            <div className="sheet-divider" />
+            <div className="privacy-section">
+              <div className="privacy-title">{t("ranking.profile.sanctions.title")}</div>
+              <label className="privacy-row profile-privacy-row">
+                <input
+                  type="checkbox"
+                  checked={sancioLocal.sancionat}
+                  onChange={(e) =>
+                    setSancioLocal((prev) => ({
+                      ...prev,
+                      sancionat: e.target.checked
+                    }))
+                  }
+                />
+                <div>
+                  <div className="privacy-row-label">{t("ranking.profile.sanctions.checkbox")}</div>
+                  <div className="privacy-row-sub">{t("ranking.profile.sanctions.readOnlyHint")}</div>
+                </div>
+              </label>
+
+              {sancioLocal.sancionat ? (
+                <label className="profile-sanction-date">
+                  <span className="privacy-row-label">{t("ranking.profile.sanctions.until")}</span>
+                  <input
+                    type="date"
+                    value={sancioLocal.sancio_fins}
+                    onChange={(e) =>
+                      setSancioLocal((prev) => ({
+                        ...prev,
+                        sancio_fins: e.target.value
+                      }))
+                    }
+                  />
+                </label>
+              ) : null}
+
+              {sancioError ? <p className="profile-photo-error">{sancioError}</p> : null}
+              <button
+                type="button"
+                className="btn btn-primary btn-block"
+                disabled={sancioSaving}
+                onClick={() => void handleSaveSancio()}
+              >
+                {sancioSaving ? t("common.saving") : t("ranking.profile.sanctions.save")}
+              </button>
             </div>
           </>
         ) : null}

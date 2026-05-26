@@ -70,10 +70,6 @@
     "enter": "Entrar",
     "entering": "Entrando...",
     "enterGoogle": "Entrar con Google",
-    "demoDivider": "o acceso demo",
-    "selectDemoUser": "Selecciona un usuario demo...",
-    "enterAsDemo": "Entrar como demo",
-    "coordMarker": " (Coord.)",
     "errors": {
       "userNotFound": "Usuario no encontrado",
       "connection": "Error de conexion.",
@@ -85,7 +81,6 @@
       "supabaseEnvMissing": "Faltan variables de entorno de Supabase.",
       "timeout": "Tiempo de espera agotado. Revisa la conexion.",
       "sessionFailed": "No se pudo obtener la sesion. Vuelve a intentarlo.",
-      "selectDemo": "Selecciona un usuario demo.",
       "googleLogin": "Error al iniciar sesion con Google."
     }
   },
@@ -120,6 +115,7 @@
     "insurancePolicy": "Póliza federativa — Federació Catalana de Pàdel",
     "insuranceContact": "Contacta con el coordinador para obtener los datos de tu póliza",
     "insuranceProtocolBtn": "Protocolo expreso de accidentes",
+    "sanctionsRules": "Reglamento de sanciones",
     "urgenciesSection": "Urgencias cercanas",
     "urgency112": "Urgencias · 112",
     "godparentsSheetTitle": "🤝 Padrinos"
@@ -294,6 +290,16 @@
       "instagramTagHint": "La sección puede etiquetarme en el perfil oficial",
       "changePhoto": "Cambiar foto",
       "photoUploading": "Subiendo foto…",
+      "sanctionedUntil": "Sancionado/a hasta el {{date}}",
+      "sanctions": {
+        "title": "Sanciones",
+        "checkbox": "Sancionado/a",
+        "until": "Hasta cuándo",
+        "save": "Guardar sanción",
+        "dateRequired": "Indica hasta cuándo dura la sanción.",
+        "saveError": "No se ha podido guardar la sanción.",
+        "readOnlyHint": "Visible en el perfil del jugador/a"
+      },
       "photoErrors": {
         "invalidType": "Formato no válido. Solo JPEG, PNG o WebP.",
         "tooLarge": "La imagen es demasiado grande (máx. 2 MB).",
@@ -374,6 +380,7 @@
       "listNotOpen": "La lista aún no está abierta.",
       "invalidPlayerId": "ID de jugador no válido.",
       "alreadyEnrolled": "Ya estás apuntado en {{label}} — {{club}}.",
+      "sanctionedUntil": "Estás sancionado/a hasta el {{date}}. No puedes apuntarte a partidos.",
       "sessionExpired": "Sesión expirada. Vuelve a iniciar sesión.",
       "bajaWarningShort": "Si te das de baja hoy, por favor busca un@ sustitut@.",
       "notifications": {

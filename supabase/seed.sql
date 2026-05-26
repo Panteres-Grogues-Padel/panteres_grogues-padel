@@ -50,6 +50,8 @@ CREATE TABLE jugadores (
   telefono varchar(20),
   instagram varchar(100),
   foto_url text,
+  sancionat boolean DEFAULT false,
+  sancio_fins date,
   mostrar_telefono boolean DEFAULT false,
   autoriza_instagram boolean DEFAULT false,
   es_coordinador boolean DEFAULT false,

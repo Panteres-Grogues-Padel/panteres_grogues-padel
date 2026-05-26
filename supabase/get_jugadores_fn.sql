@@ -16,6 +16,8 @@ AS $$
         'nombre_completo', j.nombre_completo,
         'nickname', j.nickname,
         'foto_url', j.foto_url,
+        'sancionat', COALESCE(j.sancionat, false),
+        'sancio_fins', j.sancio_fins,
         'padrino_id', j.padrino_id,
         'padrino_nombre', p.nombre
       ) AS row_data

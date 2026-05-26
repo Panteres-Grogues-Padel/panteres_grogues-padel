@@ -16,7 +16,9 @@ function mapJugadorRow(row) {
     nombreCompleto: row.nombre_completo ?? row.nombre ?? t("common.player"),
     padrinoId: row.padrino_id ? normalizeJugadorUuid(row.padrino_id) : null,
     padrinoNombre: row.padrino_nombre ?? null,
-    foto_url: row.foto_url ?? null
+    foto_url: row.foto_url ?? null,
+    sancionat: Boolean(row.sancionat),
+    sancio_fins: row.sancio_fins ?? null
   };
 }
 

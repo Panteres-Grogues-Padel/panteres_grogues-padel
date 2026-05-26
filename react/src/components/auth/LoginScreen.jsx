@@ -46,22 +46,6 @@ export default function LoginScreen({ auth }) {
             {t("auth.enterGoogle")}
           </button>
 
-          <div className="login-divider">
-            <span>{t("auth.demoDivider")}</span>
-          </div>
-          <select value={auth.demoId} onChange={(e) => auth.setDemoId(e.target.value)}>
-            <option value="">{t("auth.selectDemoUser")}</option>
-            {auth.demoUsers.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.nombreCompleto}
-                {u.isCoord ? t("auth.coordMarker") : ""}
-              </option>
-            ))}
-          </select>
-          <button className="btn btn-block mt-8" onClick={auth.loginDemo} disabled={auth.loading}>
-            {t("auth.enterAsDemo")}
-          </button>
-
           {auth.error ? <p className="error-box">{auth.error}</p> : null}
         </div>
       </div>

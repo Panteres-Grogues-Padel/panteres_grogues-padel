@@ -14,6 +14,11 @@ export function mapPerfilFromRpc(row) {
     mostrar_telefono: Boolean(row.mostrar_telefono),
     autoriza_instagram: Boolean(row.autoriza_instagram),
     es_coordinador: Boolean(row.es_coordinador),
+    auth_id: row.auth_id ?? null,
+    email: row.email ?? null,
+    activo: row.activo ?? true,
+    sancionat: Boolean(row.sancionat),
+    sancio_fins: row.sancio_fins ?? null,
     pj: row.partidos_jugados ?? 0,
     pg: row.partidos_ganados ?? 0,
     jj: row.juegos_jugados ?? 0,
@@ -35,6 +40,13 @@ export function mergePerfilView(prev, mapped) {
 export async function fetchPerfilJugadorRpc(client, jugadorId) {
   if (!client || !jugadorId) return { ok: false, perfil: null };
   const { data, error } = await client.rpc("get_perfil_jugador", { p_jugador_id: jugadorId });
+  if (error) return { ok: false, error: error.message, perfil: null };
+  return { ok: true, perfil: mapPerfilFromRpc(data) };
+}
+
+export async function fetchMiPerfilJugadorRpc(client) {
+  if (!client) return { ok: false, perfil: null };
+  const { data, error } = await client.rpc("get_mi_perfil_jugador", {});
   if (error) return { ok: false, error: error.message, perfil: null };
   return { ok: true, perfil: mapPerfilFromRpc(data) };
 }

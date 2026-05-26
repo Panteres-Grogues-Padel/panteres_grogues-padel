@@ -21,6 +21,8 @@ create table jugadores (
   telefono varchar(20),
   instagram varchar(100),
   foto_url text,
+  sancionat boolean default false,
+  sancio_fins date,
   mostrar_telefono boolean default false,
   autoriza_instagram boolean default false,
   es_coordinador boolean default false,

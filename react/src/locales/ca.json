@@ -71,10 +71,6 @@
     "enter": "Entrar",
     "entering": "Entrant...",
     "enterGoogle": "Entrar amb Google",
-    "demoDivider": "o accés demo",
-    "selectDemoUser": "Selecciona un usuari demo...",
-    "enterAsDemo": "Entrar com a demo",
-    "coordMarker": " (Coord.)",
     "errors": {
       "userNotFound": "Usuari/ària no trobat/da",
       "connection": "Error de connexió.",
@@ -86,7 +82,6 @@
       "supabaseEnvMissing": "Falten variables d'entorn de Supabase.",
       "timeout": "Temps d'espera esgotat. Revisa la connexió.",
       "sessionFailed": "No s'ha pogut obtenir la sessió. Torna-ho a provar.",
-      "selectDemo": "Selecciona un usuari demo.",
       "googleLogin": "Error en iniciar sessió amb Google."
     }
   },
@@ -121,6 +116,7 @@
     "insurancePolicy": "Pòlissa federativa — Federació Catalana de Pàdel",
     "insuranceContact": "Contacta amb el/la coordinador/a per obtenir les dades de la teva pòlissa",
     "insuranceProtocolBtn": "Protocol express d'accidents",
+    "sanctionsRules": "Reglament de sancions",
     "urgenciesSection": "Urgències properes",
     "urgency112": "Urgències · 112",
     "godparentsSheetTitle": "🤝 Padrins"
@@ -296,6 +292,16 @@
       "instagramTagHint": "La secció em pot etiquetar al perfil oficial",
       "changePhoto": "Canviar foto",
       "photoUploading": "Pujant foto…",
+      "sanctionedUntil": "Sancionat/da fins al {{date}}",
+      "sanctions": {
+        "title": "Sancions",
+        "checkbox": "Sancionat/da",
+        "until": "Fins quan",
+        "save": "Desar sanció",
+        "dateRequired": "Indica fins quan dura la sanció.",
+        "saveError": "No s'ha pogut desar la sanció.",
+        "readOnlyHint": "Visible al perfil del/de la jugador/a"
+      },
       "photoErrors": {
         "invalidType": "Format no vàlid. Només JPEG, PNG o WebP.",
         "tooLarge": "La imatge és massa gran (màx. 2 MB).",
@@ -376,6 +382,7 @@
       "listNotOpen": "La llista encara no està oberta.",
       "invalidPlayerId": "ID de jugador/a no vàlid.",
       "alreadyEnrolled": "Ja estàs apuntat/da a {{label}} — {{club}}.",
+      "sanctionedUntil": "Estàs sancionat/da fins al {{date}}. No pots apuntar-te a partits.",
       "sessionExpired": "Sessió expirada. Torna a iniciar sessió.",
       "bajaWarningShort": "Si et dones de baixa avui, si us plau busca un/a substitut/a.",
       "notifications": {

@@ -33,6 +33,13 @@ function addDaysUtc(d, n) {
   return x;
 }
 
+function formatSancioDate(value) {
+  if (!value) return "";
+  const d = new Date(`${String(value).slice(0, 10)}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleDateString(DATE_LOCALE);
+}
+
 /** Extrae YYYY-MM-DD de cualquier valor que devuelva Supabase para columnas `date`. */
 function normalizeSemana(v) {
   if (!v) return "";
@@ -393,6 +400,15 @@ export function useSlots(currentUser, authEpoch = 0) {
     const slot = slotsJugar.find((s) => s.id === slotId);
     if (!slot) return { ok: false, error: t("hooks.slots.slotNotFound") };
     if (!slot.abierto) return { ok: false, error: t("hooks.slots.listNotOpen") };
+
+    if (currentUser.sancionat && currentUser.sancio_fins && currentUser.sancio_fins >= hoyLocalStr()) {
+      return {
+        ok: false,
+        error: t("hooks.slots.sanctionedUntil", {
+          date: formatSancioDate(currentUser.sancio_fins)
+        })
+      };
+    }
 
     const jugadorId = normalizeJugadorUuid(currentUser.id);
     if (!isJugadorUuid(jugadorId)) return { ok: false, error: t("hooks.slots.invalidPlayerId") };

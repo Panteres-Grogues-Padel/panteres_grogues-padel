@@ -32,6 +32,8 @@ function mapRankingRow(row) {
     foto_url: j.foto_url ?? null,
     mostrar_telefono: Boolean(j.mostrar_telefono),
     autoriza_instagram: Boolean(j.autoriza_instagram),
+    sancionat: Boolean(j.sancionat),
+    sancio_fins: j.sancio_fins ?? null,
     pj: row.partidos_jugados ?? 0,
     pg: row.partidos_ganados ?? 0,
     jj: row.juegos_jugados ?? 0,

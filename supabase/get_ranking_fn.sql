@@ -34,7 +34,9 @@ AS $$
           'instagram', j.instagram,
           'foto_url', j.foto_url,
           'mostrar_telefono', j.mostrar_telefono,
-          'autoriza_instagram', j.autoriza_instagram
+          'autoriza_instagram', j.autoriza_instagram,
+          'sancionat', COALESCE(j.sancionat, false),
+          'sancio_fins', j.sancio_fins
         )
       ) AS row_data
     FROM ranking r

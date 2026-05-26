@@ -21,6 +21,8 @@ const LANDING_TABLER_ICON_SIZE = 34;
 
 const INSURANCE_PROTOCOL_URL =
   "https://fulqczmbmmakdxylejgw.supabase.co/storage/v1/object/public/documents/Protocol%20expres%20d'accidents%20Panteres.pdf";
+const SANCTIONS_RULES_URL =
+  "https://fulqczmbmmakdxylejgw.supabase.co/storage/v1/object/public/documents/reglament-sancions.pdf";
 
 function LandingTablerIcon({ Icon }) {
   return (
@@ -553,6 +555,26 @@ export default function Bienvenida({
             <div style={{ fontSize: 11, color: "var(--text3)" }}>
               {t("bienvenida.insuranceContact")}
             </div>
+            <div style={{ height: "0.5px", background: "var(--border)", margin: "12px 0" }} />
+            <a
+              href={SANCTIONS_RULES_URL}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                fontSize: 13,
+                fontWeight: 600,
+                color: "var(--text)",
+                textDecoration: "none"
+              }}
+            >
+              <span className="ti ti-gavel" style={{ fontSize: 16, lineHeight: 1 }} aria-hidden>
+                ⚖️
+              </span>
+              <span>{t("bienvenida.sanctionsRules")}</span>
+            </a>
           </div>
 
           {/* Hospitales cercanos */}
