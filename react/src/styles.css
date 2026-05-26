@@ -228,6 +228,41 @@ select {
   gap: 10px;
 }
 
+.utility-doc-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.utility-doc-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: var(--navy);
+  line-height: 1;
+}
+
+.ti-heart-plus.utility-doc-icon::before {
+  content: "♡";
+}
+
+.ti-gavel.utility-doc-icon::before {
+  content: "⚖";
+}
+
+.utility-doc-divider {
+  height: 0.5px;
+  background: var(--border);
+  margin: 12px 0;
+}
+
 .padrinos-lista li {
   list-style: none;
   margin-left: -1.125rem;

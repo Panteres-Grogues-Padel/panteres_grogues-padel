@@ -518,7 +518,7 @@ export default function Bienvenida({
             </div>
           </div>
 
-          {/* Seguro médico */}
+          {/* Documents */}
           <div
             style={{
               fontSize: 10,
@@ -544,35 +544,19 @@ export default function Bienvenida({
               href={INSURANCE_PROTOCOL_URL}
               target="_blank"
               rel="noreferrer"
-              className="btn btn-sm"
-              style={{ fontSize: 13, textDecoration: "none", marginBottom: 10, display: "inline-block" }}
+              className="utility-doc-row"
             >
-              🏥 {t("bienvenida.insuranceProtocolBtn")}
+              <span className="ti ti-heart-plus utility-doc-icon" aria-hidden />
+              <span>{t("bienvenida.insuranceSection")}</span>
             </a>
-            <div style={{ fontSize: 12, color: "var(--text2)", marginBottom: 4 }}>
-              {t("bienvenida.insurancePolicy")}
-            </div>
-            <div style={{ fontSize: 11, color: "var(--text3)" }}>
-              {t("bienvenida.insuranceContact")}
-            </div>
-            <div style={{ height: "0.5px", background: "var(--border)", margin: "12px 0" }} />
+            <div className="utility-doc-divider" />
             <a
               href={SANCTIONS_RULES_URL}
               target="_blank"
               rel="noreferrer"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                fontSize: 13,
-                fontWeight: 600,
-                color: "var(--text)",
-                textDecoration: "none"
-              }}
+              className="utility-doc-row"
             >
-              <span className="ti ti-gavel" style={{ fontSize: 16, lineHeight: 1 }} aria-hidden>
-                ⚖️
-              </span>
+              <span className="ti ti-gavel utility-doc-icon" aria-hidden />
               <span>{t("bienvenida.sanctionsRules")}</span>
             </a>
           </div>

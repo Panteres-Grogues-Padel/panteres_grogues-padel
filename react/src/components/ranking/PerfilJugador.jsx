@@ -6,7 +6,7 @@ import { useCurrentJugador } from "../../context/CurrentJugadorContext";
 import { fetchPerfilJugadorRpc, mergePerfilView } from "../../utils/perfilJugador";
 import { uploadProfilePhoto } from "../../utils/profilePhoto";
 import { numeroSocioPanteres } from "../../utils/socio";
-import { DATE_LOCALE, hoyLocalStr } from "../../utils/dates";
+import { DATE_LOCALE } from "../../utils/dates";
 import PlayerAvatar from "../common/PlayerAvatar";
 import { t } from "../../i18n";
 
@@ -105,7 +105,8 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
 
   const avatarJugador = isOwn && yo ? { ...view, foto_url: yo.foto_url } : view;
   const isCoord = Boolean(yo?.es_coordinador || yo?.isCoord);
-  const sancioVigent = Boolean(view?.sancionat && view?.sancio_fins && view.sancio_fins >= hoyLocalStr());
+  const sancionatVisible = Boolean(view?.sancionat && view?.sancio_fins);
+  const showSancioSection = isCoord || sancionatVisible;
 
   const corto = view?.nombreCompleto ? nombreCorto(view.nombreCompleto) : "";
 
@@ -270,7 +271,7 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
               <span className="profile-socio-label">{t("ranking.profile.memberNumber")}</span>
               <span className="profile-socio-val">{numeroSocioPanteres(view.id)}</span>
             </div>
-            {sancioVigent ? (
+            {sancionatVisible ? (
               <div className="profile-sanction-badge">
                 {t("ranking.profile.sanctionedUntil", { date: formatProfileDate(view.sancio_fins) })}
               </div>
@@ -372,7 +373,7 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
           </>
         ) : null}
 
-        {isCoord ? (
+        {showSancioSection ? (
           <>
             <div className="sheet-divider" />
             <div className="privacy-section">
@@ -381,6 +382,7 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
                 <input
                   type="checkbox"
                   checked={sancioLocal.sancionat}
+                  disabled={!isCoord || sancioSaving}
                   onChange={(e) =>
                     setSancioLocal((prev) => ({
                       ...prev,
@@ -400,6 +402,7 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
                   <input
                     type="date"
                     value={sancioLocal.sancio_fins}
+                    disabled={!isCoord || sancioSaving}
                     onChange={(e) =>
                       setSancioLocal((prev) => ({
                         ...prev,
@@ -411,14 +414,16 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
               ) : null}
 
               {sancioError ? <p className="profile-photo-error">{sancioError}</p> : null}
-              <button
-                type="button"
-                className="btn btn-primary btn-block"
-                disabled={sancioSaving}
-                onClick={() => void handleSaveSancio()}
-              >
-                {sancioSaving ? t("common.saving") : t("ranking.profile.sanctions.save")}
-              </button>
+              {isCoord ? (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-block"
+                  disabled={sancioSaving}
+                  onClick={() => void handleSaveSancio()}
+                >
+                  {sancioSaving ? t("common.saving") : t("ranking.profile.sanctions.save")}
+                </button>
+              ) : null}
             </div>
           </>
         ) : null}
