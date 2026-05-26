@@ -531,35 +531,21 @@ export default function Bienvenida({
           >
             {t("bienvenida.insuranceSection")}
           </div>
-          <div
-            style={{
-              background: "var(--bg2)",
-              borderRadius: "var(--radius-lg)",
-              padding: "1rem",
-              marginBottom: "1rem",
-              border: "0.5px solid var(--border)"
-            }}
-          >
-            <a
-              href={INSURANCE_PROTOCOL_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="utility-doc-row"
-            >
-              <span className="ti ti-heart-plus utility-doc-icon" aria-hidden />
-              <span>{t("bienvenida.insuranceSection")}</span>
-            </a>
-            <div className="utility-doc-divider" />
-            <a
-              href={SANCTIONS_RULES_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="utility-doc-row"
-            >
-              <span className="ti ti-gavel utility-doc-icon" aria-hidden />
-              <span>{t("bienvenida.sanctionsRules")}</span>
-            </a>
-          </div>
+          <a href={INSURANCE_PROTOCOL_URL} target="_blank" rel="noreferrer" className="utility-doc-row">
+            <span className="ti ti-heart-plus utility-doc-icon" aria-hidden />
+            <span className="utility-doc-copy">
+              <span className="utility-doc-title">{t("bienvenida.insuranceSection")}</span>
+              <span className="utility-doc-sub">{t("bienvenida.insuranceProtocolBtn")}</span>
+            </span>
+          </a>
+
+          <a href={SANCTIONS_RULES_URL} target="_blank" rel="noreferrer" className="utility-doc-row">
+            <span className="ti ti-gavel utility-doc-icon" aria-hidden />
+            <span className="utility-doc-copy">
+              <span className="utility-doc-title">{t("bienvenida.sanctionsRules")}</span>
+              <span className="utility-doc-sub">{t("bienvenida.sanctionsRulesSub")}</span>
+            </span>
+          </a>
 
           {/* Hospitales cercanos */}
           <div
