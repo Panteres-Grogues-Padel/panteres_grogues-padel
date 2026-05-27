@@ -15,6 +15,7 @@ import { supabase } from "../../lib/supabase";
 import PlayerAvatar from "../common/PlayerAvatar";
 import { useCurrentJugador } from "../../context/CurrentJugadorContext";
 import { DATE_LOCALE } from "../../utils/dates";
+import { getNombre, getNombreSaludo } from "../../utils/nombres";
 import { t } from "../../i18n";
 
 const LANDING_TABLER_ICON_SIZE = 34;
@@ -62,7 +63,11 @@ function formatActivityTs(value) {
 
 function mapActivityRow(row) {
   const jugador = row.jugadores ?? {};
-  const nombreJugador = jugador.nombre_completo ?? jugador.nombre ?? t("common.player");
+  const nombreJugador =
+    getNombre({
+      nickname: jugador.nickname,
+      nombre: jugador.nombre ?? jugador.nombre_completo
+    }) || t("common.player");
   return {
     id: row.id,
     jugadorId: row.jugador_id,
@@ -103,7 +108,8 @@ export default function Bienvenida({
   const [activityError, setActivityError] = useState("");
   const [logFiltro, setLogFiltro] = useState("");
   const { jugador: yo } = useCurrentJugador();
-  const nombre = currentUser?.nombreCompleto?.split(" ")[0] || currentUser?.nombre || t("common.playerFallback");
+  const jugadorHero = yo ?? currentUser;
+  const nombre = getNombreSaludo(jugadorHero) || t("common.playerFallback");
   const pos = Math.max(1, ranking.findIndex((j) => j.id === currentUser?.id) + 1);
   const rk = ranking.find((j) => j.id === currentUser?.id);
   const eficacia = rk ? `${(rk.eficacia * 100).toFixed(1)}%` : "-";
@@ -114,7 +120,7 @@ export default function Bienvenida({
   const jugadoresLog = useMemo(() => {
     const jugadores = new Map();
     ranking.forEach((j) => {
-      if (j.id) jugadores.set(String(j.id), j.nombreCompleto ?? j.nombre ?? t("common.player"));
+      if (j.id) jugadores.set(String(j.id), getNombre(j) || t("common.player"));
     });
     activityLog.forEach((e) => {
       if (e.jugadorId) jugadores.set(String(e.jugadorId), e.jugador);
@@ -170,12 +176,7 @@ export default function Bienvenida({
           onClick={() => onOpenPerfil?.()}
           aria-label={t("bienvenida.openProfile")}
         >
-          <PlayerAvatar
-            jugador={yo}
-            nombre={currentUser?.nombre}
-            size={80}
-            className="hero-player-avatar"
-          />
+          <PlayerAvatar jugador={jugadorHero} size={80} className="hero-player-avatar" />
         </button>
         <div className="hero-title">
           {saludoPorHora()}

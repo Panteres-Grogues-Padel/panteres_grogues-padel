@@ -51,7 +51,7 @@ function filaEsUsuarioActual(p, currentUser) {
     return jugadoresCoinciden(p.jugadorId, currentUser.id);
   }
   if (p.jugadorId) return false;
-  return currentUser.nombre === p.nombre;
+  return getNombre(currentUser) === getNombre(p);
 }
 
 function buildWaInscripcionesText({ slot, titulares, reserva, esDom, esSinPistas, sorted }) {

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { isJugadorUuid, jugadoresCoinciden } from "../../utils/jugador";
-import { getNombre, nombreCorto } from "../../utils/nombres";
+import { getNombre } from "../../utils/nombres";
 import { useCurrentJugador } from "../../context/CurrentJugadorContext";
 import {
   actualizarPerfilJugadorRpc,
@@ -120,8 +120,6 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
   const isCoord = Boolean(yo?.es_coordinador || yo?.isCoord);
   const sancioVigent = Boolean(view?.sancionat && view?.sancio_fins && view.sancio_fins >= hoyLocalStr());
   const showSancioSection = isCoord || sancioVigent;
-
-  const corto = view?.nombreCompleto ? nombreCorto(view.nombreCompleto) : "";
 
   const penStr = useMemo(() => {
     if (!view) return null;
@@ -271,21 +269,16 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-              <div className="profile-name">
-                {isOwn ? view.nombreCompleto || view.nombre : corto || getNombre(view)}
-              </div>
+              <div className="profile-name">{getNombre(view)}</div>
               {isOwn ? <span className="own-badge">{t("ranking.profile.you")}</span> : null}
             </div>
-            {isOwn && view.nickname ? (
-              <div className="profile-nickname">@{view.nickname}</div>
+            {isOwn && view.nickname && (view.nombreCompleto || view.nombre) ? (
+              <div className="profile-sub">
+                {t("ranking.profile.fullName", {
+                  name: view.nombreCompleto || view.nombre
+                })}
+              </div>
             ) : null}
-            <div className="profile-sub">
-              {isOwn
-                ? view.nickname
-                  ? t("ranking.profile.appName", { name: view.nombre })
-                  : view.nombre
-                : getNombre(view)}
-            </div>
             <div className="profile-socio-line">
               <span className="profile-socio-label">{t("ranking.profile.memberNumber")}</span>
               <span className="profile-socio-val">{numeroSocioPanteres(view.id)}</span>

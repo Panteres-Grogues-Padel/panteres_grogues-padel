@@ -1,9 +1,16 @@
-/** Nombre visible: nickname si existe, si no el nombre corto de jugadores. */
+/** Nom visible: nickname si existeix, si no el nom curt del jugador. */
 export function getNombre(jugador) {
   if (!jugador) return "";
   const nick = jugador.nickname?.trim();
   if (nick) return nick;
   return jugador.nombre ?? "";
+}
+
+/** Primera paraula del nom visible (per salutacions). */
+export function getNombreSaludo(jugador) {
+  const visible = getNombre(jugador);
+  if (!visible) return "";
+  return visible.split(/\s+/)[0] || visible;
 }
 
 export function nombreCorto(nombreCompleto) {

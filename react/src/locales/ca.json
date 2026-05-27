@@ -279,6 +279,7 @@
     "profile": {
       "you": "Tu",
       "appName": "Nom a l'app: {{name}}",
+      "fullName": "Nom complet: {{name}}",
       "memberNumber": "N.º soci Panteres",
       "noInstagram": "Sense compte indicat",
       "instagramHidden": "Instagram no visible",

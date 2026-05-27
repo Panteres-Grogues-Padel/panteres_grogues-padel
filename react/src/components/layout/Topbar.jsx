@@ -1,18 +1,6 @@
 import { useCurrentJugador } from "../../context/CurrentJugadorContext";
+import { getNombre } from "../../utils/nombres";
 import { t } from "../../i18n";
-
-/** Igual que en index.html (`nombreCorto`): "Jose García Blanco" → "Jose G. B." */
-function nombreCorto(nombreCompleto) {
-  const parts = (nombreCompleto ?? "").trim().split(/\s+/);
-  if (parts.length === 0) return "";
-  if (parts.length === 1) return parts[0];
-  const nombre = parts[0];
-  const aps = [parts[1], parts[2]]
-    .filter(Boolean)
-    .map((a) => a[0].toUpperCase())
-    .join("");
-  return nombre + (aps ? ` ${aps}` : "");
-}
 
 function IconBell() {
   return (
@@ -48,7 +36,7 @@ export default function Topbar({ setActiveTab, onLogout, noLeidas = 0, onOpenNot
           <button type="button" className="app-name topbar-brand-btn" onClick={irBienvenida}>
             Pàdel PG
           </button>
-          <div className="topbar-name-sub">{nombreCorto(currentUser?.nombreCompleto)}</div>
+          <div className="topbar-name-sub">{getNombre(currentUser)}</div>
         </div>
       </div>
       <div className="row-gap topbar-actions">
