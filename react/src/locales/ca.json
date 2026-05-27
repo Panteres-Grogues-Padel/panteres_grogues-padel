@@ -156,7 +156,11 @@
       "membersUp": "{{count}} socis Up",
       "nobodyYet": "Ningú apuntat/da encara",
       "titulars": "Titulars (màx. {{max}})",
-      "reserve": "Reserva ({{count}})"
+      "reserve": "Reserva ({{count}})",
+      "copyWhatsApp": "Copiar per WhatsApp",
+      "copied": "Copiat!",
+      "waApuntats": "✅ Apuntats/des:",
+      "waReserves": "⏳ Reserves:"
     }
   },
 

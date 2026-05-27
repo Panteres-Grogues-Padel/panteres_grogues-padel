@@ -20,6 +20,13 @@ function diaSlotCa(label) {
   return DIES[String(label).trim()] ?? label;
 }
 
+function slotFechaLabel(slot) {
+  if (!slot?.semanaObjetivo || slot.diaSemana === undefined) return "";
+  const lun = new Date(slot.semanaObjetivo + "T00:00:00Z");
+  lun.setUTCDate(lun.getUTCDate() + slot.diaSemana);
+  return `${lun.getUTCDate()} ${monthShortName(lun.getUTCMonth())}`;
+}
+
 function dayOpenLabel(slot) {
   if (!slot) return "";
   if (slot.semana === "actual") return t("jugar.detalle.openCurrentWeek");
@@ -47,9 +54,33 @@ function filaEsUsuarioActual(p, currentUser) {
   return currentUser.nombre === p.nombre;
 }
 
+function buildWaInscripcionesText({ slot, titulares, reserva, esDom, esSinPistas, sorted }) {
+  const listApuntats = esDom || esSinPistas ? sorted : titulares;
+  const listReserves = esDom || esSinPistas ? [] : reserva;
+  let text = `🎾 ${diaSlotCa(slot.label)} — ${slot.club}\n`;
+  const fecha = slotFechaLabel(slot);
+  if (fecha) text += `📅 ${fecha}\n`;
+  text += `\n${t("jugar.detalle.waApuntats")}\n`;
+  if (listApuntats.length === 0) {
+    text += "—\n";
+  } else {
+    listApuntats.forEach((p, idx) => {
+      text += `${idx + 1}. ${getNombre(p)}\n`;
+    });
+  }
+  if (listReserves.length > 0) {
+    text += `\n${t("jugar.detalle.waReserves")}\n`;
+    listReserves.forEach((p, idx) => {
+      text += `${idx + 1}. ${getNombre(p)}\n`;
+    });
+  }
+  return text.trimEnd();
+}
+
 export default function DetalleSlot({
   slot,
   currentUser,
+  isCoord,
   enrolled,
   rivalSlot,
   warning,
@@ -58,12 +89,21 @@ export default function DetalleSlot({
   onBaja
 }) {
   const [procesando, setProcesando] = useState(false);
+  const [copiat, setCopiat] = useState(false);
   const inFlightRef = useRef(false);
+  const copiatTimeoutRef = useRef(null);
 
   useEffect(() => {
     setProcesando(false);
     inFlightRef.current = false;
+    setCopiat(false);
   }, [slot?.id]);
+
+  useEffect(() => {
+    return () => {
+      if (copiatTimeoutRef.current) clearTimeout(copiatTimeoutRef.current);
+    };
+  }, []);
 
   if (!slot) return null;
 
@@ -79,6 +119,18 @@ export default function DetalleSlot({
       ? t("jugar.detalle.open")
       : t("jugar.detalle.closed");
   const sociosCount = sorted.filter((p) => p.socio).length;
+
+  async function handleCopyWa() {
+    const text = buildWaInscripcionesText({ slot, titulares, reserva, esDom, esSinPistas, sorted });
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiat(true);
+      if (copiatTimeoutRef.current) clearTimeout(copiatTimeoutRef.current);
+      copiatTimeoutRef.current = setTimeout(() => setCopiat(false), 2000);
+    } catch {
+      setCopiat(false);
+    }
+  }
 
   const labelPistas = esDom
     ? t("jugar.detalle.locationAmericana")
@@ -166,6 +218,17 @@ export default function DetalleSlot({
           <span>{t("jugar.detalle.enrolledList", { count: sorted.length })}</span>
           <span>{t("jugar.detalle.membersUp", { count: slot.sociosCount ?? sociosCount })}</span>
         </div>
+
+        {isCoord ? (
+          <button
+            type="button"
+            className="btn btn-sm btn-block"
+            style={{ margin: "0.5rem 0 0.75rem" }}
+            onClick={() => void handleCopyWa()}
+          >
+            {copiat ? t("jugar.detalle.copied") : t("jugar.detalle.copyWhatsApp")}
+          </button>
+        ) : null}
 
         {sorted.length === 0 ? (
           <div style={{ fontSize: "13px", color: "var(--text2)", textAlign: "center", padding: "1.5rem 0" }}>

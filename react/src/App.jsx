@@ -189,6 +189,7 @@ function AppAuthed({ auth }) {
             <Jugar
               slots={slotsJugar}
               currentUser={auth.currentUser}
+              isCoord={isCoord}
               onApuntar={handleApuntar}
               onBaja={handleBaja}
               backendNotice={slotsNotice}

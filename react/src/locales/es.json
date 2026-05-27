@@ -155,7 +155,11 @@
       "membersUp": "{{count}} socios Up",
       "nobodyYet": "Nadie apuntado todavía",
       "titulars": "Titulares (máx. {{max}})",
-      "reserve": "Reserva ({{count}})"
+      "reserve": "Reserva ({{count}})",
+      "copyWhatsApp": "Copiar por WhatsApp",
+      "copied": "¡Copiado!",
+      "waApuntats": "✅ Apuntados:",
+      "waReserves": "⏳ Reservas:"
     }
   },
 

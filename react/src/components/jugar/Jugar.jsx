@@ -36,7 +36,7 @@ function weekRangeLabel(lunesDate) {
   return lM === dM ? `${lD}–${dD} ${lM}` : `${lD} ${lM}–${dD} ${dM}`;
 }
 
-export default function Jugar({ slots, currentUser, onApuntar, onBaja, backendNotice, message }) {
+export default function Jugar({ slots, currentUser, isCoord, onApuntar, onBaja, backendNotice, message }) {
   const [selectedSlotId, setSelectedSlotId] = useState(slots[0]?.id ?? "");
   const [showLista, setShowLista] = useState(false);
 
@@ -179,6 +179,7 @@ export default function Jugar({ slots, currentUser, onApuntar, onBaja, backendNo
         <DetalleSlot
           slot={selectedSlot}
           currentUser={currentUser}
+          isCoord={isCoord}
           enrolled={selectedEnrolled}
           rivalSlot={rivalSlot}
           warning={Boolean(selectedEnrolled && selectedSlot?.bajaWarning)}
