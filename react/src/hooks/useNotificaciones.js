@@ -133,7 +133,15 @@ export function resolveNotificacionDeepLink(notif) {
     };
   }
 
-  if (["slot_obert", "inscripcio", "baixa", "jugar"].includes(tipo)) {
+  if (tipo === "slot_obert") {
+    return {
+      tab: "jugar",
+      partidosDeepLink: null,
+      jugarDeepLink: { openLista: false }
+    };
+  }
+
+  if (["inscripcio", "baixa", "jugar"].includes(tipo)) {
     return {
       tab: "jugar",
       partidosDeepLink: null,

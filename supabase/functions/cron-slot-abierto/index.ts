@@ -81,8 +81,7 @@ Deno.serve(async (req) => {
         jugador_id: jugador.id,
         tipo: TIPO,
         titulo: TITULO,
-        texto,
-        data: { slot_id: slot.id }
+        texto
       });
 
       if (insertError) {

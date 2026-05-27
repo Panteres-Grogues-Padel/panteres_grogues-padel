@@ -262,7 +262,6 @@ export function useSlots(currentUser, authEpoch = 0) {
           formatDiaPartidoLabel(fechaPartidoFromSlot(semanaObjetivo, slot.diaSemana)) ||
           slot.label ||
           t("hooks.slots.notifications.yourDay");
-        const fechaPartido = fechaPartidoFromSlot(semanaObjetivo, slot.diaSemana);
         const texto = t("hooks.slots.notifications.listOpenText", { day: diaLabel, club: slot.club });
 
         const dedupeKey = `${userId}:apertura:${slot.id}:${semanaObjetivo}`;
@@ -284,11 +283,7 @@ export function useSlots(currentUser, authEpoch = 0) {
             jugadorId: userId,
             tipo: "slot_obert",
             titulo,
-            texto,
-            data: {
-              fecha: fechaPartido,
-              slot_id: slot.id
-            }
+            texto
           }
         ]);
         if (res.ok) aperturaListaNotifRef.current.add(dedupeKey);

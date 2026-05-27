@@ -73,6 +73,10 @@ export default function Jugar({ slots, currentUser, isCoord, deepLink, onApuntar
   }, [slotsVisibles, selectedSlotId]);
 
   useEffect(() => {
+    if (deepLink?.openLista === false) {
+      setShowLista(false);
+      return;
+    }
     if (!deepLink?.openLista) return;
     if (!slotsVisibles.length) return;
 
