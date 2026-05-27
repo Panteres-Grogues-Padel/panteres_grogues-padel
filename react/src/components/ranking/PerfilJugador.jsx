@@ -48,7 +48,12 @@ function formatProfileDate(value) {
 export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated }) {
   const { jugador: yo, refreshJugador } = useCurrentJugador();
   const [view, setView] = useState(null);
-  const [contactForm, setContactForm] = useState({ telefono: "", instagram: "", ocultar_telefon: false });
+  const [contactForm, setContactForm] = useState({
+    nickname: "",
+    telefono: "",
+    instagram: "",
+    ocultar_telefon: false
+  });
   const [contactSaving, setContactSaving] = useState(false);
   const [contactError, setContactError] = useState("");
   const [sancioLocal, setSancioLocal] = useState({ sancionat: false, sancio_fins: "" });
@@ -64,6 +69,7 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
         yo && jugadoresCoinciden(jugador.id, yo.id) ? mergePerfilView(jugador, yo) : jugador;
       setView(esPropi);
       setContactForm({
+        nickname: esPropi.nickname ?? "",
         telefono: esPropi.telefono ?? "",
         instagram: (esPropi.instagram ?? "").replace(/^@/, "").trim(),
         ocultar_telefon: Boolean(esPropi.ocultar_telefon)
@@ -88,6 +94,7 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
       setView((prev) => mergePerfilView(prev, perfil));
       if (yo && jugadoresCoinciden(jugador.id, yo.id)) {
         setContactForm({
+          nickname: perfil.nickname ?? "",
           telefono: perfil.telefono ?? "",
           instagram: (perfil.instagram ?? "").replace(/^@/, "").trim(),
           ocultar_telefon: Boolean(perfil.ocultar_telefon)
@@ -147,6 +154,7 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
     }
     setView((prev) => mergePerfilView(prev, perfil));
     setContactForm({
+      nickname: perfil.nickname ?? "",
       telefono: perfil.telefono ?? "",
       instagram: (perfil.instagram ?? "").replace(/^@/, "").trim(),
       ocultar_telefon: Boolean(perfil.ocultar_telefon)
@@ -343,6 +351,17 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
             <div className="sheet-divider" />
             <div className="privacy-section">
               <div className="privacy-title">{t("ranking.profile.contact")}</div>
+              <label className="profile-contact-field">
+                <span className="privacy-row-label">{t("ranking.profile.visibleName")}</span>
+                <input
+                  type="text"
+                  className="profile-contact-input"
+                  value={contactForm.nickname}
+                  placeholder={t("ranking.profile.visibleNamePlaceholder")}
+                  onChange={(e) => setContactForm((prev) => ({ ...prev, nickname: e.target.value }))}
+                />
+                <span className="privacy-row-sub">{t("ranking.profile.visibleNameHint")}</span>
+              </label>
               <label className="profile-contact-field">
                 <span className="privacy-row-label">{t("ranking.profile.phone")}</span>
                 <input

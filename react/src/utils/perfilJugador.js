@@ -54,13 +54,18 @@ export async function fetchMiPerfilJugadorRpc(client) {
   return { ok: true, perfil: mapPerfilFromRpc(data) };
 }
 
-export async function actualizarPerfilJugadorRpc(client, jugadorId, { telefono, instagram, ocultar_telefon }) {
+export async function actualizarPerfilJugadorRpc(
+  client,
+  jugadorId,
+  { nickname, telefono, instagram, ocultar_telefon }
+) {
   if (!client || !jugadorId) return { ok: false, perfil: null };
   const { data, error } = await client.rpc("actualizar_perfil_jugador", {
     p_jugador_id: jugadorId,
     p_telefon: telefono ?? "",
     p_instagram: instagram ?? "",
-    p_ocultar_telefon: Boolean(ocultar_telefon)
+    p_ocultar_telefon: Boolean(ocultar_telefon),
+    p_nickname: nickname ?? ""
   });
   if (error) return { ok: false, error: error.message, perfil: null };
   return { ok: true, perfil: mapPerfilFromRpc(data) };
