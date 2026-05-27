@@ -128,8 +128,11 @@ function AppAuthed({ auth }) {
       nickname: u.nickname ?? rk?.nickname ?? null,
       nombreCompleto: u.nombreCompleto ?? u.nombre,
       telefono: u.telefono ?? u.tel ?? "",
-      instagram: u.instagram ?? u.ig ?? "",
+      instagram: (u.instagram ?? u.ig ?? "").replace(/^@/, "").trim(),
       foto_url: fotoBase,
+      ocultar_telefon: Boolean(
+        u.ocultar_telefon ?? (u.mostrar_telefono != null ? !u.mostrar_telefono : !u.mostrarTel)
+      ),
       mostrar_telefono: Boolean(u.mostrar_telefono ?? u.mostrarTel),
       autoriza_instagram: Boolean(u.autoriza_instagram ?? u.autorizaIG),
       sancionat: Boolean(u.sancionat),

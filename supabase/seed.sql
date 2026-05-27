@@ -54,6 +54,7 @@ CREATE TABLE jugadores (
   sancio_fins date,
   mostrar_telefono boolean DEFAULT false,
   autoriza_instagram boolean DEFAULT false,
+  ocultar_telefon boolean DEFAULT false,
   es_coordinador boolean DEFAULT false,
   activo boolean DEFAULT true,
   acepto_privacidad boolean DEFAULT false,

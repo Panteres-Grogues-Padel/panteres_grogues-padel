@@ -9,8 +9,11 @@ export function mapPerfilFromRpc(row) {
     nickname: row.nickname?.trim() || null,
     nombreCompleto: row.nombre_completo ?? row.nombre ?? "",
     telefono: row.telefono ?? "",
-    instagram: row.instagram ?? "",
+    instagram: (row.instagram ?? "").replace(/^@/, "").trim(),
     foto_url: avatarUrlBase(row.foto_url) ?? null,
+    ocultar_telefon: Boolean(
+      row.ocultar_telefon ?? (row.mostrar_telefono != null ? !row.mostrar_telefono : false)
+    ),
     mostrar_telefono: Boolean(row.mostrar_telefono),
     autoriza_instagram: Boolean(row.autoriza_instagram),
     es_coordinador: Boolean(row.es_coordinador),
@@ -47,6 +50,18 @@ export async function fetchPerfilJugadorRpc(client, jugadorId) {
 export async function fetchMiPerfilJugadorRpc(client) {
   if (!client) return { ok: false, perfil: null };
   const { data, error } = await client.rpc("get_mi_perfil_jugador", {});
+  if (error) return { ok: false, error: error.message, perfil: null };
+  return { ok: true, perfil: mapPerfilFromRpc(data) };
+}
+
+export async function actualizarPerfilJugadorRpc(client, jugadorId, { telefono, instagram, ocultar_telefon }) {
+  if (!client || !jugadorId) return { ok: false, perfil: null };
+  const { data, error } = await client.rpc("actualizar_perfil_jugador", {
+    p_jugador_id: jugadorId,
+    p_telefon: telefono ?? "",
+    p_instagram: instagram ?? "",
+    p_ocultar_telefon: Boolean(ocultar_telefon)
+  });
   if (error) return { ok: false, error: error.message, perfil: null };
   return { ok: true, perfil: mapPerfilFromRpc(data) };
 }

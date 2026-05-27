@@ -3,7 +3,11 @@ import { supabase } from "../../lib/supabase";
 import { isJugadorUuid, jugadoresCoinciden } from "../../utils/jugador";
 import { getNombre, nombreCorto } from "../../utils/nombres";
 import { useCurrentJugador } from "../../context/CurrentJugadorContext";
-import { fetchPerfilJugadorRpc, mergePerfilView } from "../../utils/perfilJugador";
+import {
+  actualizarPerfilJugadorRpc,
+  fetchPerfilJugadorRpc,
+  mergePerfilView
+} from "../../utils/perfilJugador";
 import { uploadProfilePhoto } from "../../utils/profilePhoto";
 import { numeroSocioPanteres } from "../../utils/socio";
 import { DATE_LOCALE, hoyLocalStr } from "../../utils/dates";
@@ -34,15 +38,6 @@ function IconInsta() {
   );
 }
 
-function IconLockPhone() {
-  return (
-    <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
-      <rect x="3" y="11" width="18" height="11" rx="2" />
-      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-    </svg>
-  );
-}
-
 function formatProfileDate(value) {
   if (!value) return "";
   const d = new Date(`${String(value).slice(0, 10)}T12:00:00`);
@@ -53,7 +48,9 @@ function formatProfileDate(value) {
 export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated }) {
   const { jugador: yo, refreshJugador } = useCurrentJugador();
   const [view, setView] = useState(null);
-  const [local, setLocal] = useState(null);
+  const [contactForm, setContactForm] = useState({ telefono: "", instagram: "", ocultar_telefon: false });
+  const [contactSaving, setContactSaving] = useState(false);
+  const [contactError, setContactError] = useState("");
   const [sancioLocal, setSancioLocal] = useState({ sancionat: false, sancio_fins: "" });
   const [sancioSaving, setSancioSaving] = useState(false);
   const [sancioError, setSancioError] = useState("");
@@ -66,10 +63,12 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
       const esPropi =
         yo && jugadoresCoinciden(jugador.id, yo.id) ? mergePerfilView(jugador, yo) : jugador;
       setView(esPropi);
-      setLocal({
-        mostrar_telefono: Boolean(esPropi.mostrar_telefono),
-        autoriza_instagram: Boolean(esPropi.autoriza_instagram)
+      setContactForm({
+        telefono: esPropi.telefono ?? "",
+        instagram: (esPropi.instagram ?? "").replace(/^@/, "").trim(),
+        ocultar_telefon: Boolean(esPropi.ocultar_telefon)
       });
+      setContactError("");
       setSancioLocal({
         sancionat: Boolean(esPropi.sancionat),
         sancio_fins: esPropi.sancio_fins ?? ""
@@ -87,6 +86,13 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
       const { ok, perfil } = await fetchPerfilJugadorRpc(supabase, jugador.id);
       if (cancelled || !ok || !perfil) return;
       setView((prev) => mergePerfilView(prev, perfil));
+      if (yo && jugadoresCoinciden(jugador.id, yo.id)) {
+        setContactForm({
+          telefono: perfil.telefono ?? "",
+          instagram: (perfil.instagram ?? "").replace(/^@/, "").trim(),
+          ocultar_telefon: Boolean(perfil.ocultar_telefon)
+        });
+      }
       setSancioLocal({
         sancionat: Boolean(perfil.sancionat),
         sancio_fins: perfil.sancio_fins ?? ""
@@ -96,7 +102,7 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
     return () => {
       cancelled = true;
     };
-  }, [open, jugador?.id]);
+  }, [open, jugador?.id, yo]);
 
   const isOwn = useMemo(
     () => Boolean(yo && view && jugadoresCoinciden(view.id, yo.id)),
@@ -123,26 +129,32 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
     return <div style={{ fontSize: 12, color: "#27500A" }}>{t("ranking.profile.noPenalty")}</div>;
   }, [view]);
 
-  const showTel = isOwn || view?.mostrar_telefono;
-  const showIg = isOwn || view?.autoriza_instagram;
-  const tel = view?.telefono ?? "";
-  const ig = view?.instagram ?? "";
+  const ocultarTel = Boolean(view?.ocultar_telefon);
+  const tel = (view?.telefono ?? "").trim();
+  const ig = (view?.instagram ?? "").replace(/^@/, "").trim();
+  const showIgPublic = Boolean(ig);
+  const showTelPublic = Boolean(tel) && (!ocultarTel || (isCoord && !isOwn));
+  const telOcultPerCoord = isCoord && !isOwn && ocultarTel && Boolean(tel);
 
-  const persistPrivacy = useCallback(
-    async (field, checked) => {
-      if (!isOwn || !view?.id || !supabase) return;
-      const payload = field === "mostrar_telefono" ? { mostrar_telefono: checked } : { autoriza_instagram: checked };
-      const { error } = await supabase.from("jugadores").update(payload).eq("id", view.id);
-      if (error) {
-        console.warn("[PerfilJugador]", error.message);
-        return;
-      }
-      setLocal((prev) => ({ ...prev, [field]: checked }));
-      setView((prev) => (prev ? { ...prev, ...payload } : prev));
-      onJugadorUpdated?.({ id: view.id, ...payload });
-    },
-    [isOwn, view, onJugadorUpdated]
-  );
+  const handleSaveContact = useCallback(async () => {
+    if (!isOwn || !view?.id || !supabase) return;
+    setContactError("");
+    setContactSaving(true);
+    const { ok, perfil, error } = await actualizarPerfilJugadorRpc(supabase, view.id, contactForm);
+    setContactSaving(false);
+    if (!ok || !perfil) {
+      setContactError(error ?? t("ranking.profile.contactSaveError"));
+      return;
+    }
+    setView((prev) => mergePerfilView(prev, perfil));
+    setContactForm({
+      telefono: perfil.telefono ?? "",
+      instagram: (perfil.instagram ?? "").replace(/^@/, "").trim(),
+      ocultar_telefon: Boolean(perfil.ocultar_telefon)
+    });
+    onJugadorUpdated?.({ id: view.id, ...perfil });
+    void refreshJugador();
+  }, [isOwn, view, contactForm, onJugadorUpdated, refreshJugador]);
 
   const canChangePhoto = isOwn && supabase && isJugadorUuid(view?.id) && !yo?.fromFallback;
 
@@ -276,35 +288,25 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
                 {t("ranking.profile.sanctionedUntil", { date: formatProfileDate(view.sancio_fins) })}
               </div>
             ) : null}
-            <div className="profile-links" style={{ marginTop: 5 }}>
-              {showIg && ig ? (
-                <a className="profile-link" href={igUrl(ig) ?? "#"} target="_blank" rel="noreferrer">
-                  <IconInsta />
-                  {ig.startsWith("@") ? ig : `@${ig}`}
-                </a>
-              ) : showIg ? (
-                <span className="profile-link hidden">
-                  <IconInsta />
-                  {t("ranking.profile.noInstagram")}
-                </span>
-              ) : (
-                <span className="profile-link hidden">
-                  <IconInsta />
-                  {t("ranking.profile.instagramHidden")}
-                </span>
-              )}
-              {showTel && tel ? (
-                <a className="profile-link" href={`tel:${tel.replace(/\s/g, "")}`}>
-                  <IconPhone />
-                  {tel}
-                </a>
-              ) : (
-                <span className="profile-link hidden">
-                  <IconLockPhone />
-                  {t("ranking.profile.phoneHidden")}
-                </span>
-              )}
-            </div>
+            {!isOwn && (showIgPublic || showTelPublic) ? (
+              <div className="profile-links" style={{ marginTop: 5 }}>
+                {showIgPublic ? (
+                  <a className="profile-link" href={igUrl(ig) ?? "#"} target="_blank" rel="noreferrer">
+                    <IconInsta />
+                    @{ig}
+                  </a>
+                ) : null}
+                {showTelPublic ? (
+                  <a className="profile-link" href={`tel:${tel.replace(/\s/g, "")}`}>
+                    <IconPhone />
+                    {tel}
+                    {telOcultPerCoord ? (
+                      <span className="profile-link-badge">{t("ranking.profile.phoneHiddenBadge")}</span>
+                    ) : null}
+                  </a>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -340,35 +342,60 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
           </div>
         </div>
 
-        {isOwn && local ? (
+        {isOwn ? (
           <>
             <div className="sheet-divider" />
             <div className="privacy-section">
-              <div className="privacy-title">{t("ranking.profile.privacy")}</div>
-              <div className="privacy-row profile-privacy-row">
+              <div className="privacy-title">{t("ranking.profile.contact")}</div>
+              <label className="profile-contact-field">
+                <span className="privacy-row-label">{t("ranking.profile.phone")}</span>
+                <input
+                  type="tel"
+                  className="profile-contact-input"
+                  value={contactForm.telefono}
+                  placeholder={t("ranking.profile.phonePlaceholder")}
+                  onChange={(e) => setContactForm((prev) => ({ ...prev, telefono: e.target.value }))}
+                />
+              </label>
+              <label className="privacy-row profile-privacy-row">
                 <input
                   type="checkbox"
-                  id="priv-tel"
-                  checked={local.mostrar_telefono}
-                  onChange={(e) => void persistPrivacy("mostrar_telefono", e.target.checked)}
+                  checked={contactForm.ocultar_telefon}
+                  onChange={(e) =>
+                    setContactForm((prev) => ({ ...prev, ocultar_telefon: e.target.checked }))
+                  }
                 />
                 <div>
-                  <div className="privacy-row-label">{t("ranking.profile.showPhone")}</div>
-                  <div className="privacy-row-sub">{t("ranking.profile.phoneVisible")}</div>
+                  <div className="privacy-row-label">{t("ranking.profile.hidePhone")}</div>
                 </div>
-              </div>
-              <div className="privacy-row profile-privacy-row">
-                <input
-                  type="checkbox"
-                  id="priv-ig"
-                  checked={local.autoriza_instagram}
-                  onChange={(e) => void persistPrivacy("autoriza_instagram", e.target.checked)}
-                />
-                <div>
-                  <div className="privacy-row-label">{t("ranking.profile.authorizeInstagram")}</div>
-                  <div className="privacy-row-sub">{t("ranking.profile.instagramTagHint")}</div>
+              </label>
+              <label className="profile-contact-field">
+                <span className="privacy-row-label">{t("ranking.profile.instagram")}</span>
+                <div className="profile-contact-ig">
+                  <span className="profile-contact-ig-prefix">@</span>
+                  <input
+                    type="text"
+                    className="profile-contact-input"
+                    value={contactForm.instagram}
+                    placeholder={t("ranking.profile.instagramPlaceholder")}
+                    onChange={(e) =>
+                      setContactForm((prev) => ({
+                        ...prev,
+                        instagram: e.target.value.replace(/^@+/, "")
+                      }))
+                    }
+                  />
                 </div>
-              </div>
+              </label>
+              {contactError ? <p className="profile-photo-error">{contactError}</p> : null}
+              <button
+                type="button"
+                className="btn btn-primary btn-block"
+                disabled={contactSaving}
+                onClick={() => void handleSaveContact()}
+              >
+                {contactSaving ? t("common.saving") : t("ranking.profile.saveContact")}
+              </button>
             </div>
           </>
         ) : null}
