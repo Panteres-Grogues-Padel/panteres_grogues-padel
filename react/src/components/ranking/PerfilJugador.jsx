@@ -133,8 +133,7 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
   const tel = (view?.telefono ?? "").trim();
   const ig = (view?.instagram ?? "").replace(/^@/, "").trim();
   const showIgPublic = Boolean(ig);
-  const showTelPublic = Boolean(tel) && (!ocultarTel || (isCoord && !isOwn));
-  const telOcultPerCoord = isCoord && !isOwn && ocultarTel && Boolean(tel);
+  const showTelPublic = Boolean(tel) && !ocultarTel;
 
   const handleSaveContact = useCallback(async () => {
     if (!isOwn || !view?.id || !supabase) return;
@@ -300,9 +299,6 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
                   <a className="profile-link" href={`tel:${tel.replace(/\s/g, "")}`}>
                     <IconPhone />
                     {tel}
-                    {telOcultPerCoord ? (
-                      <span className="profile-link-badge">{t("ranking.profile.phoneHiddenBadge")}</span>
-                    ) : null}
                   </a>
                 ) : null}
               </div>
