@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import PartidoCard from "./PartidoCard";
 import MoverJugador from "./MoverJugador";
 import { copyTextToClipboard } from "../../utils/clipboard";
@@ -80,6 +80,7 @@ export default function Partidos({
   const [opcionId, setOpcionId] = useState("");
   const [franjas, setFranjas] = useState(() => [createFranjaInicial()]);
   const [moverState, setMoverState] = useState({ open: false, origen: null, jugador: null });
+  const autoPickJugadorRef = useRef(false);
 
   useEffect(() => {
     if (!opcionId && opciones.length) setOpcionId(opciones[0].id);
@@ -102,6 +103,31 @@ export default function Partidos({
     );
     if (primeraDelDia) setOpcionId(primeraDelDia.id);
   }, [deepLink?.slotId, deepLink?.fechaKey, opciones]);
+
+  useEffect(() => {
+    if (autoPickJugadorRef.current) return;
+    if (isCoord) {
+      autoPickJugadorRef.current = true;
+      return;
+    }
+    if (deepLink?.fechaKey) {
+      autoPickJugadorRef.current = true;
+      return;
+    }
+    if (!opciones.length || !(slotsJugar ?? []).length) return;
+
+    const opcionInscrito = opciones.find((o) =>
+      (slotsJugar ?? []).some(
+        (s) =>
+          (s.baseId ?? s.id) === o.slotId &&
+          normalizeSemanaDate(s.semanaObjetivo) === normalizeSemanaDate(o.semanaObjetivo) &&
+          Boolean(s.apuntado)
+      )
+    );
+
+    if (opcionInscrito) setOpcionId(opcionInscrito.id);
+    autoPickJugadorRef.current = true;
+  }, [isCoord, deepLink?.fechaKey, opciones, slotsJugar]);
 
   const seleccion = useMemo(() => opciones.find((o) => o.id === opcionId), [opciones, opcionId]);
 
