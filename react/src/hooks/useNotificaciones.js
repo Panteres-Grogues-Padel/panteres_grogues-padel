@@ -17,7 +17,8 @@ function mapNotificacionRow(row) {
     titulo: row.titulo,
     texto: row.texto ?? "",
     leida: Boolean(row.leida),
-    createdAt: row.created_at
+    createdAt: row.created_at,
+    data: row.data ?? row.data_json ?? null
   };
 }
 
@@ -41,8 +42,15 @@ function cutoffNotificacionesAntiguas(dias = NOTIF_RETENCION_DIAS) {
 export function tabFromNotificacionTipo(tipo) {
   const map = {
     partidos: "partidos",
+    partidos_generats: "partidos",
+    partidos_generados: "partidos",
     resultados: "resultados",
+    resultat_validat: "resultados",
+    resultat_introduit: "resultados",
     jugar: "jugar",
+    slot_obert: "jugar",
+    inscripcio: "jugar",
+    baixa: "jugar",
     agenda: "agenda"
   };
   return map[tipo] ?? null;
@@ -51,8 +59,15 @@ export function tabFromNotificacionTipo(tipo) {
 export function iconoNotificacionTipo(tipo) {
   const map = {
     partidos: "🔄",
+    partidos_generats: "🔄",
+    partidos_generados: "🔄",
     resultados: "📋",
+    resultat_validat: "📋",
+    resultat_introduit: "📋",
     jugar: "📅",
+    slot_obert: "📅",
+    inscripcio: "📅",
+    baixa: "📅",
     agenda: "🗓️"
   };
   return map[tipo] ?? "🔔";

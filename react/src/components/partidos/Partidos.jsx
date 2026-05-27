@@ -67,9 +67,15 @@ export default function Partidos({
   onIndoor,
   onMover,
   onConfirmar,
-  isCoord
+  isCoord,
+  deepLink
 }) {
-  const opciones = useMemo(() => buildOpcionesDropdownPartidos(slotsCatalog), [slotsCatalog]);
+  const deepFechaKey = deepLink?.fechaKey ?? "";
+  const deepDate = deepFechaKey ? new Date(`${deepFechaKey}T12:00:00`) : null;
+  const opciones = useMemo(
+    () => buildOpcionesDropdownPartidos(slotsCatalog, deepDate ?? new Date()),
+    [slotsCatalog, deepFechaKey]
+  );
 
   const [opcionId, setOpcionId] = useState("");
   const [franjas, setFranjas] = useState(() => [createFranjaInicial()]);
@@ -82,11 +88,26 @@ export default function Partidos({
     }
   }, [opcionId, opciones]);
 
+  useEffect(() => {
+    if (!opciones.length || !deepLink?.fechaKey) return;
+    if (deepLink.slotId) {
+      const desiredId = `${deepLink.slotId}:${deepLink.fechaKey}`;
+      if (opciones.some((o) => o.id === desiredId)) {
+        setOpcionId(desiredId);
+        return;
+      }
+    }
+    const primeraDelDia = opciones.find(
+      (o) => o.fechaPartido && formatFechaLocal(o.fechaPartido) === deepLink.fechaKey
+    );
+    if (primeraDelDia) setOpcionId(primeraDelDia.id);
+  }, [deepLink?.slotId, deepLink?.fechaKey, opciones]);
+
   const seleccion = useMemo(() => opciones.find((o) => o.id === opcionId), [opciones, opcionId]);
 
   const slotId = seleccion?.slotId ?? "";
   const semanaObjetivo = seleccion?.semanaObjetivo ?? null;
-  const esHoy = Boolean(seleccion);
+  const esHoy = seleccion?.fechaPartido ? formatFechaLocal(seleccion.fechaPartido) === formatFechaLocal(new Date()) : false;
 
   const jugadoresSlot = useMemo(() => {
     if (!slotId || !semanaObjetivo) return [];

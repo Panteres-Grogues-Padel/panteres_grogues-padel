@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import DetalleSlot from "./DetalleSlot";
 import { getDiaSemanaActual, sameDiaSemanaSlot } from "../../utils/slots";
-import { monthShortName } from "../../utils/dates";
+import { getLunesDeSemanaLocal, monthShortName } from "../../utils/dates";
 import { t } from "../../i18n";
 
 const DIES = {
@@ -36,7 +36,7 @@ function weekRangeLabel(lunesDate) {
   return lM === dM ? `${lD}–${dD} ${lM}` : `${lD} ${lM}–${dD} ${dM}`;
 }
 
-export default function Jugar({ slots, currentUser, isCoord, onApuntar, onBaja, backendNotice, message }) {
+export default function Jugar({ slots, currentUser, isCoord, deepLink, onApuntar, onBaja, backendNotice, message }) {
   const [selectedSlotId, setSelectedSlotId] = useState(slots[0]?.id ?? "");
   const [showLista, setShowLista] = useState(false);
 
@@ -71,6 +71,28 @@ export default function Jugar({ slots, currentUser, isCoord, onApuntar, onBaja, 
       setShowLista(false);
     }
   }, [slotsVisibles, selectedSlotId]);
+
+  useEffect(() => {
+    if (!deepLink?.openLista) return;
+    if (!slotsVisibles.length) return;
+
+    const slotBaseId = deepLink?.slotBaseId ?? null;
+    const fechaKey = deepLink?.fechaKey ?? null;
+    let lunesObjetivo = "";
+    if (fechaKey) {
+      const targetDate = new Date(`${fechaKey}T12:00:00`);
+      lunesObjetivo = getLunesDeSemanaLocal(targetDate);
+    }
+
+    const chosen =
+      (slotBaseId && lunesObjetivo
+        ? slotsVisibles.find((s) => (s.baseId ?? s.id) === slotBaseId && s.semanaObjetivo === lunesObjetivo)
+        : null) ??
+      (slotBaseId ? slotsVisibles.find((s) => (s.baseId ?? s.id) === slotBaseId) : null);
+
+    if (chosen) setSelectedSlotId(chosen.id);
+    setShowLista(true);
+  }, [deepLink?.openLista, deepLink?.slotBaseId, deepLink?.fechaKey, slotsVisibles]);
 
   const selectedSlot = useMemo(
     () => slotsVisibles.find((s) => s.id === selectedSlotId) ?? slotsVisibles[0],

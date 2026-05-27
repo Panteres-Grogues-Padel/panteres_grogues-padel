@@ -516,9 +516,13 @@ export function usePartidos(currentUser) {
       .flatMap((g) => g)
       .map((j) => ({
         jugadorId: j.id,
-        tipo: "partidos",
+        tipo: "partidos_generats",
         titulo: notifTitulo,
-        texto: notifTexto
+        texto: notifTexto,
+        data: {
+          fecha: fechaPartidoFromSlot(semanaNorm, slotMeta?.diaSemana),
+          slot_id: slotId
+        }
       }));
     await createNotifications(notifications);
     return { ok: true, cantidad: grupos.length };

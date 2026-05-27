@@ -1,7 +1,6 @@
 import {
   formatNotificacionTs,
   iconoNotificacionTipo,
-  tabFromNotificacionTipo
 } from "../../hooks/useNotificaciones";
 import { t } from "../../i18n";
 
@@ -19,9 +18,8 @@ export default function NotificacionesPanel({
 
   async function handleClick(notif) {
     if (!notif.leida) await onMarcarLeida(notif.id);
-    const tab = tabFromNotificacionTipo(notif.tipo);
     onClose();
-    if (tab) onNavigate(tab);
+    if (onNavigate) onNavigate(notif);
   }
 
   return (

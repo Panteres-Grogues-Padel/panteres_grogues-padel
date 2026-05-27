@@ -169,6 +169,7 @@ CREATE TABLE notificaciones (
   tipo varchar(30) NOT NULL,
   titulo varchar(100) NOT NULL,
   texto text,
+  data jsonb NOT NULL DEFAULT '{}'::jsonb,
   leida boolean DEFAULT false,
   created_at timestamptz DEFAULT now()
 );

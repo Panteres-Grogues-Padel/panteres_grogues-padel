@@ -16,7 +16,7 @@ import { useRanking } from "./hooks/useRanking";
 import { usePartidos } from "./hooks/usePartidos";
 import { useEventos } from "./hooks/useEventos";
 import { useResultados } from "./hooks/useResultados";
-import { useNotificaciones } from "./hooks/useNotificaciones";
+import { tabFromNotificacionTipo, useNotificaciones } from "./hooks/useNotificaciones";
 import { isJugadorUuid, jugadoresCoinciden } from "./utils/jugador";
 import PerfilJugador from "./components/ranking/PerfilJugador";
 import { CurrentJugadorProvider, useCurrentJugador } from "./context/CurrentJugadorContext";
@@ -46,6 +46,8 @@ function AppAuthed({ auth }) {
   const [flashMessage, setFlashMessage] = useState("");
   const [perfilJugador, setPerfilJugador] = useState(null);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [partidosDeepLink, setPartidosDeepLink] = useState(null);
+  const [jugarDeepLink, setJugarDeepLink] = useState(null);
   // useSlots corre al montar App (tras login), no al entrar en la pestaña Jugar; Jugar solo recibe props.
   const { slots, slotsJugar, rawSlots, slotsNotice, apuntarEnSlot, bajaEnSlot } = useSlots(
     auth.currentUser,
@@ -107,6 +109,61 @@ function AppAuthed({ auth }) {
     const res = await bajaEnSlot(slotId);
     if (!res.ok) showMessage(res.error);
     if (res.warning) showMessage(res.warning);
+  }
+
+  function normalizeFechaKey(value) {
+    if (!value) return "";
+    const s = String(value);
+    const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+    return m ? m[1] : "";
+  }
+
+  function handleNotificacionNavigate(notif) {
+    const tipo = String(notif?.tipo ?? "");
+    const data = notif?.data ?? {};
+
+    const fechaKey = normalizeFechaKey(data?.fecha ?? data?.fechaPartido ?? data?.date ?? notif?.createdAt);
+    const slotId = data?.slot_id ?? data?.slotId ?? null;
+
+    if (["partidos_generats", "partidos_generados", "partidos"].includes(tipo)) {
+      setActiveTab("partidos");
+      setPartidosDeepLink({
+        fechaKey: fechaKey || normalizeFechaKey(notif?.createdAt),
+        slotId: slotId ?? null
+      });
+      setJugarDeepLink(null);
+      return;
+    }
+
+    if (["slot_obert", "inscripcio", "baixa", "jugar"].includes(tipo)) {
+      setActiveTab("jugar");
+      setJugarDeepLink({
+        openLista: true,
+        slotBaseId: slotId ?? null,
+        fechaKey: fechaKey || normalizeFechaKey(notif?.createdAt)
+      });
+      setPartidosDeepLink(null);
+      return;
+    }
+
+    if (["resultat_validat", "resultat_introduit", "resultados"].includes(tipo)) {
+      setActiveTab("resultados");
+      setJugarDeepLink(null);
+      setPartidosDeepLink(null);
+      return;
+    }
+
+    if (tipo === "agenda") {
+      setActiveTab("agenda");
+      setJugarDeepLink(null);
+      setPartidosDeepLink(null);
+      return;
+    }
+
+    const tab = tabFromNotificacionTipo(tipo);
+    if (tab) setActiveTab(tab);
+    setJugarDeepLink(null);
+    setPartidosDeepLink(null);
   }
 
   function perfilDesdeUsuarioSesion(u) {
@@ -190,6 +247,7 @@ function AppAuthed({ auth }) {
               slots={slotsJugar}
               currentUser={auth.currentUser}
               isCoord={isCoord}
+              deepLink={jugarDeepLink}
               onApuntar={handleApuntar}
               onBaja={handleBaja}
               backendNotice={slotsNotice}
@@ -223,6 +281,7 @@ function AppAuthed({ auth }) {
               isCoord={isCoord}
               ranking={ranking}
               currentUser={auth.currentUser}
+              deepLink={partidosDeepLink}
             />
           ) : null}
           {activeTab === "resultados" ? (
@@ -328,7 +387,7 @@ function AppAuthed({ auth }) {
         error={notifError}
         onMarcarLeida={marcarLeida}
         onMarcarTodasLeidas={marcarTodasLeidas}
-        onNavigate={setActiveTab}
+        onNavigate={handleNotificacionNavigate}
       />
 
     </div>

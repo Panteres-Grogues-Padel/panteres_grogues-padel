@@ -24,7 +24,8 @@ export async function createNotifications(notifications) {
       jugador_id: n.jugadorId,
       tipo: n.tipo,
       titulo: n.titulo,
-      texto: n.texto
+      texto: n.texto,
+      data: n.data ?? {}
     }));
   if (!payload.length) return { ok: true };
   const { error } = await supabase.from("notificaciones").insert(payload);

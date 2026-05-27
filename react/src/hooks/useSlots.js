@@ -262,6 +262,7 @@ export function useSlots(currentUser, authEpoch = 0) {
           formatDiaPartidoLabel(fechaPartidoFromSlot(semanaObjetivo, slot.diaSemana)) ||
           slot.label ||
           t("hooks.slots.notifications.yourDay");
+        const fechaPartido = fechaPartidoFromSlot(semanaObjetivo, slot.diaSemana);
         const texto = t("hooks.slots.notifications.listOpenText", { day: diaLabel, club: slot.club });
 
         const dedupeKey = `${userId}:apertura:${slot.id}:${semanaObjetivo}`;
@@ -269,7 +270,7 @@ export function useSlots(currentUser, authEpoch = 0) {
 
         const duplicada = await notificacionDuplicada({
           jugadorId: userId,
-          tipo: "jugar",
+          tipo: "slot_obert",
           titulo,
           texto
         });
@@ -278,7 +279,18 @@ export function useSlots(currentUser, authEpoch = 0) {
           continue;
         }
 
-        const res = await createNotifications([{ jugadorId: userId, tipo: "jugar", titulo, texto }]);
+        const res = await createNotifications([
+          {
+            jugadorId: userId,
+            tipo: "slot_obert",
+            titulo,
+            texto,
+            data: {
+              fecha: fechaPartido,
+              slot_id: slot.id
+            }
+          }
+        ]);
         if (res.ok) aperturaListaNotifRef.current.add(dedupeKey);
       }
     })();
@@ -465,9 +477,13 @@ export function useSlots(currentUser, authEpoch = 0) {
     void createNotifications([
       {
         jugadorId,
-        tipo: "jugar",
+        tipo: "inscripcio",
         titulo: t("hooks.slots.notifications.enrolledTitle"),
-        texto: t("hooks.slots.notifications.enrolledText")
+        texto: t("hooks.slots.notifications.enrolledText"),
+        data: {
+          fecha: fechaPartidoFromSlot(semana, slot.diaSemana),
+          slot_id: dbSlotId
+        }
       }
     ]);
     return { ok: true };
@@ -520,9 +536,13 @@ export function useSlots(currentUser, authEpoch = 0) {
     void createNotifications([
       {
         jugadorId,
-        tipo: "jugar",
+        tipo: "baixa",
         titulo: t("hooks.slots.notifications.unregisterTitle"),
-        texto: t("hooks.slots.notifications.unregisterText")
+        texto: t("hooks.slots.notifications.unregisterText"),
+        data: {
+          fecha: fechaPartidoFromSlot(semana, slot.diaSemana),
+          slot_id: dbSlotId
+        }
       }
     ]);
 

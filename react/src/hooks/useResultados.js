@@ -155,9 +155,10 @@ export function useResultados(partidos, currentUser, isCoord) {
         .filter((j) => j.jugadorId !== currentUser.id)
         .map((j) => ({
           jugadorId: j.jugadorId,
-          tipo: "resultados",
+          tipo: "resultat_introduit",
           titulo: t("hooks.resultados.notifications.pendingTitle"),
-          texto: t("hooks.resultados.notifications.pendingText", { date: fechaPartido })
+          texto: t("hooks.resultados.notifications.pendingText", { date: fechaPartido }),
+          data: { fecha: fechaPartido }
         }));
       await createNotifications(notifications);
     }
@@ -204,9 +205,10 @@ export function useResultados(partidos, currentUser, isCoord) {
       .filter((j) => j.jugadorId !== currentUser.id)
       .map((j) => ({
         jugadorId: j.jugadorId,
-        tipo: "resultados",
+        tipo: "resultat_validat",
         titulo: t("hooks.resultados.notifications.validatedTitle"),
-        texto: t("hooks.resultados.notifications.validatedText", { date: fechaPartido })
+        texto: t("hooks.resultados.notifications.validatedText", { date: fechaPartido }),
+        data: { fecha: fechaPartido }
       }));
     await createNotifications(notifications);
 

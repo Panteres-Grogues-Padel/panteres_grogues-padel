@@ -1,4 +1,4 @@
--- Lectura de notificaciones por jugador vía RPC (evita caché PostgREST del SELECT directo).
+-- RPC get_notificaciones: incloure camp data per deep links.
 CREATE OR REPLACE FUNCTION get_notificaciones(p_jugador_id uuid)
 RETURNS jsonb
 LANGUAGE sql
