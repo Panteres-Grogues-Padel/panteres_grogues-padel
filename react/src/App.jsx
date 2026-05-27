@@ -16,7 +16,7 @@ import { useRanking } from "./hooks/useRanking";
 import { usePartidos } from "./hooks/usePartidos";
 import { useEventos } from "./hooks/useEventos";
 import { useResultados } from "./hooks/useResultados";
-import { tabFromNotificacionTipo, useNotificaciones } from "./hooks/useNotificaciones";
+import { resolveNotificacionDeepLink, useNotificaciones } from "./hooks/useNotificaciones";
 import { isJugadorUuid, jugadoresCoinciden } from "./utils/jugador";
 import PerfilJugador from "./components/ranking/PerfilJugador";
 import { CurrentJugadorProvider, useCurrentJugador } from "./context/CurrentJugadorContext";
@@ -111,59 +111,12 @@ function AppAuthed({ auth }) {
     if (res.warning) showMessage(res.warning);
   }
 
-  function normalizeFechaKey(value) {
-    if (!value) return "";
-    const s = String(value);
-    const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
-    return m ? m[1] : "";
-  }
-
   function handleNotificacionNavigate(notif) {
-    const tipo = String(notif?.tipo ?? "");
-    const data = notif?.data ?? {};
-
-    const fechaKey = normalizeFechaKey(data?.fecha ?? data?.fechaPartido ?? data?.date ?? notif?.createdAt);
-    const slotId = data?.slot_id ?? data?.slotId ?? null;
-
-    if (["partidos_generats", "partidos_generados", "partidos"].includes(tipo)) {
-      setActiveTab("partidos");
-      setPartidosDeepLink({
-        fechaKey: fechaKey || normalizeFechaKey(notif?.createdAt),
-        slotId: slotId ?? null
-      });
-      setJugarDeepLink(null);
-      return;
-    }
-
-    if (["slot_obert", "inscripcio", "baixa", "jugar"].includes(tipo)) {
-      setActiveTab("jugar");
-      setJugarDeepLink({
-        openLista: true,
-        slotBaseId: slotId ?? null,
-        fechaKey: fechaKey || normalizeFechaKey(notif?.createdAt)
-      });
-      setPartidosDeepLink(null);
-      return;
-    }
-
-    if (["resultat_validat", "resultat_introduit", "resultados"].includes(tipo)) {
-      setActiveTab("resultados");
-      setJugarDeepLink(null);
-      setPartidosDeepLink(null);
-      return;
-    }
-
-    if (tipo === "agenda") {
-      setActiveTab("agenda");
-      setJugarDeepLink(null);
-      setPartidosDeepLink(null);
-      return;
-    }
-
-    const tab = tabFromNotificacionTipo(tipo);
+    const { tab, partidosDeepLink: partidosLink, jugarDeepLink: jugarLink } =
+      resolveNotificacionDeepLink(notif);
     if (tab) setActiveTab(tab);
-    setJugarDeepLink(null);
-    setPartidosDeepLink(null);
+    setPartidosDeepLink(partidosLink);
+    setJugarDeepLink(jugarLink);
   }
 
   function perfilDesdeUsuarioSesion(u) {

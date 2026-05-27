@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
-const TIPO = "slot_abierto";
-const TITULO = "¡Ya puedes inscribirte!";
+const TIPO = "slot_obert";
+const TITULO = "Ja et pots apuntar!";
 
 type SlotRow = { id: string; label: string; club: string; nombre: string };
 type JugadorRow = { id: string };
@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
   let skipped = 0;
 
   for (const slot of slots) {
-    const texto = `Las inscripciones para ${nombreSlot(slot)} ya están abiertas`;
+    const texto = `S'ha obert la llista per a ${nombreSlot(slot)}. Corre a apuntar-te!`;
 
     for (const jugador of jugadores) {
       if (!jugador?.id) continue;
@@ -81,7 +81,8 @@ Deno.serve(async (req) => {
         jugador_id: jugador.id,
         tipo: TIPO,
         titulo: TITULO,
-        texto
+        texto,
+        data: { slot_id: slot.id }
       });
 
       if (insertError) {

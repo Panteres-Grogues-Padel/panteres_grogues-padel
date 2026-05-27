@@ -8,17 +8,51 @@ function rowsFromRpc(data) {
   return Array.isArray(data) ? data : [];
 }
 
+function parseNotifData(raw) {
+  if (raw == null) return {};
+  if (typeof raw === "object" && !Array.isArray(raw)) return raw;
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw);
+      return typeof parsed === "object" && parsed && !Array.isArray(parsed) ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
+/** Normalitza tipus legacy (p. ex. cron `slot_abierto` → `slot_obert`). */
+export function normalizeNotificacionTipo(tipo, titulo) {
+  const t = String(tipo ?? "").trim().toLowerCase();
+  if (t === "slot_abierto") return "slot_obert";
+  if (tituloIndicaSlotObert(titulo)) return "slot_obert";
+  return t;
+}
+
+function tituloIndicaSlotObert(titulo) {
+  const s = String(titulo ?? "").toLowerCase();
+  return (
+    s.includes("pots inscriure") ||
+    s.includes("puedes inscribir") ||
+    s.includes("pots apuntar") ||
+    s.includes("puedes apuntar") ||
+    s.includes("llista oberta")
+  );
+}
+
 function mapNotificacionRow(row) {
   if (!row?.id) return null;
+  const titulo = row.titulo ?? "";
   return {
     id: row.id,
     jugadorId: row.jugador_id,
-    tipo: row.tipo,
-    titulo: row.titulo,
+    tipo: normalizeNotificacionTipo(row.tipo, titulo),
+    titulo,
     texto: row.texto ?? "",
     leida: Boolean(row.leida),
     createdAt: row.created_at,
-    data: row.data ?? row.data_json ?? null
+    data: parseNotifData(row.data ?? row.data_json)
   };
 }
 
@@ -39,7 +73,8 @@ function cutoffNotificacionesAntiguas(dias = NOTIF_RETENCION_DIAS) {
 }
 
 /** Pestaña BottomNav asociada a cada tipo de notificación. */
-export function tabFromNotificacionTipo(tipo) {
+export function tabFromNotificacionTipo(tipo, titulo) {
+  const t = normalizeNotificacionTipo(tipo, titulo);
   const map = {
     partidos: "partidos",
     partidos_generats: "partidos",
@@ -53,10 +88,11 @@ export function tabFromNotificacionTipo(tipo) {
     baixa: "jugar",
     agenda: "agenda"
   };
-  return map[tipo] ?? null;
+  return map[t] ?? null;
 }
 
-export function iconoNotificacionTipo(tipo) {
+export function iconoNotificacionTipo(tipo, titulo) {
+  const t = normalizeNotificacionTipo(tipo, titulo);
   const map = {
     partidos: "🔄",
     partidos_generats: "🔄",
@@ -70,7 +106,55 @@ export function iconoNotificacionTipo(tipo) {
     baixa: "📅",
     agenda: "🗓️"
   };
-  return map[tipo] ?? "🔔";
+  return map[t] ?? "🔔";
+}
+
+function normalizeFechaKey(value) {
+  if (!value) return "";
+  const m = String(value).match(/^(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1] : "";
+}
+
+/** Resol navegació (pestanya + deep links) des d'una notificació. */
+export function resolveNotificacionDeepLink(notif) {
+  const tipo = normalizeNotificacionTipo(notif?.tipo, notif?.titulo);
+  const data = parseNotifData(notif?.data);
+  const fechaKey = normalizeFechaKey(data?.fecha ?? data?.fechaPartido ?? data?.date ?? notif?.createdAt);
+  const slotId = data?.slot_id ?? data?.slotId ?? null;
+
+  if (["partidos_generats", "partidos_generados", "partidos"].includes(tipo)) {
+    return {
+      tab: "partidos",
+      partidosDeepLink: {
+        fechaKey: fechaKey || normalizeFechaKey(notif?.createdAt),
+        slotId: slotId ?? null
+      },
+      jugarDeepLink: null
+    };
+  }
+
+  if (["slot_obert", "inscripcio", "baixa", "jugar"].includes(tipo)) {
+    return {
+      tab: "jugar",
+      partidosDeepLink: null,
+      jugarDeepLink: {
+        openLista: true,
+        slotBaseId: slotId ?? null,
+        fechaKey: fechaKey || normalizeFechaKey(notif?.createdAt)
+      }
+    };
+  }
+
+  if (["resultat_validat", "resultat_introduit", "resultados"].includes(tipo)) {
+    return { tab: "resultados", partidosDeepLink: null, jugarDeepLink: null };
+  }
+
+  if (tipo === "agenda") {
+    return { tab: "agenda", partidosDeepLink: null, jugarDeepLink: null };
+  }
+
+  const tab = tabFromNotificacionTipo(tipo, notif?.titulo);
+  return { tab, partidosDeepLink: null, jugarDeepLink: null };
 }
 
 export function formatNotificacionTs(value) {
