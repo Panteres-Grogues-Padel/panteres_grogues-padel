@@ -4,7 +4,7 @@ Documento de referencia para el estado del proyecto y decisiones recientes.
 
 ---
 
-## Implementado hoy (19/05/2026)
+## Implementado hoy (28/05/2026)
 
 ### Sistema de padrinos/madrinas
 
@@ -78,6 +78,42 @@ Migración: `supabase/migrations/20250520190000_cron_slot_abierto.sql`
 
 - Icono 📜 en la fila Actividad/Historial de la landing (alineado con Utilidades 🗺️ y Padrinos 🤝)
 - `get_jugadores` en `usePadrinos.js` llamado con parámetros vacíos explícitos: `rpc('get_jugadores', {})`
+
+### Cambios implementados del 20/05 al 28/05
+
+#### Perfil y datos de jugador
+
+- Añadida foto de perfil en la app y persistencia visual en componentes principales.
+- Perfil ampliado con teléfono e Instagram.
+- Se corrigió la visibilidad del teléfono oculto para que no se muestre a nadie.
+- Se habilitó edición de `nickname` desde perfil.
+- Se prioriza `nickname` frente a nombre en los lugares de la UI donde se identifica al jugador.
+
+#### Notificaciones y navegación
+
+- Implementados deep links para notificaciones.
+- Corregido deep link de notificación `slot_obert` para abrir correctamente la pantalla **Jugar**.
+
+#### Inscripciones y partidos
+
+- Corregida apertura de `slot_obert`: acceso a **Jugar** sin preselección incorrecta de slot.
+- Vista de partidos ajustada para cargar automáticamente el partido del jugador en el día actual.
+- Se restauró el desplegable de días en Partidos tras regresión.
+- Ajustado filtro temporal para mostrar solo el día correcto cuando aplica.
+- Corrección de fecha de mayo en vista de inscripciones.
+
+#### Utilidades, sanciones y UX
+
+- Añadido reglamento en Utilidades.
+- Reorganizadas Utilidades en dos filas para separar acciones y mejorar lectura.
+- Sanciones visibles en perfil para todos los jugadores (no solo coordinadores).
+- Añadida opción de copiar lista de apuntados para compartir por WhatsApp.
+- Eliminado login demo.
+
+#### Diseño y estilos
+
+- Ajustes visuales del Topbar y del overlay de Hero.
+- Restauración del avatar del Hero con tamaños originales.
 
 ---
 
