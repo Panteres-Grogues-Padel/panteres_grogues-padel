@@ -1,4 +1,3 @@
--- Lectura del ranking vía RPC (evita caché PostgREST del SELECT directo).
 CREATE OR REPLACE FUNCTION get_ranking()
 RETURNS jsonb
 LANGUAGE sql
@@ -34,9 +33,7 @@ AS $$
           'instagram', j.instagram,
           'foto_url', j.foto_url,
           'mostrar_telefono', j.mostrar_telefono,
-          'autoriza_instagram', j.autoriza_instagram,
-          'sancionat', COALESCE(j.sancionat, false),
-          'sancio_fins', j.sancio_fins
+          'autoriza_instagram', j.autoriza_instagram
         )
       ) AS row_data
     FROM ranking r

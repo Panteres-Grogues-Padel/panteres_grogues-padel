@@ -86,9 +86,10 @@ export function useRanking() {
 
     void loadRanking();
 
-    let channel;
+    let rankingChannel;
+    let jugadoresChannel;
     if (supabase) {
-      channel = supabase
+      rankingChannel = supabase
         .channel("ranking_changes")
         .on(
           "postgres_changes",
@@ -98,11 +99,24 @@ export function useRanking() {
           }
         )
         .subscribe();
+
+      // Refresh ranking when profile data changes (nickname, foto, etc).
+      jugadoresChannel = supabase
+        .channel("jugadores_profile_changes")
+        .on(
+          "postgres_changes",
+          { event: "UPDATE", schema: "public", table: "jugadores" },
+          () => {
+            loadRanking();
+          }
+        )
+        .subscribe();
     }
 
     return () => {
       mounted = false;
-      if (channel) supabase.removeChannel(channel);
+      if (rankingChannel) supabase.removeChannel(rankingChannel);
+      if (jugadoresChannel) supabase.removeChannel(jugadoresChannel);
     };
   }, []);
 

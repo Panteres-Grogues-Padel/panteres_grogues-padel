@@ -48,7 +48,7 @@ export default function Ranking({ ranking = [], currentUser, onSelect }) {
                     onClick={() => onSelect?.(jugador)}
                   >
                     <td className="rank-pos">{pos}</td>
-                    <td className="rank-name">{getNombre(jugador) || "—"}</td>
+                    <td className="rank-name">{jugador.nickname || jugador.nombre || getNombre(jugador) || "—"}</td>
                     <td className="rank-stat">{jugador.pj}</td>
                     <td className="rank-stat">{jugador.pg}</td>
                     <td className="rank-stat">{jugador.jj}</td>
