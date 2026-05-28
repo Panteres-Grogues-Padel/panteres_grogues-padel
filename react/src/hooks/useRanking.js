@@ -87,7 +87,9 @@ export function useRanking() {
     void loadRanking();
 
     let rankingChannel;
-    let jugadoresChannel;
+    const onPerfilActualizado = () => {
+      void loadRanking();
+    };
     if (supabase) {
       rankingChannel = supabase
         .channel("ranking_changes")
@@ -99,24 +101,17 @@ export function useRanking() {
           }
         )
         .subscribe();
-
-      // Refresh ranking when profile data changes (nickname, foto, etc).
-      jugadoresChannel = supabase
-        .channel("jugadores_profile_changes")
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "jugadores" },
-          () => {
-            loadRanking();
-          }
-        )
-        .subscribe();
+    }
+    if (typeof window !== "undefined") {
+      window.addEventListener("perfil-actualizado", onPerfilActualizado);
     }
 
     return () => {
       mounted = false;
       if (rankingChannel) supabase.removeChannel(rankingChannel);
-      if (jugadoresChannel) supabase.removeChannel(jugadoresChannel);
+      if (typeof window !== "undefined") {
+        window.removeEventListener("perfil-actualizado", onPerfilActualizado);
+      }
     };
   }, []);
 

@@ -68,5 +68,8 @@ export async function actualizarPerfilJugadorRpc(
     p_nickname: nickname ?? ""
   });
   if (error) return { ok: false, error: error.message, perfil: null };
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("perfil-actualizado"));
+  }
   return { ok: true, perfil: mapPerfilFromRpc(data) };
 }
