@@ -15,7 +15,6 @@ import {
 import { expandFranjasToPistas, shufflePistasPlan, validarFranjas } from "../utils/franjasPartidos";
 import { t } from "../i18n";
 import { isJugadorUuid } from "../utils/jugador";
-import { getNombre } from "../utils/nombres";
 
 function strId(id) {
   return id == null ? id : String(id);
@@ -52,7 +51,7 @@ function flattenPartidos(data) {
         .map((jp) => ({
           id: jp.id,
           jugadorId: jp.jugador_id,
-          nombre: getNombre(jp.jugadores) || t("common.player"),
+          nombre: jp.jugadores?.nombre ?? t("common.player"),
           nickname: jp.jugadores?.nickname?.trim() || null,
           nombreCompleto: jp.jugadores?.nombre_completo ?? jp.jugadores?.nombre ?? t("common.player"),
           posicion: jp.posicion,

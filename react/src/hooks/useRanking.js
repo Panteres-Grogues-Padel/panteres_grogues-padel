@@ -105,7 +105,7 @@ export function useRanking() {
         .channel("jugadores_profile_changes")
         .on(
           "postgres_changes",
-          { event: "UPDATE", schema: "public", table: "jugadores" },
+          { event: "*", schema: "public", table: "jugadores" },
           () => {
             loadRanking();
           }
