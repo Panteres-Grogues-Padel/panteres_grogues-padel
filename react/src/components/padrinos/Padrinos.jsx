@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePadrinos } from "../../hooks/usePadrinos";
 import { jugadoresCoinciden } from "../../utils/jugador";
-import { getNombre } from "../../utils/nombres";
+import { getNombreVisible } from "../../utils/nombres";
 import { DATE_LOCALE } from "../../utils/dates";
 import PlayerAvatar from "../common/PlayerAvatar";
 import { t } from "../../i18n";
 
 function displayNombre(j) {
-  return getNombre(j) || j?.nombreCompleto || j?.nombre || t("common.player");
+  return getNombreVisible(j) || j?.nombreCompleto || j?.nombre || t("common.player");
 }
 
 function PadrinosPersonRow({ j }) {

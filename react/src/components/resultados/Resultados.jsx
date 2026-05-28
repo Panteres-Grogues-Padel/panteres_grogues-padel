@@ -6,6 +6,7 @@ import {
   getRotacionesAmericano
 } from "../../utils/resultadosUtils";
 import ResultadosCalendario from "./ResultadosCalendario";
+import { getNombreVisible } from "../../utils/nombres";
 import { t } from "../../i18n";
 
 const DIES = {
@@ -29,10 +30,6 @@ function emptySets() {
     { p1: 0, p2: 0 },
     { p1: 0, p2: 0 }
   ];
-}
-
-function nombreFix(jugador) {
-  return jugador?.nombre ?? t("common.player");
 }
 
 function PartidoResultadoCard({
@@ -80,7 +77,7 @@ function PartidoResultadoCard({
               key={j.id}
               className={`chip${String(j.jugadorId) === String(currentUser?.id) ? " res-chip-me" : ""}`}
             >
-              <span className="res-pos">{j.posicion}º</span> {nombreFix(j)}
+              <span className="res-pos">{j.posicion}º</span> {getNombreVisible(j) || t("common.player")}
             </span>
           ))}
       </div>

@@ -1,5 +1,5 @@
 import { useCurrentJugador } from "../../context/CurrentJugadorContext";
-import { getNombre } from "../../utils/nombres";
+import { getNombreVisible } from "../../utils/nombres";
 import { t } from "../../i18n";
 
 function IconBell() {
@@ -36,7 +36,7 @@ export default function Topbar({ setActiveTab, onLogout, noLeidas = 0, onOpenNot
           <button type="button" className="app-name topbar-brand-btn" onClick={irBienvenida}>
             Pàdel PG
           </button>
-          <div className="topbar-name-sub">{getNombre(currentUser)}</div>
+          <div className="topbar-name-sub">{getNombreVisible(currentUser)}</div>
         </div>
       </div>
       <div className="row-gap topbar-actions">

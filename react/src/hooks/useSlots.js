@@ -10,7 +10,7 @@ import {
 import { supabase } from "../lib/supabase";
 import { createActivityLog, createNotifications, notificacionDuplicada } from "../lib/engagement";
 import { isJugadorUuid, jugadoresCoinciden, normalizeJugadorUuid } from "../utils/jugador";
-import { getNombre } from "../utils/nombres";
+import { getNombreVisible } from "../utils/nombres";
 import { DATE_LOCALE, fechaPartidoFromSlot, formatDiaPartidoLabel, hoyLocalStr } from "../utils/dates";
 import { t } from "../i18n";
 
@@ -302,7 +302,7 @@ export function useSlots(currentUser, authEpoch = 0) {
       .filter((i) => i.slot_id === slotId && normalizeSemana(i.semana) === semana)
       .map((i, idx) => ({
         jugadorId: normalizeJugadorUuid(i.jugador_id),
-        nombre: getNombre(i.jugadores) || i.jugador_id,
+        nombre: getNombreVisible(i.jugadores) || i.jugador_id,
         nickname: i.jugadores?.nickname ?? null,
         socio: Boolean(i.es_socio),
         ts: i.inscrito_at ? new Date(i.inscrito_at).getTime() : idx + 1,

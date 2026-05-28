@@ -15,7 +15,7 @@ import { supabase } from "../../lib/supabase";
 import PlayerAvatar from "../common/PlayerAvatar";
 import { useCurrentJugador } from "../../context/CurrentJugadorContext";
 import { DATE_LOCALE } from "../../utils/dates";
-import { getNombre, getNombreSaludo } from "../../utils/nombres";
+import { getNombreSaludo, getNombreVisible } from "../../utils/nombres";
 import { t } from "../../i18n";
 
 const LANDING_TABLER_ICON_SIZE = 34;
@@ -64,7 +64,7 @@ function formatActivityTs(value) {
 function mapActivityRow(row) {
   const jugador = row.jugadores ?? {};
   const nombreJugador =
-    getNombre({
+    getNombreVisible({
       nickname: jugador.nickname,
       nombre: jugador.nombre ?? jugador.nombre_completo
     }) || t("common.player");
@@ -120,7 +120,7 @@ export default function Bienvenida({
   const jugadoresLog = useMemo(() => {
     const jugadores = new Map();
     ranking.forEach((j) => {
-      if (j.id) jugadores.set(String(j.id), getNombre(j) || t("common.player"));
+      if (j.id) jugadores.set(String(j.id), getNombreVisible(j) || t("common.player"));
     });
     activityLog.forEach((e) => {
       if (e.jugadorId) jugadores.set(String(e.jugadorId), e.jugador);

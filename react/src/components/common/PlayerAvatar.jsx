@@ -1,7 +1,7 @@
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
 import { avatarUrl } from "../../utils/avatarUrl";
 import { useJugadorConFoto } from "../../context/CurrentJugadorContext";
-import { getNombre } from "../../utils/nombres";
+import { getNombreVisible } from "../../utils/nombres";
 
 export default function PlayerAvatar({
   jugador,
@@ -14,7 +14,9 @@ export default function PlayerAvatar({
   const jugadorResuelto = useJugadorConFoto(jugador);
   const displayName =
     nombre ??
-    (jugadorResuelto ? getNombre(jugadorResuelto) || jugadorResuelto.nombreCompleto || jugadorResuelto.nombre : "");
+    (jugadorResuelto
+      ? getNombreVisible(jugadorResuelto) || jugadorResuelto.nombreCompleto || jugadorResuelto.nombre
+      : "");
   const foto = fotoUrl ?? jugadorResuelto?.foto_url ?? avatarUrl(jugador?.foto_url) ?? null;
   const initials = initialsFromNombre(displayName);
   const avClass = avatarClassFromNombre(displayName);

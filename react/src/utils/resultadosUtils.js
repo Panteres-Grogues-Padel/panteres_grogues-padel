@@ -1,6 +1,6 @@
 import { t } from "../i18n";
 import { ayerLocalStr, enVentanaCoordResultados, hoyLocalStr } from "./dates";
-import { getNombre } from "./nombres";
+import { getNombreVisible } from "./nombres";
 
 const ROTACIONES_POS = [
   { izq: [1, 4], der: [2, 3] },
@@ -10,7 +10,7 @@ const ROTACIONES_POS = [
 
 function nombrePorPosicion(jugadores, pos) {
   const j = jugadores.find((x) => Number(x.posicion) === pos);
-  return getNombre(j) || `P${pos}`;
+  return getNombreVisible(j) || `P${pos}`;
 }
 
 /** Etiquetas de parejas por set (americano). */

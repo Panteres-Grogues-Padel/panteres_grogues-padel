@@ -13,6 +13,7 @@ import {
   franjasFromPartidos,
   resumenFranjas
 } from "../../utils/franjasPartidos";
+import { getNombreVisible } from "../../utils/nombres";
 import { DATE_LOCALE, weekdayName } from "../../utils/dates";
 import { t, pluralSuffix } from "../../i18n";
 
@@ -52,10 +53,6 @@ function etiquetaOpcion(o) {
     day: weekdayName(o.diaSemana) || diaSlotCa(o.slot.label),
     club: o.slot.club
   });
-}
-
-function nombreFix(jugador) {
-  return jugador?.nombre ?? t("common.player");
 }
 
 export default function Partidos({
@@ -260,10 +257,12 @@ export default function Partidos({
       const indoorSuffix = p.indoor ? " Indoor" : "";
       wa += `${t("partidos.waMatchLine", { num: i + 1, hora, indoorSuffix })}\n`;
       const jugOrd = jugadoresOrdenRanking(p.jugadores, rankingPosByJugador);
-      wa += `${jugOrd.map((j) => nombreFix(j)).join(" · ")}\n\n`;
+      wa += `${jugOrd.map((j) => getNombreVisible(j) || t("common.player")).join(" · ")}\n\n`;
     });
     if (reservas.length) {
-      wa += t("partidos.waReserve", { names: reservas.map((r) => nombreFix(r)).join(", ") });
+      wa += t("partidos.waReserve", {
+        names: reservas.map((r) => getNombreVisible(r) || t("common.player")).join(", ")
+      });
     }
     return wa;
   }
@@ -449,7 +448,7 @@ export default function Partidos({
               <div style={{ fontSize: "11px", fontWeight: 600, color: "#BA7517", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: "6px" }}>
                 {t("partidos.reserveBox", { count: reservas.length })}
               </div>
-              <div>{reservas.map((p) => <span key={p.id} className="chip" style={{ fontSize: "11px" }}>{nombreFix(p)}</span>)}</div>
+              <div>{reservas.map((p) => <span key={p.id} className="chip" style={{ fontSize: "11px" }}>{getNombreVisible(p) || t("common.player")}</span>)}</div>
             </div>
           ) : null}
 

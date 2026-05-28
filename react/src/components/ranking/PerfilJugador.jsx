@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { isJugadorUuid, jugadoresCoinciden } from "../../utils/jugador";
-import { getNombre } from "../../utils/nombres";
+import { getNombreVisible } from "../../utils/nombres";
 import { useCurrentJugador } from "../../context/CurrentJugadorContext";
 import {
   actualizarPerfilJugadorRpc,
@@ -49,11 +49,13 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
   const { jugador: yo, refreshJugador } = useCurrentJugador();
   const [view, setView] = useState(null);
   const [contactForm, setContactForm] = useState({
-    nickname: "",
     telefono: "",
     instagram: "",
     ocultar_telefon: false
   });
+  const [nicknameForm, setNicknameForm] = useState("");
+  const [nicknameSaving, setNicknameSaving] = useState(false);
+  const [nicknameError, setNicknameError] = useState("");
   const [contactSaving, setContactSaving] = useState(false);
   const [contactError, setContactError] = useState("");
   const [sancioLocal, setSancioLocal] = useState({ sancionat: false, sancio_fins: "" });
@@ -69,11 +71,12 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
         yo && jugadoresCoinciden(jugador.id, yo.id) ? mergePerfilView(jugador, yo) : jugador;
       setView(esPropi);
       setContactForm({
-        nickname: esPropi.nickname ?? "",
         telefono: esPropi.telefono ?? "",
         instagram: (esPropi.instagram ?? "").replace(/^@/, "").trim(),
         ocultar_telefon: Boolean(esPropi.ocultar_telefon)
       });
+      setNicknameForm(esPropi.nickname ?? "");
+      setNicknameError("");
       setContactError("");
       setSancioLocal({
         sancionat: Boolean(esPropi.sancionat),
@@ -94,12 +97,12 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
       setView((prev) => mergePerfilView(prev, perfil));
       if (yo && jugadoresCoinciden(jugador.id, yo.id)) {
         setContactForm({
-          nickname: perfil.nickname ?? "",
           telefono: perfil.telefono ?? "",
           instagram: (perfil.instagram ?? "").replace(/^@/, "").trim(),
           ocultar_telefon: Boolean(perfil.ocultar_telefon)
         });
       }
+      setNicknameForm(perfil.nickname ?? "");
       setSancioLocal({
         sancionat: Boolean(perfil.sancionat),
         sancio_fins: perfil.sancio_fins ?? ""
@@ -144,7 +147,10 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
     if (!isOwn || !view?.id || !supabase) return;
     setContactError("");
     setContactSaving(true);
-    const { ok, perfil, error } = await actualizarPerfilJugadorRpc(supabase, view.id, contactForm);
+    const { ok, perfil, error } = await actualizarPerfilJugadorRpc(supabase, view.id, {
+      ...contactForm,
+      nickname: view.nickname ?? ""
+    });
     setContactSaving(false);
     if (!ok || !perfil) {
       setContactError(error ?? t("ranking.profile.contactSaveError"));
@@ -152,7 +158,6 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
     }
     setView((prev) => mergePerfilView(prev, perfil));
     setContactForm({
-      nickname: perfil.nickname ?? "",
       telefono: perfil.telefono ?? "",
       instagram: (perfil.instagram ?? "").replace(/^@/, "").trim(),
       ocultar_telefon: Boolean(perfil.ocultar_telefon)
@@ -160,6 +165,35 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
     onJugadorUpdated?.({ id: view.id, ...perfil });
     void refreshJugador();
   }, [isOwn, view, contactForm, onJugadorUpdated, refreshJugador]);
+
+  const handleSaveNickname = useCallback(async () => {
+    if (!isCoord || !view?.id || !supabase) return;
+    setNicknameError("");
+    setNicknameSaving(true);
+    const nicknameTrim = nicknameForm.trim();
+    const { error } = await supabase
+      .from("jugadores")
+      .update({ nickname: nicknameTrim || null })
+      .eq("id", view.id);
+    if (error) {
+      setNicknameSaving(false);
+      setNicknameError(error.message);
+      return;
+    }
+    const { ok, perfil, error: reloadError } = await fetchPerfilJugadorRpc(supabase, view.id);
+    setNicknameSaving(false);
+    if (!ok || !perfil) {
+      setNicknameError(reloadError ?? t("ranking.profile.contactSaveError"));
+      return;
+    }
+    setView((prev) => mergePerfilView(prev, perfil));
+    setNicknameForm(perfil.nickname ?? "");
+    onJugadorUpdated?.({ id: view.id, ...perfil });
+    if (isOwn) void refreshJugador();
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("perfil-actualizado"));
+    }
+  }, [isCoord, isOwn, nicknameForm, onJugadorUpdated, refreshJugador, view]);
 
   const canChangePhoto = isOwn && supabase && isJugadorUuid(view?.id) && !yo?.fromFallback;
 
@@ -269,7 +303,7 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-              <div className="profile-name">{getNombre(view)}</div>
+              <div className="profile-name">{getNombreVisible(view)}</div>
               {isOwn ? <span className="own-badge">{t("ranking.profile.you")}</span> : null}
             </div>
             {isOwn && view.nickname && (view.nombreCompleto || view.nombre) ? (
@@ -345,17 +379,6 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
             <div className="privacy-section">
               <div className="privacy-title">{t("ranking.profile.contact")}</div>
               <label className="profile-contact-field">
-                <span className="privacy-row-label">{t("ranking.profile.visibleName")}</span>
-                <input
-                  type="text"
-                  className="profile-contact-input"
-                  value={contactForm.nickname}
-                  placeholder={t("ranking.profile.visibleNamePlaceholder")}
-                  onChange={(e) => setContactForm((prev) => ({ ...prev, nickname: e.target.value }))}
-                />
-                <span className="privacy-row-sub">{t("ranking.profile.visibleNameHint")}</span>
-              </label>
-              <label className="profile-contact-field">
                 <span className="privacy-row-label">{t("ranking.profile.phone")}</span>
                 <input
                   type="tel"
@@ -403,6 +426,35 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
                 onClick={() => void handleSaveContact()}
               >
                 {contactSaving ? t("common.saving") : t("ranking.profile.saveContact")}
+              </button>
+            </div>
+          </>
+        ) : null}
+
+        {isCoord ? (
+          <>
+            <div className="sheet-divider" />
+            <div className="privacy-section">
+              <div className="privacy-title">{t("ranking.profile.visibleName")}</div>
+              <label className="profile-contact-field">
+                <span className="privacy-row-label">{t("ranking.profile.visibleName")}</span>
+                <input
+                  type="text"
+                  className="profile-contact-input"
+                  value={nicknameForm}
+                  placeholder={t("ranking.profile.visibleNamePlaceholder")}
+                  onChange={(e) => setNicknameForm(e.target.value)}
+                />
+                <span className="privacy-row-sub">{t("ranking.profile.visibleNameHint")}</span>
+              </label>
+              {nicknameError ? <p className="profile-photo-error">{nicknameError}</p> : null}
+              <button
+                type="button"
+                className="btn btn-primary btn-block"
+                disabled={nicknameSaving}
+                onClick={() => void handleSaveNickname()}
+              >
+                {nicknameSaving ? t("common.saving") : t("ranking.profile.saveContact")}
               </button>
             </div>
           </>

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { jugadoresCoinciden } from "../../utils/jugador";
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
 import { DATE_LOCALE, formatHoraInput, monthName, monthShortCapitalName, weekdayShortName } from "../../utils/dates";
-import { getNombre } from "../../utils/nombres";
+import { getNombreVisible } from "../../utils/nombres";
 import { t, pluralSuffix } from "../../i18n";
 
 const TIPO_LABEL = {
@@ -14,7 +14,7 @@ const TIPO_LABEL = {
 function parejaNombre(parejaRef, inscritos) {
   if (!parejaRef) return "";
   const hit = inscritos.find((i) => jugadoresCoinciden(i.jugadorId, parejaRef));
-  return hit ? getNombre(hit) || hit.nombre : String(parejaRef);
+  return hit ? getNombreVisible(hit) || hit.nombre : String(parejaRef);
 }
 
 function eventoEnMes(e, year, month) {
@@ -380,11 +380,11 @@ export default function Agenda({
                     borderBottom: "0.5px solid var(--border)"
                   }}
                 >
-                  <div className={`avatar ${avatarClassFromNombre(getNombre(ins))}`} style={{ width: 28, height: 28, fontSize: 11 }}>
-                    {initialsFromNombre(getNombre(ins))}
+                  <div className={`avatar ${avatarClassFromNombre(getNombreVisible(ins))}`} style={{ width: 28, height: 28, fontSize: 11 }}>
+                    {initialsFromNombre(getNombreVisible(ins))}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text)" }}>{getNombre(ins)}</div>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text)" }}>{getNombreVisible(ins)}</div>
                     {esTorneo && ins.pareja ? (
                       <div style={{ fontSize: 11, color: "var(--text2)" }}>
                         {t("agenda.withPartner", {
@@ -551,7 +551,7 @@ function EventoCard({
                       <option value="">{t("common.selectPlaceholder")}</option>
                       {candidatosPareja.map((i) => (
                         <option key={String(i.jugadorId)} value={String(i.jugadorId)}>
-                          {getNombre(i)}
+                          {getNombreVisible(i)}
                         </option>
                       ))}
                     </select>

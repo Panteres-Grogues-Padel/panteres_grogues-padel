@@ -1,8 +1,5 @@
 import { t } from "../../i18n";
-
-function nombreFix(jugador) {
-  return jugador?.nombre ?? t("common.player");
-}
+import { getNombreVisible } from "../../utils/nombres";
 
 export default function MoverJugador({ open, origenPartido, jugador, destinos, onClose, onMove }) {
   if (!open || !origenPartido || !jugador) return null;
@@ -15,7 +12,7 @@ export default function MoverJugador({ open, origenPartido, jugador, destinos, o
         </div>
         <div style={{ fontSize: "13px", color: "var(--text2)", marginBottom: "1rem" }}>
           {t("partidos.move.subtitle", {
-            name: nombreFix(jugador),
+            name: getNombreVisible(jugador) || t("common.player"),
             from: origenPartido.numeroPista || "-"
           })}
         </div>
@@ -36,7 +33,7 @@ export default function MoverJugador({ open, origenPartido, jugador, destinos, o
                   })}
                 </div>
                 <div style={{ fontSize: "11px", color: "var(--text2)", marginTop: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {d.jugadores.map((j) => nombreFix(j)).join(", ")}
+                  {d.jugadores.map((j) => getNombreVisible(j) || t("common.player")).join(", ")}
                 </div>
               </div>
               <button className="btn btn-sm btn-primary" style={{ fontSize: "12px", flexShrink: 0, marginLeft: "10px" }} onClick={() => onMove(d.id)}>

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { isJugadorUuid, jugadoresCoinciden } from "../../utils/jugador";
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
-import { getNombre } from "../../utils/nombres";
+import { getNombreVisible } from "../../utils/nombres";
 import { monthShortName, weekdayName } from "../../utils/dates";
 import { t, pluralSuffix } from "../../i18n";
 
@@ -51,7 +51,7 @@ function filaEsUsuarioActual(p, currentUser) {
     return jugadoresCoinciden(p.jugadorId, currentUser.id);
   }
   if (p.jugadorId) return false;
-  return getNombre(currentUser) === getNombre(p);
+  return getNombreVisible(currentUser) === getNombreVisible(p);
 }
 
 function buildWaInscripcionesText({ slot, titulares, reserva, esDom, esSinPistas, sorted }) {
@@ -65,13 +65,13 @@ function buildWaInscripcionesText({ slot, titulares, reserva, esDom, esSinPistas
     text += "—\n";
   } else {
     listApuntats.forEach((p, idx) => {
-      text += `${idx + 1}. ${getNombre(p)}\n`;
+      text += `${idx + 1}. ${getNombreVisible(p)}\n`;
     });
   }
   if (listReserves.length > 0) {
     text += `\n${t("jugar.detalle.waReserves")}\n`;
     listReserves.forEach((p, idx) => {
-      text += `${idx + 1}. ${getNombre(p)}\n`;
+      text += `${idx + 1}. ${getNombreVisible(p)}\n`;
     });
   }
   return text.trimEnd();
@@ -238,9 +238,9 @@ export default function DetalleSlot({
           sorted.map((p, idx) => (
             <div className="player-row" key={`${slot.id}-all-${idx}-${p.nombre}`}>
               <span className="ppos">{idx + 1}</span>
-              <div className={`avatar ${avatarClassFromNombre(getNombre(p))}`}>{initialsFromNombre(getNombre(p))}</div>
+              <div className={`avatar ${avatarClassFromNombre(getNombreVisible(p))}`}>{initialsFromNombre(getNombreVisible(p))}</div>
               <span className="pname">
-                {getNombre(p)}
+                {getNombreVisible(p)}
                 {filaEsUsuarioActual(p, currentUser) ? " ✓" : ""}
               </span>
               {p.socio ? <span className="badge badge-socio">Up</span> : null}
@@ -260,9 +260,9 @@ export default function DetalleSlot({
             {titulares.map((p, idx) => (
               <div className="player-row" key={`${slot.id}-t-${idx}-${p.nombre}`}>
                 <span className="ppos">{idx + 1}</span>
-                <div className={`avatar ${avatarClassFromNombre(getNombre(p))}`}>{initialsFromNombre(getNombre(p))}</div>
+                <div className={`avatar ${avatarClassFromNombre(getNombreVisible(p))}`}>{initialsFromNombre(getNombreVisible(p))}</div>
                 <span className="pname">
-                  {getNombre(p)}
+                  {getNombreVisible(p)}
                   {filaEsUsuarioActual(p, currentUser) ? " ✓" : ""}
                 </span>
                 {p.socio ? <span className="badge badge-socio">Up</span> : null}
@@ -275,9 +275,9 @@ export default function DetalleSlot({
                 {reserva.map((p, idx) => (
                   <div className="player-row" key={`${slot.id}-r-${idx}-${p.nombre}`}>
                     <span className="ppos">R{idx + 1}</span>
-                    <div className={`avatar ${avatarClassFromNombre(getNombre(p))}`}>{initialsFromNombre(getNombre(p))}</div>
+                    <div className={`avatar ${avatarClassFromNombre(getNombreVisible(p))}`}>{initialsFromNombre(getNombreVisible(p))}</div>
                     <span className="pname">
-                      {getNombre(p)}
+                      {getNombreVisible(p)}
                       {filaEsUsuarioActual(p, currentUser) ? " ✓" : ""}
                     </span>
                     {p.socio ? <span className="badge badge-socio">Up</span> : null}
