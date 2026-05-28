@@ -171,10 +171,10 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
     setNicknameError("");
     setNicknameSaving(true);
     const nicknameTrim = nicknameForm.trim();
-    const { error } = await supabase
-      .from("jugadores")
-      .update({ nickname: nicknameTrim || null })
-      .eq("id", view.id);
+    const { error } = await supabase.rpc("actualizar_nickname_jugador", {
+      p_jugador_id: view.id,
+      p_nickname: nicknameTrim
+    });
     if (error) {
       setNicknameSaving(false);
       setNicknameError(error.message);
