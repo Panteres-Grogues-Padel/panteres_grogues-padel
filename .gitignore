@@ -5,3 +5,4 @@
 react/.env
 react/.env.*
 !react/.env.example
+supabase/.temp/
