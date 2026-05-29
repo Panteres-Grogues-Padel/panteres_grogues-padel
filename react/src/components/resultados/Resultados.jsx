@@ -182,6 +182,7 @@ function PartidoResultadoCard({
 
 export default function Resultados({
   partidos,
+  onRefetch,
   onGuardar,
   onValidar,
   onModificar,
@@ -205,6 +206,20 @@ export default function Resultados({
       setFechaSel(preferido);
     }
   }, [diasDisponibles, fechaSel, hoy]);
+
+  useEffect(() => {
+    if (!onRefetch) return undefined;
+    void onRefetch();
+  }, [onRefetch]);
+
+  useEffect(() => {
+    if (!onRefetch || typeof document === "undefined") return undefined;
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void onRefetch();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [onRefetch]);
 
   const partidosDia = useMemo(
     () =>
