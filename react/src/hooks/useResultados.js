@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { createActivityLog, createNotifications } from "../lib/engagement";
 import { ayerLocalStr, enVentanaCoordResultados, hoyLocalStr } from "../utils/dates";
@@ -27,14 +27,14 @@ export function useResultados(partidos, currentUser, isCoord) {
     !isJugadorUuid(currentUser.id);
   const pistaIdsKey = partidos.map((p) => p.id).sort().join("|");
 
-  async function loadResultados() {
-    if (useFallback || partidos.length === 0) {
+  const loadResultados = useCallback(async () => {
+    if (useFallback || !pistaIdsKey) {
       setResultados([]);
       return;
     }
+    const pistaIds = pistaIdsKey.split("|").filter(Boolean);
     setLoading(true);
     setError("");
-    const pistaIds = partidos.map((p) => p.id);
     const { data, error: fetchError } = await supabase.rpc("get_resultados", {
       p_pista_ids: pistaIds
     });
@@ -48,22 +48,26 @@ export function useResultados(partidos, currentUser, isCoord) {
       fecha: normalizeFechaResultado(r.fecha)
     }));
     setResultados(rows);
-  }
-
-  useEffect(() => {
-    loadResultados();
   }, [useFallback, pistaIdsKey]);
 
   useEffect(() => {
+    void loadResultados();
+  }, [loadResultados]);
+
+  useEffect(() => {
     if (useFallback) return undefined;
+    const onDbChange = () => {
+      void loadResultados();
+    };
     const channel = supabase
       .channel("resultados_changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "resultados" }, loadResultados)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "resultados" }, onDbChange)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "resultados" }, onDbChange)
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [useFallback]);
+  }, [useFallback, loadResultados]);
 
   function getResultado(partidoId, fecha) {
     return resultados.find((r) => r.pista_id === partidoId && r.fecha === fecha) ?? null;
