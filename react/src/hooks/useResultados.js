@@ -16,7 +16,7 @@ function normalizeFechaResultado(fecha) {
   return String(fecha).slice(0, 10);
 }
 
-export function useResultados(partidos, currentUser, isCoord, isActive = false) {
+export function useResultados(partidos, currentUser, isCoord) {
   const [resultados, setResultados] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,13 +28,13 @@ export function useResultados(partidos, currentUser, isCoord, isActive = false) 
   const pistaIdsKey = partidos.map((p) => p.id).sort().join("|");
 
   const loadResultados = useCallback(async () => {
-    if (useFallback || !pistaIdsKey) {
+    if (useFallback || partidos.length === 0) {
       setResultados([]);
       return;
     }
-    const pistaIds = pistaIdsKey.split("|").filter(Boolean);
     setLoading(true);
     setError("");
+    const pistaIds = partidos.map((p) => p.id);
     const { data, error: fetchError } = await supabase.rpc("get_resultados", {
       p_pista_ids: pistaIds
     });
@@ -48,45 +48,20 @@ export function useResultados(partidos, currentUser, isCoord, isActive = false) 
       fecha: normalizeFechaResultado(r.fecha)
     }));
     setResultados(rows);
-  }, [useFallback, pistaIdsKey]);
+  }, [useFallback, partidos]);
 
   useEffect(() => {
     void loadResultados();
-  }, [loadResultados]);
-
-  useEffect(() => {
-    if (!isActive || useFallback) return;
-    void loadResultados();
-  }, [isActive, useFallback, loadResultados]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return undefined;
-    const onRefetch = () => {
-      void loadResultados();
-    };
-    window.addEventListener("resultados-refetch", onRefetch);
-    return () => window.removeEventListener("resultados-refetch", onRefetch);
   }, [loadResultados]);
 
   useEffect(() => {
     if (useFallback) return undefined;
-
-    const onDbChange = () => {
-      void loadResultados();
-    };
-
     const channel = supabase
       .channel("resultados_changes")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "resultados" }, onDbChange)
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "resultados" }, onDbChange)
-      .subscribe((status, err) => {
-        if (status === "SUBSCRIBED") return;
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-          console.warn("[useResultados] Realtime:", status, err?.message ?? err);
-          void loadResultados();
-        }
-      });
-
+      .on("postgres_changes", { event: "*", schema: "public", table: "resultados" }, () => {
+        void loadResultados();
+      })
+      .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
@@ -284,7 +259,6 @@ export function useResultados(partidos, currentUser, isCoord, isActive = false) 
     validarResultado,
     getResultado,
     mapSetsFromResultado,
-    reloadResultados: loadResultados,
     loading,
     error
   };

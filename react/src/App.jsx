@@ -60,17 +60,15 @@ function AppAuthed({ auth }) {
     () => Boolean(auth.currentUser?.es_coordinador),
     [auth.currentUser]
   );
-  const resultadosTabActive = activeTab === "resultados";
   const {
     guardarResultado,
     modificarResultado,
     validarResultado,
     getResultado,
     mapSetsFromResultado,
-    reloadResultados,
     loading: resultadosLoading,
     error: resultadosError
-  } = useResultados(partidos, auth.currentUser, isCoord, resultadosTabActive);
+  } = useResultados(partidos, auth.currentUser, isCoord);
   const {
     eventos,
     apuntarseEvento,
@@ -119,9 +117,6 @@ function AppAuthed({ auth }) {
     if (tab) setActiveTab(tab);
     setPartidosDeepLink(partidosLink);
     setJugarDeepLink(jugarLink);
-    if (tab === "resultados" && typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("resultados-refetch"));
-    }
   }
 
   function perfilDesdeUsuarioSesion(u) {
@@ -251,7 +246,6 @@ function AppAuthed({ auth }) {
               {resultadosError ? <p className="error-box">{t("app.toasts.resultsError", { error: resultadosError })}</p> : null}
               <Resultados
                 partidos={partidos}
-                onRefetch={reloadResultados}
                 onGuardar={async (id, fecha, sets) => {
                   const res = await guardarResultado(id, fecha, sets);
                   if (!res.ok) return showMessage(res.error);
