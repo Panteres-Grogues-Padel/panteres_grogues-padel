@@ -180,6 +180,9 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
       setNicknameError(error.message);
       return;
     }
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("perfil-actualizado"));
+    }
     const { ok, perfil, error: reloadError } = await fetchPerfilJugadorRpc(supabase, view.id);
     setNicknameSaving(false);
     if (!ok || !perfil) {
@@ -190,9 +193,6 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
     setNicknameForm(perfil.nickname ?? "");
     onJugadorUpdated?.({ id: view.id, ...perfil });
     if (isOwn) void refreshJugador();
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("perfil-actualizado"));
-    }
   }, [isCoord, isOwn, nicknameForm, onJugadorUpdated, refreshJugador, view]);
 
   const canChangePhoto = isOwn && supabase && isJugadorUuid(view?.id) && !yo?.fromFallback;
