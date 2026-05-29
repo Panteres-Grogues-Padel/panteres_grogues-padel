@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EVENTOS_INICIALES } from "../utils/mockData";
 import { createActivityLog } from "../lib/engagement";
 import { supabase } from "../lib/supabase";
@@ -42,6 +42,8 @@ async function rpcGetInscripcionesEventos(eventoId = null) {
   return { ok: true, rows: rowsFromRpc(data) };
 }
 
+const REALTIME_REFETCH_MS = 400;
+
 export function useEventos(currentUser, isCoord) {
   const [eventos, setEventos] = useState(EVENTOS_INICIALES);
   const [loading, setLoading] = useState(false);
@@ -51,6 +53,8 @@ export function useEventos(currentUser, isCoord) {
     !currentUser?.id ||
     currentUser.fromFallback === true ||
     !isJugadorUuid(currentUser.id);
+  const realtimeInscripcionesTimerRef = useRef(null);
+  const realtimeEventosTimerRef = useRef(null);
 
   const mergeInscripcionesEnEventos = useCallback((prevEventos, insRows) => {
     const byEvento = buildInscripcionesByEvento(insRows);
@@ -143,8 +147,66 @@ export function useEventos(currentUser, isCoord) {
   );
 
   useEffect(() => {
-    loadEventos();
+    void loadEventos();
   }, [loadEventos]);
+
+  useEffect(() => {
+    if (useFallback) return undefined;
+
+    const onInscripcionesChange = () => {
+      if (realtimeInscripcionesTimerRef.current) {
+        clearTimeout(realtimeInscripcionesTimerRef.current);
+      }
+      realtimeInscripcionesTimerRef.current = setTimeout(() => {
+        realtimeInscripcionesTimerRef.current = null;
+        void reloadInscripcionesEventos({ silent: true });
+      }, REALTIME_REFETCH_MS);
+    };
+
+    const onEventosChange = () => {
+      if (realtimeEventosTimerRef.current) {
+        clearTimeout(realtimeEventosTimerRef.current);
+      }
+      realtimeEventosTimerRef.current = setTimeout(() => {
+        realtimeEventosTimerRef.current = null;
+        void loadEventos({ silent: true });
+      }, REALTIME_REFETCH_MS);
+    };
+
+    const channel = supabase
+      .channel("eventos_agenda_changes")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "inscripciones_eventos" },
+        onInscripcionesChange
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "inscripciones_eventos" },
+        onInscripcionesChange
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "inscripciones_eventos" },
+        onInscripcionesChange
+      )
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "eventos" }, onEventosChange)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "eventos" }, onEventosChange)
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "eventos" }, onEventosChange)
+      .subscribe();
+
+    return () => {
+      if (realtimeInscripcionesTimerRef.current) {
+        clearTimeout(realtimeInscripcionesTimerRef.current);
+        realtimeInscripcionesTimerRef.current = null;
+      }
+      if (realtimeEventosTimerRef.current) {
+        clearTimeout(realtimeEventosTimerRef.current);
+        realtimeEventosTimerRef.current = null;
+      }
+      supabase.removeChannel(channel);
+    };
+  }, [useFallback, reloadInscripcionesEventos, loadEventos]);
 
   const eventosOrdenados = useMemo(() => {
     const sorted = [...eventos].sort((a, b) => a.fecha.localeCompare(b.fecha));
