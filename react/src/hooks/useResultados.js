@@ -61,7 +61,8 @@ export function useResultados(partidos, currentUser, isCoord) {
 
   useEffect(() => {
     if (useFallback) return undefined;
-    const onDbChange = () => {
+    const onDbChange = (payload) => {
+      console.log("realtime resultados evento recibido", payload);
       if (Date.now() - lastSaveRef.current < IGNORE_REALTIME_AFTER_SAVE_MS) {
         return;
       }
