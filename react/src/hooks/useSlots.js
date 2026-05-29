@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SLOTS_INICIALES } from "../utils/mockData";
 import {
   esAperturaListaProximaHoy,
@@ -101,51 +101,6 @@ export function useSlots(currentUser, authEpoch = 0) {
 
   const userId = currentUser?.id ? normalizeJugadorUuid(currentUser.id) : "";
 
-  const reloadSlotsFromDb = useCallback(async () => {
-    if (!supabase) return;
-    const { data: slotsData, error: slotsErr } = await supabase
-      .from("slots")
-      .select("id,label,club,dia_semana,pistas_default,pistas_activo,hora_cierre")
-      .eq("activo", true)
-      .order("dia_semana", { ascending: true })
-      .order("id", { ascending: true });
-
-    if (slotsErr || !slotsData?.length) {
-      setSlotsNotice(slotsErr?.message ?? t("hooks.slots.noActiveSlots"));
-      setSlots(SLOTS_INICIALES);
-      return;
-    }
-
-    setSlotsNotice("");
-    setSlots(
-      slotsData.map((s) => ({
-        id: s.id,
-        label: s.label,
-        club: s.club,
-        diaSemana: s.dia_semana,
-        horaCierre: s.hora_cierre ?? null,
-        pistas: Number(s.pistas_activo ?? 0),
-        pistasDefault: Number(s.pistas_default ?? 0),
-        jugadores: []
-      }))
-    );
-  }, []);
-
-  const reloadInscripciones = useCallback(async () => {
-    if (!supabase || !isJugadorUuid(userId)) return;
-    const lunes = getMondayUtc(new Date());
-    const desde = formatDateUTC(addDaysUtc(lunes, -14));
-    const hasta = formatDateUTC(addDaysUtc(lunes, 28));
-    const { data, error } = await supabase.rpc("get_inscripciones", {
-      p_desde: desde,
-      p_hasta: hasta
-    });
-    if (!error) {
-      const conNombres = await cargarNombres(data ?? []);
-      setInscripciones(conNombres);
-    }
-  }, [userId]);
-
   useEffect(() => {
     const tieneId = isJugadorUuid(userId);
 
@@ -165,10 +120,36 @@ export function useSlots(currentUser, authEpoch = 0) {
 
     (async () => {
       try {
-        await reloadSlotsFromDb();
+        // Cargar definiciones de slots
+        const { data: slotsData, error: slotsErr } = await supabase
+          .from("slots")
+          .select("id,label,club,dia_semana,pistas_default,pistas_activo,hora_cierre")
+          .eq("activo", true)
+          .order("dia_semana", { ascending: true })
+          .order("id", { ascending: true });
 
         if (cancelled) return;
 
+        if (slotsErr || !slotsData?.length) {
+          setSlotsNotice(slotsErr?.message ?? t("hooks.slots.noActiveSlots"));
+          setSlots(SLOTS_INICIALES);
+        } else {
+          setSlotsNotice("");
+          setSlots(
+            slotsData.map((s) => ({
+              id: s.id,
+              label: s.label,
+              club: s.club,
+              diaSemana: s.dia_semana,
+              horaCierre: s.hora_cierre ?? null,
+              pistas: Number(s.pistas_activo ?? 0),
+              pistasDefault: Number(s.pistas_default ?? 0),
+              jugadores: []
+            }))
+          );
+        }
+
+        // Cargar inscripciones: rango de -2 a +4 semanas desde el lunes actual
         const lunes = getMondayUtc(new Date());
         const desde = formatDateUTC(addDaysUtc(lunes, -14));
         const hasta = formatDateUTC(addDaysUtc(lunes, 28));
@@ -196,7 +177,7 @@ export function useSlots(currentUser, authEpoch = 0) {
     return () => {
       cancelled = true;
     };
-  }, [userId, currentUser?.auth_id, authEpoch, reloadSlotsFromDb]);
+  }, [userId, currentUser?.auth_id, authEpoch]);
 
   useEffect(() => {
     if (!supabase || !isJugadorUuid(userId)) return undefined;
@@ -209,25 +190,7 @@ export function useSlots(currentUser, authEpoch = 0) {
     });
 
     return () => listener.subscription.unsubscribe();
-  }, [userId, authEpoch, reloadInscripciones]);
-
-  useEffect(() => {
-    if (!supabase || !isJugadorUuid(userId)) return undefined;
-
-    const channel = supabase
-      .channel("slots_inscripciones_changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "inscripciones" }, () => {
-        void reloadInscripciones();
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "slots" }, () => {
-        void reloadSlotsFromDb();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [userId, reloadInscripciones, reloadSlotsFromDb]);
+  }, [userId, authEpoch]);
 
   useEffect(() => {
     if (!supabase || !isJugadorUuid(userId) || loading || !slots.length) return undefined;
@@ -422,6 +385,21 @@ export function useSlots(currentUser, authEpoch = 0) {
   }, [slots, inscripciones, currentUser, userId]);
 
   // --- Acciones ---
+
+  async function reloadInscripciones() {
+    if (!supabase || !isJugadorUuid(userId)) return;
+    const lunes = getMondayUtc(new Date());
+    const desde = formatDateUTC(addDaysUtc(lunes, -14));
+    const hasta = formatDateUTC(addDaysUtc(lunes, 28));
+    const { data, error } = await supabase.rpc("get_inscripciones", {
+      p_desde: desde,
+      p_hasta: hasta
+    });
+    if (!error) {
+      const conNombres = await cargarNombres(data ?? []);
+      setInscripciones(conNombres);
+    }
+  }
 
   async function apuntarEnSlot(slotId, options = {}) {
     if (!currentUser || !supabase) return { ok: false, error: t("hooks.slots.noSession") };
