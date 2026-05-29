@@ -17,6 +17,7 @@ function normalizeFechaResultado(fecha) {
 }
 
 const REALTIME_REFETCH_MS = 400;
+const IGNORE_REALTIME_AFTER_SAVE_MS = 2000;
 
 export function useResultados(partidos, currentUser, isCoord) {
   const [resultados, setResultados] = useState([]);
@@ -29,6 +30,7 @@ export function useResultados(partidos, currentUser, isCoord) {
     !isJugadorUuid(currentUser.id);
   const pistaIdsKey = partidos.map((p) => p.id).sort().join("|");
   const realtimeRefetchTimerRef = useRef(null);
+  const lastSaveRef = useRef(0);
 
   const loadResultados = useCallback(async () => {
     if (useFallback || !pistaIdsKey) {
@@ -60,11 +62,17 @@ export function useResultados(partidos, currentUser, isCoord) {
   useEffect(() => {
     if (useFallback) return undefined;
     const onDbChange = () => {
+      if (Date.now() - lastSaveRef.current < IGNORE_REALTIME_AFTER_SAVE_MS) {
+        return;
+      }
       if (realtimeRefetchTimerRef.current) {
         clearTimeout(realtimeRefetchTimerRef.current);
       }
       realtimeRefetchTimerRef.current = setTimeout(() => {
         realtimeRefetchTimerRef.current = null;
+        if (Date.now() - lastSaveRef.current < IGNORE_REALTIME_AFTER_SAVE_MS) {
+          return;
+        }
         void loadResultados();
       }, REALTIME_REFETCH_MS);
     };
@@ -158,6 +166,8 @@ export function useResultados(partidos, currentUser, isCoord) {
     }
     const { error: saveError } = await query;
     if (saveError) return { ok: false, error: saveError.message };
+
+    lastSaveRef.current = Date.now();
 
     await createActivityLog({
       jugadorId: currentUser.id,
