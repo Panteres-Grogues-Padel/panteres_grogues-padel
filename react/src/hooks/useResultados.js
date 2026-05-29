@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { createActivityLog, createNotifications } from "../lib/engagement";
 import { ayerLocalStr, enVentanaCoordResultados, hoyLocalStr } from "../utils/dates";
@@ -16,6 +16,8 @@ function normalizeFechaResultado(fecha) {
   return String(fecha).slice(0, 10);
 }
 
+const REALTIME_REFETCH_MS = 400;
+
 export function useResultados(partidos, currentUser, isCoord) {
   const [resultados, setResultados] = useState([]);
   const [error, setError] = useState("");
@@ -26,6 +28,7 @@ export function useResultados(partidos, currentUser, isCoord) {
     currentUser.fromFallback === true ||
     !isJugadorUuid(currentUser.id);
   const pistaIdsKey = partidos.map((p) => p.id).sort().join("|");
+  const realtimeRefetchTimerRef = useRef(null);
 
   const loadResultados = useCallback(async () => {
     if (useFallback || !pistaIdsKey) {
@@ -57,7 +60,13 @@ export function useResultados(partidos, currentUser, isCoord) {
   useEffect(() => {
     if (useFallback) return undefined;
     const onDbChange = () => {
-      void loadResultados();
+      if (realtimeRefetchTimerRef.current) {
+        clearTimeout(realtimeRefetchTimerRef.current);
+      }
+      realtimeRefetchTimerRef.current = setTimeout(() => {
+        realtimeRefetchTimerRef.current = null;
+        void loadResultados();
+      }, REALTIME_REFETCH_MS);
     };
     const channel = supabase
       .channel("resultados_changes")
@@ -65,6 +74,10 @@ export function useResultados(partidos, currentUser, isCoord) {
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "resultados" }, onDbChange)
       .subscribe();
     return () => {
+      if (realtimeRefetchTimerRef.current) {
+        clearTimeout(realtimeRefetchTimerRef.current);
+        realtimeRefetchTimerRef.current = null;
+      }
       supabase.removeChannel(channel);
     };
   }, [useFallback, loadResultados]);
