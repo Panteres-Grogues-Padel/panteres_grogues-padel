@@ -146,6 +146,28 @@ export function useEventos(currentUser, isCoord) {
     loadEventos();
   }, [loadEventos]);
 
+  useEffect(() => {
+    if (useFallback) return undefined;
+
+    const channel = supabase
+      .channel("eventos_agenda_changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "eventos" }, () => {
+        void loadEventos({ silent: true });
+      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "inscripciones_eventos" },
+        () => {
+          void reloadInscripcionesEventos({ silent: true });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [useFallback, loadEventos, reloadInscripcionesEventos]);
+
   const eventosOrdenados = useMemo(() => {
     const sorted = [...eventos].sort((a, b) => a.fecha.localeCompare(b.fecha));
     return sorted.map((e) => {

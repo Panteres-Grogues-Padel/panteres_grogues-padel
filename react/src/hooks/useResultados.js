@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { createActivityLog, createNotifications } from "../lib/engagement";
 import { ayerLocalStr, enVentanaCoordResultados, hoyLocalStr } from "../utils/dates";
@@ -27,7 +27,7 @@ export function useResultados(partidos, currentUser, isCoord) {
     !isJugadorUuid(currentUser.id);
   const pistaIdsKey = partidos.map((p) => p.id).sort().join("|");
 
-  async function loadResultados() {
+  const loadResultados = useCallback(async () => {
     if (useFallback || partidos.length === 0) {
       setResultados([]);
       return;
@@ -48,22 +48,24 @@ export function useResultados(partidos, currentUser, isCoord) {
       fecha: normalizeFechaResultado(r.fecha)
     }));
     setResultados(rows);
-  }
+  }, [useFallback, partidos]);
 
   useEffect(() => {
-    loadResultados();
-  }, [useFallback, pistaIdsKey]);
+    void loadResultados();
+  }, [loadResultados]);
 
   useEffect(() => {
     if (useFallback) return undefined;
     const channel = supabase
       .channel("resultados_changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "resultados" }, loadResultados)
+      .on("postgres_changes", { event: "*", schema: "public", table: "resultados" }, () => {
+        void loadResultados();
+      })
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [useFallback]);
+  }, [useFallback, loadResultados]);
 
   function getResultado(partidoId, fecha) {
     return resultados.find((r) => r.pista_id === partidoId && r.fecha === fecha) ?? null;
