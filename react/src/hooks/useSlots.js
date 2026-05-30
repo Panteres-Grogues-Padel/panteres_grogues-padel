@@ -96,10 +96,18 @@ export function useSlots(currentUser, authEpoch = 0) {
   const [inscripciones, setInscripciones] = useState([]);
   const [loading, setLoading] = useState(false);
   const [slotsNotice, setSlotsNotice] = useState("");
+  const [tick, setTick] = useState(0);
   const recordatoriosInscRef = useRef(new Set());
   const aperturaListaNotifRef = useRef(new Set());
 
   const userId = currentUser?.id ? normalizeJugadorUuid(currentUser.id) : "";
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTick((t) => t + 1);
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const tieneId = isJugadorUuid(userId);
@@ -342,7 +350,7 @@ export function useSlots(currentUser, authEpoch = 0) {
         apuntado: estaApuntado(slot.id, semanaObjetivo)
       };
     });
-  }, [slots, inscripciones, currentUser, userId]);
+  }, [slots, inscripciones, currentUser, userId, tick]);
 
   // Dos entradas por slot (actual + próxima) — para Jugar
   const slotsJugar = useMemo(() => {
@@ -382,7 +390,7 @@ export function useSlots(currentUser, authEpoch = 0) {
       });
     }
     return result;
-  }, [slots, inscripciones, currentUser, userId]);
+  }, [slots, inscripciones, currentUser, userId, tick]);
 
   // --- Acciones ---
 
