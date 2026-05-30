@@ -70,6 +70,12 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
       const esPropi =
         yo && jugadoresCoinciden(jugador.id, yo.id) ? mergePerfilView(jugador, yo) : jugador;
       setView(esPropi);
+      console.log(
+        "useEffect jugador/yo - esPropi.ocultar_telefon:",
+        esPropi?.ocultar_telefon,
+        "mostrar_telefono:",
+        esPropi?.mostrar_telefono
+      );
       setContactForm({
         telefono: esPropi.telefono ?? "",
         instagram: (esPropi.instagram ?? "").replace(/^@/, "").trim(),
@@ -164,6 +170,8 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
       ...contactForm,
       nickname: view.nickname ?? ""
     });
+    console.log("perfil tras guardar RPC:", perfil);
+    console.log("ocultar_telefon tras guardar:", perfil?.ocultar_telefon);
     setContactSaving(false);
     if (!ok || !perfil) {
       setContactError(error ?? t("ranking.profile.contactSaveError"));
