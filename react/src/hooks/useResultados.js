@@ -261,10 +261,9 @@ export function useResultados(partidos, currentUser, isCoord) {
 
     if (useFallback) return { ok: true };
 
-    const { error: modError } = await supabase
-      .from("resultados")
-      .update({ validado_por: null, validado_at: null })
-      .eq("id", r.id);
+    const { error: modError } = await supabase.rpc("modificar_resultado", {
+      p_resultado_id: r.id
+    });
     if (modError) return { ok: false, error: modError.message };
 
     await createActivityLog({
