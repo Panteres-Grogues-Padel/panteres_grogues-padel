@@ -31,6 +31,9 @@ function mapRankingRow(row) {
     instagram: j.instagram ?? "",
     foto_url: j.foto_url ?? null,
     mostrar_telefono: Boolean(j.mostrar_telefono),
+    ocultar_telefon: Boolean(
+      j.ocultar_telefon ?? (j.mostrar_telefono != null ? !j.mostrar_telefono : false)
+    ),
     autoriza_instagram: Boolean(j.autoriza_instagram),
     sancionat: Boolean(j.sancionat),
     sancio_fins: j.sancio_fins ?? null,

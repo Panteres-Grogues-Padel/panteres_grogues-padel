@@ -73,7 +73,10 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
       setContactForm({
         telefono: esPropi.telefono ?? "",
         instagram: (esPropi.instagram ?? "").replace(/^@/, "").trim(),
-        ocultar_telefon: Boolean(esPropi.ocultar_telefon)
+        ocultar_telefon: Boolean(
+          esPropi.ocultar_telefon ??
+            (esPropi.mostrar_telefono != null ? !esPropi.mostrar_telefono : false)
+        )
       });
       setNicknameForm(esPropi.nickname ?? "");
       setNicknameError("");
