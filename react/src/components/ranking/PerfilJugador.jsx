@@ -319,13 +319,6 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
               <div className="profile-name">{getNombreVisible(view)}</div>
               {isOwn ? <span className="own-badge">{t("ranking.profile.you")}</span> : null}
             </div>
-            {isOwn && view.nickname && (view.nombreCompleto || view.nombre) ? (
-              <div className="profile-sub">
-                {t("ranking.profile.fullName", {
-                  name: view.nombreCompleto || view.nombre
-                })}
-              </div>
-            ) : null}
             <div className="profile-socio-line">
               <span className="profile-socio-label">{t("ranking.profile.memberNumber")}</span>
               <span className="profile-socio-val">{numeroSocioPanteres(view.id)}</span>
