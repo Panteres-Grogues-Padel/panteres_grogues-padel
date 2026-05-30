@@ -114,6 +114,16 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
     };
   }, [open, jugador?.id, yo]);
 
+  useEffect(() => {
+    if (view) {
+      setContactForm({
+        telefono: view.telefono ?? "",
+        instagram: (view.instagram ?? "").replace(/^@/, "").trim(),
+        ocultar_telefon: Boolean(view.ocultar_telefon)
+      });
+    }
+  }, [view?.id]);
+
   const isOwn = useMemo(
     () => Boolean(yo && view && jugadoresCoinciden(view.id, yo.id)),
     [yo, view]
