@@ -4,6 +4,37 @@ Documento de referencia para el estado del proyecto y decisiones recientes.
 
 ---
 
+## Cambios recientes
+
+### Nickname y nombres en UI
+
+- El **nickname** (nombre visible) solo lo edita el **coordinador** desde el perfil en Ranking (`actualizar_nickname_jugador` + RLS).
+- **`getNombreVisible()`** en toda la app: muestra nickname si existe; si no, `nombre` corto. El **nombre completo no se muestra** en ningún sitio (eliminado subtítulo en perfil propio; sigue en BD).
+- **`get_ranking`** devuelve nickname con fallback, `sancionat`/`sancio_fins` y `ocultar_telefon` en el objeto `jugadores`.
+
+### Perfil y privacidad
+
+- **`contactForm`** se inicializa con teléfono, Instagram y `ocultar_telefon` al abrir el perfil.
+- **`actualizar_perfil_jugador`** sincroniza `ocultar_telefon` y `mostrar_telefono` (columna legacy) para que el checkbox y `mapPerfilFromRpc` no se contradigan.
+
+### Realtime
+
+- Refresco en tiempo real en **resultados**, **inscripciones** (slots), **partidos**, **ranking** (tabla `jugadores`) y **agenda** (`eventos`, `inscripciones_eventos`).
+- Tablas en publicación **`supabase_realtime`**: `partidos_generados`, `pistas_partido`, `jugadores_pista`, `jugadores`, `inscripciones`, `slots`, `eventos`, `inscripciones_eventos`, `resultados` (y `notificaciones`).
+- **Resultados:** debounce 400 ms en refetch + `lastSaveRef` 2 s tras guardar para no resetear el formulario.
+- **RLS `inscripciones_eventos`:** cualquier jugador activo autenticado ve todas las inscripciones (necesario para que el coordinador inscrito sea visible vía realtime).
+
+### Slots y resultados
+
+- **Slots:** `tick` cada 60 s en `useSlots` para que el candado desaparezca a las **19:00** sin relogar (`isSlotOpen` se recalcula).
+- **Resultados validados:** desbloqueo del coordinador con RPC **`modificar_resultado`** (sustituye UPDATE directo PostgREST en el paso «Modificar»).
+
+### Operaciones staging
+
+- Email de prueba actualizado: `sergic@pa.com` → `sergir@pa.com` (`auth.users` + `jugadores`).
+
+---
+
 ## Implementado hoy (28/05/2026)
 
 ### Sistema de padrinos/madrinas
@@ -86,8 +117,7 @@ Migración: `supabase/migrations/20250520190000_cron_slot_abierto.sql`
 - Añadida foto de perfil en la app y persistencia visual en componentes principales.
 - Perfil ampliado con teléfono e Instagram.
 - Se corrigió la visibilidad del teléfono oculto para que no se muestre a nadie.
-- Se habilitó edición de `nickname` desde perfil.
-- Se prioriza `nickname` frente a nombre en los lugares de la UI donde se identifica al jugador.
+- Edición de `nickname` solo por coordinador; `getNombreVisible` en toda la app (ver **Cambios recientes**).
 
 #### Notificaciones y navegación
 
@@ -120,8 +150,8 @@ Migración: `supabase/migrations/20250520190000_cron_slot_abierto.sql`
 ## Pendientes añadidos
 
 - **Onboarding nuevos jugadores:** formulario de bienvenida + email automático con Resend
-- **Nickname:** columna `nickname` en `jugadores`, mostrar en ranking y perfil
 - **Notificación push móvil** cuando la app está cerrada (Firebase FCM — futuro)
+- **RPC `guardar_resultado`:** migrar INSERT/UPDATE de sets desde PostgREST directo (alinear con regla de escrituras)
 
 ---
 
@@ -129,6 +159,8 @@ Migración: `supabase/migrations/20250520190000_cron_slot_abierto.sql`
 
 **Todo SELECT directo a Supabase debe hacerse vía RPC** para evitar el caché de PostgREST.
 
-Las escrituras (INSERT, UPDATE, DELETE) pueden usar la API de tabla con RLS; las lecturas que alimentan la UI deben pasar por funciones `get_*` con `SECURITY DEFINER` cuando haya riesgo de caché o ambigüedad de embeds.
+Las escrituras sensibles deben ir por **RPC** cuando afecten permisos, caché o lógica de negocio (ej. `modificar_resultado`, `actualizar_nickname_jugador`, `borrar_inscripcion`). Otros INSERT/UPDATE pueden usar API de tabla con RLS si están acotados; priorizar RPC si hay incidencias.
+
+Las lecturas que alimentan la UI deben pasar por funciones `get_*` con `SECURITY DEFINER` cuando haya riesgo de caché o ambigüedad de embeds.
 
 Ver también `BUGS_RESUELTOS.md` para historial de bugs y lista completa de migraciones.

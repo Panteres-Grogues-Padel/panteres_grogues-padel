@@ -22,6 +22,21 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 - **Error embed `inscripciones_eventos` + `jugadores`** — Causa: ambigüedad PostgREST (FK `jugador_id` vs `pago_confirmado_por`). Solución: RPC `get_inscripciones_eventos`.
 - **Generar partidos sin inscritos** — Causa: semana incorrecta en query (fecha del slot vs lunes UTC). Solución: `getLunesSemanaActual()` al buscar inscripciones.
 - **Marcar pago se revertía en UI** — Causa: race entre actualización optimista y `loadEventos` / caché. Solución: optimista → RPC → revertir si falla; recarga de inscripciones solo vía RPC tras confirmar.
+- **Nickname editable por cualquier jugador en perfil** — Solución: solo coordinador puede cambiar el nickname visible desde `PerfilJugador` (Ranking); RPC `actualizar_nickname_jugador` + política RLS para coordinadores.
+- **Nombre real visible en ranking o perfil** — Solución: `getNombreVisible()` en toda la app (nickname si existe; si no, `nombre` corto). El nombre completo no se muestra en la UI.
+- **Ranking sin sanciones ni `ocultar_telefon` en listados** — Solución: `get_ranking` fusiona nickname con fallback, `sancionat`/`sancio_fins` y `ocultar_telefon` en el objeto `jugadores`; `mapRankingRow` alinea el fallback de privacidad del teléfono.
+- **Realtime no refrescaba UI** (resultados, inscripciones, partidos, ranking, agenda) — Solución: suscripciones `postgres_changes` en hooks + tablas en publicación `supabase_realtime` (`partidos_generados`, `pistas_partido`, `jugadores_pista`, `jugadores`, `inscripciones`, `slots`, `eventos`, `inscripciones_eventos`, `resultados`).
+- **Formulario de resultados se reseteaba al guardar** (coordinador/jugador) — Solución: debounce 400 ms en refetch realtime de resultados + `lastSaveRef` (2 s) para ignorar eventos propios tras `guardarResultado`.
+- **Coordinador inscrito en eventos no visible para otros** — Causa: RLS SELECT en `inscripciones_eventos` solo devolvía la fila propia. Solución: política para que cualquier jugador activo autenticado vea todas las inscripciones de eventos.
+- **Teléfono/Instagram del perfil no persistían al guardar** — Causa: `contactForm` vacío sobrescribía BD. Solución: inicializar `contactForm` al abrir perfil con datos de `view`/RPC.
+- **Checkbox «ocultar teléfono» se desmarcaba al guardar** — Causa: `mostrar_telefono` legacy en `true` mientras `ocultar_telefon` era `true`; `mapPerfilFromRpc` aplicaba fallback incorrecto. Solución: `actualizar_perfil_jugador` sincroniza ambas columnas; `get_ranking` expone `ocultar_telefon`; fallback coherente en `useRanking` y `PerfilJugador`.
+- **Candado de slots no desaparecía a las 19:00 sin recargar** — Solución: `tick` en `useSlots` con `setInterval` 60 s para recalcular `isSlotOpen` / `slotsJugar` / `slotsConEstado`.
+- **Desbloquear resultado validado vía PostgREST** — Violaba regla de escrituras sensibles y podía afectar caché/permisos. Solución: RPC `modificar_resultado(p_resultado_id)` (solo coordinador).
+- **Nombre completo visible en perfil propio** — Eliminado el subtítulo «Nom complet» en `PerfilJugador`; el dato sigue en BD pero no se muestra en la app.
+
+### Operaciones (staging)
+
+- Email de usuario de prueba actualizado: `sergic@pa.com` → `sergir@pa.com` en `auth.users` y `jugadores`.
 
 ---
 
@@ -45,6 +60,11 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 - Pestaña Partidos: dropdown solo día de hoy; coordinador genera/regenera solo hoy
 - Pestaña Resultados: ventanas por rol (coordinador vs jugador)
 - Log de actividad en Bienvenida
+- **Nickname visible** en ranking, partidos y perfil vía `getNombreVisible`; edición solo por coordinador (`actualizar_nickname_jugador`)
+- **Perfil:** teléfono, Instagram, ocultar teléfono; sin mostrar nombre completo en UI
+- **Realtime** en resultados, inscripciones (slots), partidos, jugadores/ranking y agenda (eventos + inscripciones_eventos)
+- **Apertura de listas a las 19:00** sin relogar: recálculo de slots cada minuto en cliente
+- **Modificar resultado validado:** desbloqueo con RPC `modificar_resultado`; guardado de sets y revalidación con flujo existente
 
 ---
 
@@ -66,6 +86,11 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 | `borrar_inscripcion` | `p_jugador_id`, `p_slot_id`, `p_semana` | Baja de inscripción a slot |
 | `marcar_pago_inscripcion_evento` | `p_inscripcion_id`, `p_pagado` | Marcar/desmarcar pago (coordinador) |
 | `actualizar_ranking` | `p_resultado_id` | Recalcular ranking tras validar resultado |
+| `get_perfil_jugador` | `p_jugador_id` | Perfil público de un jugador |
+| `get_mi_perfil_jugador` | — | Perfil del jugador autenticado |
+| `actualizar_perfil_jugador` | `p_jugador_id`, teléfono, instagram, ocultar, nickname | Actualizar contacto y privacidad (propietario) |
+| `actualizar_nickname_jugador` | `p_jugador_id`, `p_nickname` | Cambiar nickname visible (solo coordinador) |
+| `modificar_resultado` | `p_resultado_id` | Desbloquear resultado validado para edición (solo coordinador) |
 
 Funciones auxiliares en BD: `es_coordinador()` (RLS).
 
@@ -74,8 +99,10 @@ Funciones auxiliares en BD: `es_coordinador()` (RLS).
 ## Pendientes
 
 - ~~Notificación slot abierto a las 19h~~ — Edge Function `cron-slot-abierto` + pg_cron 17:00 UTC (ver `CONTEXT.md`)
+- ~~Nickname en ranking y perfil~~ — Implementado con `getNombreVisible` y RPC coordinador
 - Horarios aleatorios — pendiente probar con 8+ jugadores
-- Sistema de padrinos/ahijados
+- Sistema de padrinos/ahijados — implementado (ver `CONTEXT.md`); revisar UX si hace falta
+- Migrar `guardarResultado` a RPC (INSERT/UPDATE de sets) para alinear con regla PostgREST
 - Google OAuth
 - Organigrama en Coordinación
 - Migración usuarios desde Google Sheets
@@ -108,3 +135,14 @@ Las escrituras (INSERT, UPDATE, DELETE) pueden usar la API de tabla con RLS; las
 - `20250519180000_marcar_pago_pagado_param.sql`
 - `20250519190000_get_inscripciones_eventos_pago.sql`
 - `20250520190000_cron_slot_abierto.sql`
+- `20260527140000_perfil_telefon_instagram.sql`
+- `20260527150000_actualizar_perfil_nickname.sql`
+- `20260528134900_get_ranking_nickname_fallback.sql`
+- `20260528135800_realtime_jugadores_ranking_refresh.sql`
+- `20260528151000_coord_actualizar_nickname_jugador.sql`
+- `20260528160000_get_ranking_fusion.sql`
+- `20260528190000_realtime_partidos_jugadores.sql`
+- `20260529100000_rls_inscripciones_eventos_select.sql`
+- `20260529110000_get_ranking_ocultar_telefon.sql`
+- `20260529120000_fix_actualizar_perfil_mostrar_telefono.sql`
+- `20260529130000_rpc_modificar_resultado.sql`
