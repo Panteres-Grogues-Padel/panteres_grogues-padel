@@ -131,9 +131,19 @@ function PartidoResultadoCard({
               </div>
             </div>
           ))}
-          <button type="button" className="btn btn-primary btn-sm btn-block" onClick={() => onGuardar(partido.id, sets)}>
-            {resultado ? t("resultados.saveChanges") : t("resultados.saveResult")}
-          </button>
+          {isCoord ? (
+            <button
+              type="button"
+              className="btn btn-primary btn-sm btn-block res-validar-btn"
+              onClick={() => onValidar(partido.id, sets)}
+            >
+              {t("resultados.validateResult")}
+            </button>
+          ) : (
+            <button type="button" className="btn btn-primary btn-sm btn-block" onClick={() => onGuardar(partido.id, sets)}>
+              {resultado ? t("resultados.saveChanges") : t("resultados.saveResult")}
+            </button>
+          )}
           {!isCoord && !resultado ? (
             <p className="slot-meta res-hint">{t("resultados.coordMustValidate")}</p>
           ) : null}
@@ -167,7 +177,7 @@ function PartidoResultadoCard({
         </button>
       ) : null}
 
-      {isCoord && permisos.puedeValidar ? (
+      {isCoord && permisos.puedeValidar && !permisos.puedeEditar ? (
         <button type="button" className="btn btn-primary btn-sm btn-block res-validar-btn" onClick={() => onValidar(partido.id)}>
           {t("resultados.validateResult")}
         </button>
@@ -228,9 +238,14 @@ export default function Resultados({
     onGuardar(partidoId, partido?.fechaPartido ?? fechaSel, sets);
   }
 
-  function handleValidar(partidoId) {
+  async function handleValidar(partidoId, sets) {
     const partido = partidos.find((p) => p.id === partidoId);
-    onValidar(partidoId, partido?.fechaPartido ?? fechaSel);
+    const fecha = partido?.fechaPartido ?? fechaSel;
+    if (isCoord && sets) {
+      const saveRes = await onGuardar(partidoId, fecha, sets);
+      if (!saveRes?.ok) return;
+    }
+    await onValidar(partidoId, fecha);
   }
 
   function handleModificar(partidoId) {

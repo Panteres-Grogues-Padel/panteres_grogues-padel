@@ -248,8 +248,12 @@ function AppAuthed({ auth }) {
                 partidos={partidos}
                 onGuardar={async (id, fecha, sets) => {
                   const res = await guardarResultado(id, fecha, sets);
-                  if (!res.ok) return showMessage(res.error);
+                  if (!res.ok) {
+                    showMessage(res.error);
+                    return res;
+                  }
                   showMessage(t("app.toasts.resultSaved"));
+                  return res;
                 }}
                 onValidar={async (id, fecha) => {
                   const res = await validarResultado(id, fecha);
