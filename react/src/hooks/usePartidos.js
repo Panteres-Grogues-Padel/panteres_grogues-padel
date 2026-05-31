@@ -533,10 +533,10 @@ export function usePartidos(currentUser) {
       setPartidos((prev) => prev.map((p) => (p.id === partidoId ? { ...p, hora } : p)));
       return { ok: true };
     }
-    const { error: updateError } = await supabase
-      .from("pistas_partido")
-      .update({ hora })
-      .eq("id", partidoId);
+    const { error: updateError } = await supabase.rpc("asignar_hora_partido", {
+      p_pista_id: partidoId,
+      p_hora: hora ?? ""
+    });
     if (updateError) return { ok: false, error: updateError.message };
     const partido = partidos.find((p) => p.id === partidoId);
     if (partido?.slotId && partido?.semana) {
