@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { formatHoraInput } from "../../utils/dates";
 import { jugadoresCoinciden } from "../../utils/jugador";
 import { getNombreVisible } from "../../utils/nombres";
@@ -31,6 +31,18 @@ export default function PartidoCard({
   rankingPosByJugador
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [horaUi, setHoraUi] = useState(() => formatHoraInput(partido.hora));
+  const horaDebounceRef = useRef(null);
+
+  useEffect(() => {
+    setHoraUi(formatHoraInput(partido.hora));
+  }, [partido.id, partido.hora]);
+
+  useEffect(() => {
+    return () => {
+      if (horaDebounceRef.current) clearTimeout(horaDebounceRef.current);
+    };
+  }, []);
   const jugadoresPorRanking = useMemo(() => {
     const copy = [...partido.jugadores];
     copy.sort((a, b) => {
@@ -48,7 +60,6 @@ export default function PartidoCard({
     () => jugadoresPorRanking.map((j) => getNombreVisible(j) || t("common.player")).join(", "),
     [jugadoresPorRanking]
   );
-  const horaUi = formatHoraInput(partido.hora);
 
   return (
     <div style={{ border: "0.5px solid var(--border)", borderRadius: "var(--radius)", marginBottom: "6px", overflow: "hidden" }}>
@@ -117,7 +128,14 @@ export default function PartidoCard({
               <input
                 type="time"
                 value={horaUi}
-                onChange={(e) => onHora(partido.id, e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setHoraUi(val);
+                  if (horaDebounceRef.current) clearTimeout(horaDebounceRef.current);
+                  horaDebounceRef.current = setTimeout(() => {
+                    onHora(partido.id, val);
+                  }, 800);
+                }}
                 style={{ fontSize: "12px", height: "30px", padding: "2px 8px", border: "0.5px solid var(--border2)", borderRadius: "var(--radius)", background: "var(--bg)", width: "100px" }}
               />
               <button className="btn btn-sm" style={{ fontSize: "11px", padding: "3px 9px" }} onClick={() => onIndoor(partido.id)}>
