@@ -187,7 +187,7 @@ export default function Bienvenida({
       </div>
 
       <button className="bienvenida-cta" onClick={onGoToJugar}>
-        <span className="cta-emoji">🏓</span>
+        <span className="cta-emoji">🎾</span>
         <span className="cta-copy">
           <span className="cta-title">{t("bienvenida.ctaTitle")}</span>
           <span className="cta-sub">{t("bienvenida.ctaSubtitle")}</span>
