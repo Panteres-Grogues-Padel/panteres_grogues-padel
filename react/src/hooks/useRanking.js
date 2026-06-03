@@ -111,8 +111,15 @@ export function useRanking() {
         .on(
           "postgres_changes",
           { event: "UPDATE", schema: "public", table: "jugadores" },
-          () => {
+          (payload) => {
             loadRanking();
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(
+                new CustomEvent("jugador-actualizado", {
+                  detail: { jugadorId: payload.new?.id }
+                })
+              );
+            }
           }
         )
         .subscribe();

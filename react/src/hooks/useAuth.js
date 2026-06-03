@@ -68,6 +68,21 @@ export function useAuth() {
     return { ok: true, perfil };
   }, [bumpAvatarVersion]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    function onJugadorActualizado(event) {
+      const jugadorId = event.detail?.jugadorId;
+      const u = currentUserRef.current;
+      if (!jugadorId || !u?.id) return;
+      if (normalizeJugadorUuid(jugadorId) !== normalizeJugadorUuid(u.id)) return;
+      void refreshCurrentJugador();
+    }
+
+    window.addEventListener("jugador-actualizado", onJugadorActualizado);
+    return () => window.removeEventListener("jugador-actualizado", onJugadorActualizado);
+  }, [refreshCurrentJugador]);
+
   async function fetchJugadorSesion() {
     let { ok, perfil, error: rpcError } = await fetchMiPerfilJugadorRpc(supabase);
     if (!ok) return { ok: false, message: rpcError ?? t("auth.errors.connection") };
