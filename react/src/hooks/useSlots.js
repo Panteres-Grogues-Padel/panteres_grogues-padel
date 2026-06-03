@@ -11,7 +11,13 @@ import { supabase } from "../lib/supabase";
 import { createActivityLog, createNotifications, notificacionDuplicada } from "../lib/engagement";
 import { isJugadorUuid, jugadoresCoinciden, normalizeJugadorUuid } from "../utils/jugador";
 import { getNombreVisible } from "../utils/nombres";
-import { DATE_LOCALE, fechaPartidoFromSlot, formatDiaPartidoLabel, hoyLocalStr } from "../utils/dates";
+import {
+  DATE_LOCALE,
+  fechaPartidoFromSlot,
+  formatDiaPartidoLabel,
+  formatFechaLocal,
+  hoyLocalStr
+} from "../utils/dates";
 import { t } from "../i18n";
 
 // --- Utilidades de fecha UTC ---
@@ -38,6 +44,11 @@ function formatSancioDate(value) {
   const d = new Date(`${String(value).slice(0, 10)}T12:00:00`);
   if (Number.isNaN(d.getTime())) return String(value);
   return d.toLocaleDateString(DATE_LOCALE);
+}
+
+function startOfLocalDay(d) {
+  const x = d instanceof Date ? d : new Date(`${String(d).slice(0, 10)}T12:00:00`);
+  return new Date(x.getFullYear(), x.getMonth(), x.getDate());
 }
 
 /** Extrae YYYY-MM-DD de cualquier valor que devuelva Supabase para columnas `date`. */
@@ -417,7 +428,9 @@ export function useSlots(currentUser, authEpoch = 0) {
     if (!slot) return { ok: false, error: t("hooks.slots.slotNotFound") };
     if (!slot.abierto) return { ok: false, error: t("hooks.slots.listNotOpen") };
 
-    if (currentUser.sancionat && currentUser.sancio_fins && currentUser.sancio_fins >= hoyLocalStr()) {
+    const fechaSlot = fechaPartidoFromSlot(slot.semanaObjetivo, slot.diaSemana);
+    const fechaSlotStr = fechaSlot ? formatFechaLocal(startOfLocalDay(fechaSlot)) : null;
+    if (currentUser.sancionat && currentUser.sancio_fins && fechaSlotStr && fechaSlotStr <= currentUser.sancio_fins) {
       return {
         ok: false,
         error: t("hooks.slots.sanctionedUntil", {
