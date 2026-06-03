@@ -500,18 +500,6 @@ export function useSlots(currentUser, authEpoch = 0) {
       tipo: "jugar",
       texto: t("hooks.slots.activity.signUp", { label: slot.label, club: slot.club, week: semana })
     });
-    void createNotifications([
-      {
-        jugadorId,
-        tipo: "inscripcio",
-        titulo: t("hooks.slots.notifications.enrolledTitle"),
-        texto: t("hooks.slots.notifications.enrolledText"),
-        data: {
-          fecha: fechaPartidoFromSlot(semana, slot.diaSemana),
-          slot_id: dbSlotId
-        }
-      }
-    ]);
     return { ok: true };
   }
 
@@ -559,18 +547,6 @@ export function useSlots(currentUser, authEpoch = 0) {
         week: slot.semanaObjetivo
       })
     });
-    void createNotifications([
-      {
-        jugadorId,
-        tipo: "baixa",
-        titulo: t("hooks.slots.notifications.unregisterTitle"),
-        texto: t("hooks.slots.notifications.unregisterText"),
-        data: {
-          fecha: fechaPartidoFromSlot(semana, slot.diaSemana),
-          slot_id: dbSlotId
-        }
-      }
-    ]);
 
     if (slot.semana === "actual" && isBajaWarning({ diaSemana: slot.diaSemana })) {
       return { ok: true, warning: t("hooks.slots.bajaWarningShort") };
