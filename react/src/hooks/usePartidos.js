@@ -378,11 +378,15 @@ export function usePartidos(currentUser) {
         inscritoTs: ins.inscrito_at ? new Date(ins.inscrito_at).getTime() : 0
       };
     });
-    filas.sort((a, b) => {
-      if (a.rankIdx !== b.rankIdx) return a.rankIdx - b.rankIdx;
-      return a.inscritoTs - b.inscritoTs;
-    });
-    const candidatos = filas.map(({ id, nombre, nombreCompleto }) => ({ id, nombre, nombreCompleto }));
+    filas.sort((a, b) => a.inscritoTs - b.inscritoTs);
+
+    const maxTit = pistasPlan.length * 4;
+    const filasT = maxTit > 0 ? filas.slice(0, maxTit) : filas;
+
+    filasT.sort((a, b) => a.rankIdx - b.rankIdx);
+
+    const candidatos = filasT.map(({ id, nombre, nombreCompleto }) => ({ id, nombre, nombreCompleto }));
+    const titulares = candidatos;
 
     console.log("[generarPartidos] inscritos y candidatos", {
       slotId,
@@ -394,9 +398,6 @@ export function usePartidos(currentUser) {
       conFilaRanking: filas.filter((f) => f.rankIdx < Number.MAX_SAFE_INTEGER).length,
       muestraNombres: candidatos.slice(0, 12).map((c) => c.nombre)
     });
-
-    const maxTit = pistasPlan.length * 4;
-    const titulares = maxTit > 0 ? candidatos.slice(0, maxTit) : candidatos;
     const grupos = groupsOf4(titulares);
     if (!grupos.length) {
       return { ok: false, error: t("hooks.partidos.notEnoughPlayers") };
