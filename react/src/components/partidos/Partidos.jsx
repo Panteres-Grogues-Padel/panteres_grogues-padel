@@ -230,11 +230,10 @@ export default function Partidos({
   const reservas = useMemo(() => {
     if (!slotActual) return [];
     const idsAsignados = new Set(partidosFiltrados.flatMap((p) => p.jugadores.map((j) => j.jugadorId)));
-    const candidates = (ranking ?? []).filter((r) =>
-      slotActual.jugadores?.some((j) => j.nombre === r.nombre && !idsAsignados.has(r.id))
-    );
-    return candidates;
-  }, [slotActual, partidosFiltrados, ranking]);
+    return (slotActual.jugadores ?? [])
+      .filter((j) => !idsAsignados.has(j.jugadorId))
+      .sort((a, b) => new Date(a.inscrito_at ?? 0) - new Date(b.inscrito_at ?? 0));
+  }, [slotActual, partidosFiltrados]);
 
   function buildWaText() {
     if (!slotActual || !partidosFiltrados.length) return "";
@@ -448,7 +447,7 @@ export default function Partidos({
               <div style={{ fontSize: "11px", fontWeight: 600, color: "#BA7517", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: "6px" }}>
                 {t("partidos.reserveBox", { count: reservas.length })}
               </div>
-              <div>{reservas.map((p) => <span key={p.id} className="chip" style={{ fontSize: "11px" }}>{getNombreVisible(p) || t("common.player")}</span>)}</div>
+              <div>{reservas.map((p) => <span key={p.jugadorId} className="chip" style={{ fontSize: "11px" }}>{getNombreVisible(p) || t("common.player")}</span>)}</div>
             </div>
           ) : null}
 

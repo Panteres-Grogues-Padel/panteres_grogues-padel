@@ -313,6 +313,7 @@ export function useSlots(currentUser, authEpoch = 0) {
         nombre: getNombreVisible(i.jugadores) || i.jugador_id,
         nickname: i.jugadores?.nickname ?? null,
         socio: Boolean(i.es_socio),
+        inscrito_at: i.inscrito_at ?? null,
         ts: i.inscrito_at ? new Date(i.inscrito_at).getTime() : idx + 1,
         tsStr: formatTsStr(i.inscrito_at)
       }))
