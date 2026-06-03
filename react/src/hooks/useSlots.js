@@ -455,15 +455,24 @@ export function useSlots(currentUser, authEpoch = 0) {
       };
     }
 
+    const { data: esCoordDia } = await supabase.rpc("es_coordinador_dia", {
+      p_slot_id: dbSlotId
+    });
+
+    const inscritoAt =
+      esCoordDia === true ? "1970-01-01T00:00:00Z" : undefined;
+
     const { error } = await supabase.from("inscripciones").insert({
       jugador_id: jugadorId,
       slot_id: dbSlotId,
       semana,
-      es_socio: Boolean(options.socio)
+      es_socio: Boolean(options.socio),
+      ...(inscritoAt ? { inscrito_at: inscritoAt } : {})
     });
     if (error) return { ok: false, error: error.message };
 
     const nowIso = new Date().toISOString();
+    const inscritoAtLocal = inscritoAt ?? nowIso;
     setInscripciones((prev) => {
       const ya = prev.some(
         (r) =>
@@ -480,7 +489,7 @@ export function useSlots(currentUser, authEpoch = 0) {
           slot_id: dbSlotId,
           semana,
           es_socio: Boolean(options.socio),
-          inscrito_at: nowIso,
+          inscrito_at: inscritoAtLocal,
           jugadores: { nombre: currentUser.nombre }
         }
       ];
