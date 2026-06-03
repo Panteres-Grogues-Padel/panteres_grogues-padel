@@ -530,6 +530,7 @@ export function usePartidos(currentUser) {
   }
 
   async function asignarHora(partidoId, hora) {
+    console.log("asignarHora llamada con:", { partidoId, hora });
     if (useFallback) {
       setPartidos((prev) => prev.map((p) => (p.id === partidoId ? { ...p, hora } : p)));
       return { ok: true };
@@ -538,6 +539,7 @@ export function usePartidos(currentUser) {
       p_pista_id: partidoId,
       p_hora: hora ?? ""
     });
+    console.log("asignarHora resultado:", { updateError });
     if (updateError) return { ok: false, error: updateError.message };
     const partido = partidos.find((p) => p.id === partidoId);
     if (partido?.slotId && partido?.semana) {
