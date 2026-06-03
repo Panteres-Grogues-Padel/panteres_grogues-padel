@@ -79,6 +79,7 @@ export function tabFromNotificacionTipo(tipo, titulo) {
     partidos: "partidos",
     partidos_generats: "partidos",
     partidos_generados: "partidos",
+    jugador_sancionat: "partidos",
     resultados: "resultados",
     resultat_validat: "resultados",
     resultat_introduit: "resultados",
