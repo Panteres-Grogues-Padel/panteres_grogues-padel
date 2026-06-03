@@ -80,6 +80,7 @@ export function tabFromNotificacionTipo(tipo, titulo) {
     partidos_generats: "partidos",
     partidos_generados: "partidos",
     jugador_sancionat: "partidos",
+    sancio_aplicada: null,
     resultados: "resultados",
     resultat_validat: "resultados",
     resultat_introduit: "resultados",
@@ -160,6 +161,10 @@ export function resolveNotificacionDeepLink(notif) {
 
   if (tipo === "agenda") {
     return { tab: "agenda", partidosDeepLink: null, jugarDeepLink: null };
+  }
+
+  if (tipo === "sancio_aplicada") {
+    return { tab: null, partidosDeepLink: null, jugarDeepLink: null };
   }
 
   const tab = tabFromNotificacionTipo(tipo, notif?.titulo);
