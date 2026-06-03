@@ -15,7 +15,11 @@ import {
 } from "../../utils/franjasPartidos";
 import { getNombreVisible } from "../../utils/nombres";
 import { DATE_LOCALE, weekdayName } from "../../utils/dates";
+import { supabase } from "../../lib/supabase";
 import { t, pluralSuffix } from "../../i18n";
+
+const MSG_RESULTADOS_PENDIENTES =
+  "No es pot generar partits. Hi ha resultats pendents de validar de dies anteriors.";
 
 const DIES = {
   Lunes: "Dilluns",
@@ -217,9 +221,22 @@ export default function Partidos({
   const hayInscritos = (slotActual?.jugadores?.length ?? 0) > 0;
   const mostrarRegenerar = yaGenerado;
   const mostrarGenerar = !mostrarRegenerar && hayInscritos && esHoy;
+  const [generarBloqueo, setGenerarBloqueo] = useState("");
 
-  function handleGenerarClick(regenerar) {
+  async function handleGenerarClick(regenerar) {
     if (!slotId || !semanaObjetivo || !esHoy) return;
+    setGenerarBloqueo("");
+    if (supabase) {
+      const { data: hayPendientes, error } = await supabase.rpc("hay_resultados_pendientes");
+      if (error) {
+        setGenerarBloqueo(error.message);
+        return;
+      }
+      if (hayPendientes === true) {
+        setGenerarBloqueo(MSG_RESULTADOS_PENDIENTES);
+        return;
+      }
+    }
     if (regenerar) {
       const ok = window.confirm(t("partidos.regenerateConfirm"));
       if (!ok) return;
@@ -399,12 +416,13 @@ export default function Partidos({
               reserva: resumen.reserva
             })}
           </div>
+          {generarBloqueo ? <p className="error-box">{generarBloqueo}</p> : null}
           {mostrarRegenerar ? (
-            <button type="button" className="btn btn-primary btn-sm btn-block" onClick={() => handleGenerarClick(true)}>
+            <button type="button" className="btn btn-primary btn-sm btn-block" onClick={() => void handleGenerarClick(true)}>
               {t("partidos.regenerateMatches")}
             </button>
           ) : mostrarGenerar ? (
-            <button type="button" className="btn btn-primary btn-sm btn-block" onClick={() => handleGenerarClick(false)}>
+            <button type="button" className="btn btn-primary btn-sm btn-block" onClick={() => void handleGenerarClick(false)}>
               {t("partidos.generateMatches")}
             </button>
           ) : null}
