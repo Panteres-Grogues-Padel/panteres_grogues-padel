@@ -137,15 +137,11 @@ export function getRangoSemanaPasada(now = new Date()) {
   return { desde: formatFechaLocal(lastMonday), hasta: formatFechaLocal(lastSunday) };
 }
 
-/** Coordinador: desde el lunes de esta semana hasta hoy (inclusive); sin futuros. */
+/** Coordinador: cualquier fecha pasada o hoy; sin futuros. */
 export function enVentanaCoordResultados(fechaStr, now = new Date()) {
   if (!fechaStr) return false;
   const hoy = hoyLocalStr(now);
-  if (fechaStr > hoy) return false;
-  const today = startOfLocalDay(now);
-  const lunesActual = addDaysLocal(today, -getDiaSemanaLocal(today));
-  const lunesActualStr = formatFechaLocal(lunesActual);
-  return fechaStr >= lunesActualStr;
+  return fechaStr <= hoy;
 }
 
 /** Días con partidos visibles en el dropdown de Resultados (orden cronológico). */

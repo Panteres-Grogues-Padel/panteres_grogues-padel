@@ -199,7 +199,7 @@
 
   "resultados": {
     "title": "Resultados",
-    "coordHint": "Desde el lunes de esta semana hasta hoy",
+    "coordHint": "Puedes ver todos los resultados pasados",
     "playerHint": "Puedes introducir resultados solo en tus partidos de hoy o ayer. Consulta cualquier día.",
     "noMatchesWindow": "No hay partidos con resultados en esta ventana",
     "noMatchesGenerate": "Genera partidos en la pestaña Partidos para poder registrar resultados",
