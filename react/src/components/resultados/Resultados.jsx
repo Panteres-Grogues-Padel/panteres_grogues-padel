@@ -233,9 +233,17 @@ export default function Resultados({
     setSetsDraft((prev) => ({ ...prev, [partidoId]: next }));
   }
 
-  function handleGuardar(partidoId, sets) {
+  async function handleGuardar(partidoId, sets) {
     const partido = partidos.find((p) => p.id === partidoId);
-    onGuardar(partidoId, partido?.fechaPartido ?? fechaSel, sets);
+    const res = await onGuardar(partidoId, partido?.fechaPartido ?? fechaSel, sets);
+    if (res?.ok) {
+      setSetsDraft((prev) => {
+        const next = { ...prev };
+        delete next[partidoId];
+        return next;
+      });
+    }
+    return res;
   }
 
   async function handleValidar(partidoId, sets) {
