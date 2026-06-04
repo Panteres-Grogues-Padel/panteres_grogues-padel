@@ -4,6 +4,47 @@ Documento de referencia para el estado del proyecto y decisiones recientes.
 
 ---
 
+## Implementado hoy (04/06/2026)
+
+### Coordinador del día — prioridad al apuntarse
+
+- Tabla **`coordinador_dia`** (`dia_semana` 1–7, `jugador_id`) con asignación por día de la semana.
+- RPC **`es_coordinador_dia(p_slot_id)`** comprueba si el usuario autenticado es el coordinador de ese día.
+- Al apuntarse, el coordinador del día recibe **`inscrito_at` mínimo** (`1970-01-01T00:00:00Z`) para quedar primero en el orden de llegada (titulares y reservas).
+- Migración: `supabase/migrations/20260602130000_coordinador_dia.sql`
+
+### Bloqueo de generación de partidos (resultados pendientes)
+
+- RPC **`hay_resultados_pendientes()`** devuelve `true` si existe algún resultado con `introducido_por` relleno, sin validar (`validado_por` / `validado_at` NULL) y `fecha <= CURRENT_DATE` (incluye hoy).
+- En **Partidos**, «Generar» / «Regenerar» llama a la RPC y bloquea con mensaje si hay pendientes.
+- Migraciones: `20260602140000_rpc_hay_resultados_pendientes.sql`, `20260604100000_fix_hay_resultados_pendientes.sql`
+
+### Resultados — ventana del coordinador
+
+- **`enVentanaCoordResultados`**: el coordinador ve y gestiona resultados de **cualquier fecha pasada o hoy** (`fecha <= hoy`), igual que el jugador en el calendario; sin partidos futuros.
+- Hint UI: «Pots veure tots els resultats passats» / «Puedes ver todos los resultados pasados».
+
+### Sets inválidos → 0-0 y sincronización UI
+
+- Al guardar, marcadores no válidos en pádel (fuera de 6-0…6-4, 7-5, 7-6) se normalizan a **0-0** vía `setParaGuardar`.
+- Respuesta `{ ok: true, warning: "…" }` + toast informativo en **App.jsx**.
+- Tras guardar con éxito, **`setsDraft`** se limpia en **Resultados.jsx** para que la UI muestre los datos de BD (0-0) y no el draft inválido.
+
+### Sanciones
+
+- **`sancionar_jugador`**: además de marcar `sancionat` / `sancio_fins`, da de baja inscripciones cuya fecha de partido cae en el período de sanción y notifica a **coordinadores** y al **jugador sancionado**.
+- **Bloqueo de inscripción** en cliente: compara la **fecha del slot** (`fechaPartidoFromSlot`) con `sancio_fins` (`fechaSlot <= sancio_fins` → no puede apuntarse).
+- Tras sancionar/desancionar el perfil propio, **`patchCurrentUser`** / **`refreshCurrentJugador`** actualizan `currentUser` en tiempo real (sin relogar).
+- Migraciones: `20260602110000_sancionar_jugador_baja_notificacio.sql`, `20260602120000_sancionar_jugador_notificacio_jugador.sql`
+
+### Partidos — titulares, reservas y generación
+
+- **Titulares** en Jugar/Partidos: primeros N inscritos por **`inscrito_at`** (orden de llegada).
+- **Reservas** en Partidos: inscritos no asignados a ninguna pista, ordenados por **`inscrito_at`**.
+- Al **generar partidos**: candidatos = primeros `4 × pistas` por llegada; dentro de ese cupo se **reordenan por ranking** y se agrupan en parejas de 4 por nivel.
+
+---
+
 ## Cambios recientes
 
 ### Nickname y nombres en UI

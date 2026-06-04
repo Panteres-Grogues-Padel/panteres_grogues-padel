@@ -33,6 +33,12 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 - **Candado de slots no desaparecía a las 19:00 sin recargar** — Solución: `tick` en `useSlots` con `setInterval` 60 s para recalcular `isSlotOpen` / `slotsJugar` / `slotsConEstado`.
 - **Desbloquear resultado validado vía PostgREST** — Violaba regla de escrituras sensibles y podía afectar caché/permisos. Solución: RPC `modificar_resultado(p_resultado_id)` (solo coordinador).
 - **Nombre completo visible en perfil propio** — Eliminado el subtítulo «Nom complet» en `PerfilJugador`; el dato sigue en BD pero no se muestra en la app.
+- **Coordinador no veía ayer en calendario de Resultados** — Causa: `enVentanaCoordResultados` limitaba a «semana pasada» + hoy. Solución: ventana `fecha <= hoy` (misma visibilidad de fechas que el jugador; permisos de edición siguen por rol).
+- **UI de resultados mostraba marcador inválido tras guardar** — Causa: `setsDraft` tenía prioridad sobre datos recargados de BD. Solución: limpiar draft del partido tras `onGuardar` con `ok` + `loadResultados()`.
+- **Generación de partidos con resultados sin validar** — Solución: RPC `hay_resultados_pendientes()` (incluye hoy con `introducido_por` y sin validar); bloqueo en Partidos antes de generar/regenerar.
+- **`hay_resultados_pendientes` ignoraba pendientes de hoy** — Causa: filtro `fecha < CURRENT_DATE`. Solución: `fecha <= CURRENT_DATE` + `introducido_por IS NOT NULL`.
+- **Sanción no actualizaba sesión del jugador** — Solución: `patchCurrentUser` / `refreshCurrentJugador` al sancionar o desancionar el perfil propio desde Ranking.
+- **Inscripción bloqueada por sanción con criterio incorrecto** — Solución: comparar fecha del partido del slot con `sancio_fins` (`fechaSlot <= sancio_fins`).
 
 ### Operaciones (staging)
 
@@ -58,13 +64,20 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 - Timezone corregido (hora Europe/Madrid en saludo y lógica de slots)
 - Panel de notificaciones: todas (leídas y no leídas), orden reciente; no leídas destacadas
 - Pestaña Partidos: dropdown solo día de hoy; coordinador genera/regenera solo hoy
-- Pestaña Resultados: ventanas por rol (coordinador vs jugador)
+- Pestaña Resultados: coordinador ve fechas pasadas y hoy; jugador introduce solo hoy/ayer en sus partidos
 - Log de actividad en Bienvenida
 - **Nickname visible** en ranking, partidos y perfil vía `getNombreVisible`; edición solo por coordinador (`actualizar_nickname_jugador`)
 - **Perfil:** teléfono, Instagram, ocultar teléfono; sin mostrar nombre completo en UI
 - **Realtime** en resultados, inscripciones (slots), partidos, jugadores/ranking y agenda (eventos + inscripciones_eventos)
 - **Apertura de listas a las 19:00** sin relogar: recálculo de slots cada minuto en cliente
 - **Modificar resultado validado:** desbloqueo con RPC `modificar_resultado`; guardado de sets y revalidación con flujo existente
+- **Coordinador del día:** tabla `coordinador_dia` + RPC `es_coordinador_dia`; al apuntarse, `inscrito_at` mínimo para prioridad en titulares/reservas
+- **Bloqueo generar partidos** si hay resultados introducidos sin validar (`hay_resultados_pendientes`)
+- **Resultados coordinador:** calendario y permisos con cualquier fecha pasada o hoy (`enVentanaCoordResultados`)
+- **Sets inválidos:** guardado automático como 0-0 (`setParaGuardar`) + toast de aviso al jugador
+- **Sancionar jugador:** baja automática de inscripciones en el período + notificaciones a coordinadores y jugador (`sancionar_jugador` / `desancionar_jugador`)
+- **Reservas en Partidos:** inscritos no en pista, ordenados por `inscrito_at`
+- **Generar partidos:** titulares por orden de llegada (tope `4 × pistas`), reordenados por ranking al formar grupos de 4
 
 ---
 
@@ -91,6 +104,10 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 | `actualizar_perfil_jugador` | `p_jugador_id`, teléfono, instagram, ocultar, nickname | Actualizar contacto y privacidad (propietario) |
 | `actualizar_nickname_jugador` | `p_jugador_id`, `p_nickname` | Cambiar nickname visible (solo coordinador) |
 | `modificar_resultado` | `p_resultado_id` | Desbloquear resultado validado para edición (solo coordinador) |
+| `hay_resultados_pendientes` | — | Bloquear generación de partidos si hay resultados sin validar (hasta hoy inclusive) |
+| `es_coordinador_dia` | `p_slot_id` | Comprobar si el usuario es coordinador del día del slot |
+| `sancionar_jugador` | `p_jugador_id`, `p_fins` | Sancionar, bajar inscripciones afectadas y notificar |
+| `desancionar_jugador` | `p_jugador_id` | Quitar sanción |
 
 Funciones auxiliares en BD: `es_coordinador()` (RLS).
 
@@ -146,3 +163,8 @@ Las escrituras (INSERT, UPDATE, DELETE) pueden usar la API de tabla con RLS; las
 - `20260529110000_get_ranking_ocultar_telefon.sql`
 - `20260529120000_fix_actualizar_perfil_mostrar_telefono.sql`
 - `20260529130000_rpc_modificar_resultado.sql`
+- `20260602110000_sancionar_jugador_baja_notificacio.sql`
+- `20260602120000_sancionar_jugador_notificacio_jugador.sql`
+- `20260602130000_coordinador_dia.sql`
+- `20260602140000_rpc_hay_resultados_pendientes.sql`
+- `20260604100000_fix_hay_resultados_pendientes.sql`
