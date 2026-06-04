@@ -114,10 +114,25 @@ export function useSlots(currentUser, authEpoch = 0) {
   const userId = currentUser?.id ? normalizeJugadorUuid(currentUser.id) : "";
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTick((t) => t + 1);
-    }, 60_000);
-    return () => clearInterval(interval);
+    const now = new Date();
+    const target = new Date();
+    target.setHours(19, 0, 0, 0);
+
+    let timeout;
+    if (now < target) {
+      const ms = target.getTime() - now.getTime();
+      timeout = setTimeout(() => setTick((t) => t + 1), ms);
+    }
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") setTick((t) => t + 1);
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      if (timeout) clearTimeout(timeout);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, []);
 
   useEffect(() => {
