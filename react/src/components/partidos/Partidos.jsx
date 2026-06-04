@@ -52,6 +52,19 @@ function formatFechaPartido(d) {
   return d.toLocaleDateString(DATE_LOCALE, { weekday: "long", day: "numeric", month: "short" });
 }
 
+function formatFechaClubsList(fechaPartido) {
+  if (!fechaPartido) return "";
+  const s = String(fechaPartido).slice(0, 10);
+  const [y, m, d] = s.split("-");
+  if (!y || !m || !d) return s;
+  return `${d}/${m}/${y}`;
+}
+
+function nombreCompletoJugador(j) {
+  const name = (j?.nombreCompleto ?? j?.nombre ?? "").trim();
+  return name || t("common.player");
+}
+
 function etiquetaOpcion(o) {
   return t("partidos.todayLabel", {
     day: weekdayName(o.diaSemana) || diaSlotCa(o.slot.label),
@@ -288,6 +301,32 @@ export default function Partidos({
     await copyTextToClipboard(texto);
   }
 
+  function buildClubsListText() {
+    if (!slotActual || !partidosFiltrados.length) return "";
+    const fecha = formatFechaClubsList(
+      seleccion?.fechaPartido ?? partidosFiltrados[0]?.fechaPartido
+    );
+    const club = slotActual.club ?? "";
+    const ordenados = [...partidosFiltrados].sort(
+      (a, b) =>
+        (formatHoraInput(a.hora) || "99:99").localeCompare(formatHoraInput(b.hora) || "99:99") ||
+        (a.numeroPista ?? 0) - (b.numeroPista ?? 0)
+    );
+    const jugadores = ordenados.flatMap((p) =>
+      [...p.jugadores].sort((a, b) => (a.posicion ?? 0) - (b.posicion ?? 0))
+    );
+    let text = `Partits ${fecha} — ${club}\n\n`;
+    jugadores.forEach((j, idx) => {
+      text += `${idx + 1}. ${nombreCompletoJugador(j)}\n`;
+    });
+    return text.trimEnd();
+  }
+
+  async function handleCopyClubsList() {
+    const texto = buildClubsListText();
+    await copyTextToClipboard(texto);
+  }
+
   function onOpenMover(origenPartido, jugador) {
     setMoverState({ open: true, origen: origenPartido, jugador });
   }
@@ -472,9 +511,16 @@ export default function Partidos({
           <div className="wa-box">
             <div className="wa-header">
               <span>{t("partidos.waHeader")}</span>
-              <button type="button" className="btn btn-sm" onClick={() => void handleCopyWa()}>
-                {t("common.copy")}
-              </button>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                <button type="button" className="btn btn-sm" onClick={() => void handleCopyWa()}>
+                  {t("common.copy")}
+                </button>
+                {isCoord ? (
+                  <button type="button" className="btn btn-sm" onClick={() => void handleCopyClubsList()}>
+                    Copiar llista clubs
+                  </button>
+                ) : null}
+              </div>
             </div>
             <div className="wa-text">{buildWaText()}</div>
           </div>
