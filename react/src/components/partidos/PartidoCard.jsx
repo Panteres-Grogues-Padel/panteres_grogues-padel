@@ -133,6 +133,7 @@ export default function PartidoCard({
 
           {isCoord ? (
             <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "8px", flexWrap: "wrap" }}>
+              <span style={{ fontSize: "12px" }}>Pista</span>
               <input
                 type="number"
                 min={1}

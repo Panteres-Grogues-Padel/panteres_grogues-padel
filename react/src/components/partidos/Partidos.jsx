@@ -283,9 +283,11 @@ export default function Partidos({
     wa += "\n";
     ordenados.forEach((p, i) => {
       const horaRaw = formatHoraInput(p.hora);
-      const hora = horaRaw ? ` · 🕐 ${horaRaw}` : "";
+      const horaPart = horaRaw ? ` (${horaRaw})` : "";
       const indoorSuffix = p.indoor ? " Indoor" : "";
-      wa += `${t("partidos.waMatchLine", { num: i + 1, hora, indoorSuffix })}\n`;
+      const numPista =
+        p.numeroPista != null && p.numeroPista > 0 ? p.numeroPista : i + 1;
+      wa += `*Pista ${numPista}${horaPart}*${indoorSuffix}\n`;
       const jugOrd = jugadoresOrdenRanking(p.jugadores, rankingPosByJugador);
       wa += `${jugOrd.map((j) => getNombreVisible(j) || t("common.player")).join(" · ")}\n\n`;
     });
