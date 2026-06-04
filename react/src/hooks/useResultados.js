@@ -169,6 +169,10 @@ export function useResultados(partidos, currentUser, isCoord) {
 
     if (useFallback) return { ok: true };
 
+    const algunSetNormalizadoA00 = [sets[0], sets[1], sets[2]].some(
+      (s) => !isSetValido(s?.p1 ?? 0, s?.p2 ?? 0)
+    );
+
     const set1 = setParaGuardar(sets[0]);
     const set2 = setParaGuardar(sets[1]);
     const set3 = setParaGuardar(sets[2]);
@@ -220,6 +224,13 @@ export function useResultados(partidos, currentUser, isCoord) {
     }
 
     await loadResultados();
+
+    if (algunSetNormalizadoA00) {
+      return {
+        ok: true,
+        warning: "Algun set tenia un marcador no vàlid i s'ha guardat com 0-0."
+      };
+    }
     return { ok: true };
   }
 

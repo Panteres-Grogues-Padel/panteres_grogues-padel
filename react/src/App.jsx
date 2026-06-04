@@ -253,6 +253,7 @@ function AppAuthed({ auth }) {
                     return res;
                   }
                   showMessage(t("app.toasts.resultSaved"));
+                  if (res.warning) showMessage(res.warning);
                   return res;
                 }}
                 onValidar={async (id, fecha) => {
