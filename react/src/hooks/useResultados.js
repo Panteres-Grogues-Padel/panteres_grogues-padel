@@ -19,6 +19,31 @@ function normalizeFechaResultado(fecha) {
 const REALTIME_REFETCH_MS = 400;
 const IGNORE_REALTIME_AFTER_SAVE_MS = 2000;
 
+const MARCADORES_SET_VALIDOS = [
+  [6, 0],
+  [6, 1],
+  [6, 2],
+  [6, 3],
+  [6, 4],
+  [7, 5],
+  [7, 6]
+];
+
+/** Marcador de set válido en pádel (6-0…6-4, 7-5, 7-6 o al revés). */
+export function isSetValido(p1, p2) {
+  const a = Number(p1);
+  const b = Number(p2);
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return false;
+  return MARCADORES_SET_VALIDOS.some(([x, y]) => (a === x && b === y) || (a === y && b === x));
+}
+
+function setParaGuardar(set) {
+  const p1 = set?.p1 ?? 0;
+  const p2 = set?.p2 ?? 0;
+  if (!isSetValido(p1, p2)) return { p1: 0, p2: 0 };
+  return { p1: Number(p1), p2: Number(p2) };
+}
+
 export function useResultados(partidos, currentUser, isCoord) {
   const [resultados, setResultados] = useState([]);
   const [error, setError] = useState("");
@@ -144,15 +169,19 @@ export function useResultados(partidos, currentUser, isCoord) {
 
     if (useFallback) return { ok: true };
 
+    const set1 = setParaGuardar(sets[0]);
+    const set2 = setParaGuardar(sets[1]);
+    const set3 = setParaGuardar(sets[2]);
+
     const payload = {
       pista_id: partidoId,
       fecha: fechaPartido,
-      set1_p1: sets[0].p1,
-      set1_p2: sets[0].p2,
-      set2_p1: sets[1].p1,
-      set2_p2: sets[1].p2,
-      set3_p1: sets[2].p1,
-      set3_p2: sets[2].p2,
+      set1_p1: set1.p1,
+      set1_p2: set1.p2,
+      set2_p1: set2.p1,
+      set2_p2: set2.p2,
+      set3_p1: set3.p1,
+      set3_p2: set3.p2,
       introducido_por: prev?.introducido_por ?? currentUser.id,
       validado_por: null,
       validado_at: null
