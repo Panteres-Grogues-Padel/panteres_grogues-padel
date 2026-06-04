@@ -200,7 +200,7 @@
 
   "resultados": {
     "title": "Resultats",
-    "coordHint": "Setmana passada i avui · sense partits futurs",
+    "coordHint": "Des del dilluns d'aquesta setmana fins avui",
     "playerHint": "Pots introduir resultats només als teus partits d'avui o d'ahir. Consulta qualsevol dia.",
     "noMatchesWindow": "No hi ha partits amb resultats en aquesta finestra",
     "noMatchesGenerate": "Genera partits a la pestanya Partits per poder registrar resultats",
