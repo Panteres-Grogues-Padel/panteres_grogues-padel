@@ -26,21 +26,29 @@ export default function PartidoCard({
   currentUser,
   onConfirmar,
   onHora,
+  onNumeroPista,
   onIndoor,
   onOpenMover,
   rankingPosByJugador
 }) {
   const [expanded, setExpanded] = useState(false);
   const [horaUi, setHoraUi] = useState(() => formatHoraInput(partido.hora));
+  const [numeroPistaUi, setNumeroPistaUi] = useState(() => String(partido.numeroPista ?? ""));
   const horaDebounceRef = useRef(null);
+  const numeroPistaDebounceRef = useRef(null);
 
   useEffect(() => {
     setHoraUi(formatHoraInput(partido.hora));
   }, [partido.id, partido.hora]);
 
   useEffect(() => {
+    setNumeroPistaUi(String(partido.numeroPista ?? ""));
+  }, [partido.id, partido.numeroPista]);
+
+  useEffect(() => {
     return () => {
       if (horaDebounceRef.current) clearTimeout(horaDebounceRef.current);
+      if (numeroPistaDebounceRef.current) clearTimeout(numeroPistaDebounceRef.current);
     };
   }, []);
   const jugadoresPorRanking = useMemo(() => {
@@ -125,6 +133,22 @@ export default function PartidoCard({
 
           {isCoord ? (
             <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "8px", flexWrap: "wrap" }}>
+              <input
+                type="number"
+                min={1}
+                placeholder="Pista"
+                value={numeroPistaUi}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setNumeroPistaUi(val);
+                  if (numeroPistaDebounceRef.current) clearTimeout(numeroPistaDebounceRef.current);
+                  numeroPistaDebounceRef.current = setTimeout(() => {
+                    const n = Number.parseInt(val, 10);
+                    if (Number.isFinite(n) && n >= 1) onNumeroPista?.(partido.id, n);
+                  }, 800);
+                }}
+                style={{ fontSize: "12px", height: "30px", padding: "2px 8px", border: "0.5px solid var(--border2)", borderRadius: "var(--radius)", background: "var(--bg)", width: "64px" }}
+              />
               <input
                 type="time"
                 value={horaUi}

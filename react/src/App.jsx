@@ -54,8 +54,16 @@ function AppAuthed({ auth }) {
     auth.authEpoch
   );
   const { ranking, loading: rankingLoading, error: rankingError } = useRanking();
-  const { partidos, generarPartidos, loadPartidosForSlot, asignarHora, toggleIndoor, moverJugador, confirmarAsistencia } =
-    usePartidos(auth.currentUser);
+  const {
+    partidos,
+    generarPartidos,
+    loadPartidosForSlot,
+    asignarHora,
+    asignarNumeroPista,
+    toggleIndoor,
+    moverJugador,
+    confirmarAsistencia
+  } = usePartidos(auth.currentUser);
   const isCoord = useMemo(
     () => Boolean(auth.currentUser?.es_coordinador),
     [auth.currentUser]
@@ -219,6 +227,10 @@ function AppAuthed({ auth }) {
               onLoadSlot={loadPartidosForSlot}
               onHora={async (id, hora) => {
                 const res = await asignarHora(id, hora);
+                if (!res.ok) showMessage(res.error);
+              }}
+              onNumeroPista={async (id, numeroPista) => {
+                const res = await asignarNumeroPista(id, numeroPista);
                 if (!res.ok) showMessage(res.error);
               }}
               onIndoor={async (id) => {

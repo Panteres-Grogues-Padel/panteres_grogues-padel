@@ -81,6 +81,7 @@ export default function Partidos({
   onGenerar,
   onLoadSlot,
   onHora,
+  onNumeroPista,
   onIndoor,
   onMover,
   onConfirmar,
@@ -493,6 +494,7 @@ export default function Partidos({
                 currentUser={currentUser}
                 onConfirmar={onConfirmar}
                 onHora={onHora}
+                onNumeroPista={onNumeroPista}
                 onIndoor={onIndoor}
                 onOpenMover={onOpenMover}
                 rankingPosByJugador={rankingPosByJugador}

@@ -548,6 +548,31 @@ export function usePartidos(currentUser) {
     return { ok: true };
   }
 
+  async function asignarNumeroPista(partidoId, numeroPista) {
+    const n = Number(numeroPista);
+    if (!Number.isFinite(n) || n < 1) {
+      return { ok: false, error: "Número de pista no vàlid" };
+    }
+    if (useFallback) {
+      setPartidos((prev) =>
+        prev.map((p) => (p.id === partidoId ? { ...p, numeroPista: n } : p))
+      );
+      return { ok: true };
+    }
+    const { error: updateError } = await supabase.rpc("asignar_numero_pista", {
+      p_pista_id: partidoId,
+      p_numero_pista: n
+    });
+    if (updateError) return { ok: false, error: updateError.message };
+    const partido = partidos.find((p) => p.id === partidoId);
+    if (partido?.slotId && partido?.semana) {
+      await loadPartidosForSlot(partido.slotId, partido.semana);
+    } else {
+      await loadPartidos();
+    }
+    return { ok: true };
+  }
+
   async function toggleIndoor(partidoId) {
     if (useFallback) {
       setPartidos((prev) => prev.map((p) => (p.id === partidoId ? { ...p, indoor: !p.indoor } : p)));
@@ -721,6 +746,7 @@ export function usePartidos(currentUser) {
     generarPartidos,
     loadPartidosForSlot,
     asignarHora,
+    asignarNumeroPista,
     toggleIndoor,
     moverJugador,
     confirmarAsistencia
