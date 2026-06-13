@@ -30,7 +30,7 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 - **Coordinador inscrito en eventos no visible para otros** — Causa: RLS SELECT en `inscripciones_eventos` solo devolvía la fila propia. Solución: política para que cualquier jugador activo autenticado vea todas las inscripciones de eventos.
 - **Teléfono/Instagram del perfil no persistían al guardar** — Causa: `contactForm` vacío sobrescribía BD. Solución: inicializar `contactForm` al abrir perfil con datos de `view`/RPC.
 - **Checkbox «ocultar teléfono» se desmarcaba al guardar** — Causa: `mostrar_telefono` legacy en `true` mientras `ocultar_telefon` era `true`; `mapPerfilFromRpc` aplicaba fallback incorrecto. Solución: `actualizar_perfil_jugador` sincroniza ambas columnas; `get_ranking` expone `ocultar_telefon`; fallback coherente en `useRanking` y `PerfilJugador`.
-- **Candado de slots no desaparecía a las 19:00 sin recargar** — Solución: `tick` en `useSlots` con `setInterval` 60 s para recalcular `isSlotOpen` / `slotsJugar` / `slotsConEstado`.
+- **Candado de slots no desaparecía a las 19:00 sin recargar** — Solución inicial: `setInterval` 60 s. Mejora 04/06/2026: `setTimeout` alineado exactamente a las 19:00 + `visibilitychange` para recalcular `isSlotOpen` al volver a la pestaña.
 - **Desbloquear resultado validado vía PostgREST** — Violaba regla de escrituras sensibles y podía afectar caché/permisos. Solución: RPC `modificar_resultado(p_resultado_id)` (solo coordinador).
 - **Nombre completo visible en perfil propio** — Eliminado el subtítulo «Nom complet» en `PerfilJugador`; el dato sigue en BD pero no se muestra en la app.
 - **Coordinador no veía ayer en calendario de Resultados** — Causa: `enVentanaCoordResultados` limitaba a «semana pasada» + hoy. Solución: ventana `fecha <= hoy` (misma visibilidad de fechas que el jugador; permisos de edición siguen por rol).
@@ -39,6 +39,9 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 - **`hay_resultados_pendientes` ignoraba pendientes de hoy** — Causa: filtro `fecha < CURRENT_DATE`. Solución: `fecha <= CURRENT_DATE` + `introducido_por IS NOT NULL`.
 - **Sanción no actualizaba sesión del jugador** — Solución: `patchCurrentUser` / `refreshCurrentJugador` al sancionar o desancionar el perfil propio desde Ranking.
 - **Inscripción bloqueada por sanción con criterio incorrecto** — Solución: comparar fecha del partido del slot con `sancio_fins` (`fechaSlot <= sancio_fins`).
+- **Marcadores inválidos guardados tal cual** — Solución: `setParaGuardar` normaliza a 0-0 + `warning` en respuesta y toast en App.
+- **Botones «Validar» redundantes tras nuevo flujo** — Solución: validación automática en `guardarResultado` con modal de confirmación; `puedeValidar: false`.
+- **UI de mover jugadores sin lógica operativa** — Solución: eliminados botón ↕️, modal `MoverJugador` y props `onOpenMover`/`onMover` en Partidos/PartidoCard (lógica backend intacta).
 
 ### Operaciones (staging)
 
@@ -53,7 +56,7 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 - Horarios asignados aleatoriamente a las pistas (`shufflePistasPlan`)
 - Regeneración de partidos (borra anteriores: resultados → jugadores_pista → pistas → partidos_generados antes de insertar)
 - Resultados con parejas por set americano (pos1+4 vs 2+3, pos1+3 vs 2+4, pos1+2 vs 3+4)
-- Validación y modificación de resultados solo por coordinador
+- Validación automática al confirmar guardado (modal catalán) + modificación de resultados validados solo por coordinador (`modificar_resultado`)
 - Ranking con fórmula: **eficacia × (1 − penalización)**, donde **penalización = MAX(0, (9 − partidos) × 0,06)**
 - Sistema de notificaciones completo (campana, badge, panel, Realtime, borrado automático a los 14 días)
 - Notificaciones: apuntarse, baja, recordatorio 2 días (por inscripción), apertura lista 19:00, pista completa, resultado introducido/validado, partidos generados/regenerados
@@ -69,8 +72,8 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 - **Nickname visible** en ranking, partidos y perfil vía `getNombreVisible`; edición solo por coordinador (`actualizar_nickname_jugador`)
 - **Perfil:** teléfono, Instagram, ocultar teléfono; sin mostrar nombre completo en UI
 - **Realtime** en resultados, inscripciones (slots), partidos, jugadores/ranking y agenda (eventos + inscripciones_eventos)
-- **Apertura de listas a las 19:00** sin relogar: recálculo de slots cada minuto en cliente
-- **Modificar resultado validado:** desbloqueo con RPC `modificar_resultado`; guardado de sets y revalidación con flujo existente
+- **Apertura de listas a las 19:00** sin relogar: `setTimeout` alineado a 19:00 + `visibilitychange` en `useSlots`
+- **Modificar resultado validado:** desbloqueo con RPC `modificar_resultado`; re-guardar valida de nuevo y actualiza ranking
 - **Coordinador del día:** tabla `coordinador_dia` + RPC `es_coordinador_dia`; al apuntarse, `inscrito_at` mínimo para prioridad en titulares/reservas
 - **Bloqueo generar partidos** si hay resultados introducidos sin validar (`hay_resultados_pendientes`)
 - **Resultados coordinador:** calendario y permisos con cualquier fecha pasada o hoy (`enVentanaCoordResultados`)
@@ -78,6 +81,9 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 - **Sancionar jugador:** baja automática de inscripciones en el período + notificaciones a coordinadores y jugador (`sancionar_jugador` / `desancionar_jugador`)
 - **Reservas en Partidos:** inscritos no en pista, ordenados por `inscrito_at`
 - **Generar partidos:** titulares por orden de llegada (tope `4 × pistas`), reordenados por ranking al formar grupos de 4
+- **Copiar llista clubs** (coordinador): lista plana con nombres completos, sin agrupación por pista (`buildClubsListText`)
+- **Número de pista manual:** input en PartidoCard + RPC `asignar_numero_pista`; reflejado en texto WhatsApp
+- **Notificación `resultat_validat`** a otros jugadores de la pista tras confirmar resultado
 
 ---
 
@@ -108,6 +114,7 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 | `es_coordinador_dia` | `p_slot_id` | Comprobar si el usuario es coordinador del día del slot |
 | `sancionar_jugador` | `p_jugador_id`, `p_fins` | Sancionar, bajar inscripciones afectadas y notificar |
 | `desancionar_jugador` | `p_jugador_id` | Quitar sanción |
+| `asignar_numero_pista` | `p_pista_id`, `p_numero_pista` | Asignar número de pista manualmente (solo coordinador) |
 
 Funciones auxiliares en BD: `es_coordinador()` (RLS).
 
@@ -168,3 +175,4 @@ Las escrituras (INSERT, UPDATE, DELETE) pueden usar la API de tabla con RLS; las
 - `20260602130000_coordinador_dia.sql`
 - `20260602140000_rpc_hay_resultados_pendientes.sql`
 - `20260604100000_fix_hay_resultados_pendientes.sql`
+- `20260604110000_rpc_asignar_numero_pista.sql`

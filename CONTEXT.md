@@ -6,29 +6,62 @@ Documento de referencia para el estado del proyecto y decisiones recientes.
 
 ## Implementado hoy (04/06/2026)
 
-### Coordinador del día — prioridad al apuntarse
+### 1. Coordinador del día — prioridad al apuntarse
 
 - Tabla **`coordinador_dia`** (`dia_semana` 1–7, `jugador_id`) con asignación por día de la semana.
 - RPC **`es_coordinador_dia(p_slot_id)`** comprueba si el usuario autenticado es el coordinador de ese día.
 - Al apuntarse, el coordinador del día recibe **`inscrito_at` mínimo** (`1970-01-01T00:00:00Z`) para quedar primero en el orden de llegada (titulares y reservas).
 - Migración: `supabase/migrations/20260602130000_coordinador_dia.sql`
 
-### Bloqueo de generación de partidos (resultados pendientes)
+### 2. Bloqueo de generación de partidos (resultados pendientes)
 
 - RPC **`hay_resultados_pendientes()`** devuelve `true` si existe algún resultado con `introducido_por` relleno, sin validar (`validado_por` / `validado_at` NULL) y `fecha <= CURRENT_DATE` (incluye hoy).
 - En **Partidos**, «Generar» / «Regenerar» llama a la RPC y bloquea con mensaje si hay pendientes.
 - Migraciones: `20260602140000_rpc_hay_resultados_pendientes.sql`, `20260604100000_fix_hay_resultados_pendientes.sql`
 
-### Resultados — ventana del coordinador
+### 3. Resultados — ventana del coordinador
 
 - **`enVentanaCoordResultados`**: el coordinador ve y gestiona resultados de **cualquier fecha pasada o hoy** (`fecha <= hoy`), igual que el jugador en el calendario; sin partidos futuros.
 - Hint UI: «Pots veure tots els resultats passats» / «Puedes ver todos los resultados pasados».
 
-### Sets inválidos → 0-0 y sincronización UI
+### 4. Sets inválidos → 0-0 con aviso
 
-- Al guardar, marcadores no válidos en pádel (fuera de 6-0…6-4, 7-5, 7-6) se normalizan a **0-0** vía `setParaGuardar`.
+- Al guardar, marcadores no válidos en pádel (fuera de 6-0…6-4, 7-5, 7-6) se normalizan a **0-0** vía `setParaGuardar` en `useResultados.js`.
 - Respuesta `{ ok: true, warning: "…" }` + toast informativo en **App.jsx**.
-- Tras guardar con éxito, **`setsDraft`** se limpia en **Resultados.jsx** para que la UI muestre los datos de BD (0-0) y no el draft inválido.
+
+### 5. `setsDraft` se limpia tras guardar
+
+- Tras guardar con éxito, **`setsDraft`** se limpia en **Resultados.jsx** para que la UI muestre los datos de BD (p. ej. 0-0) y no el draft inválido que había escrito el jugador.
+
+### 6. Apertura de slots exactamente a las 19:00
+
+- **`useSlots.js`**: sustituido `setInterval` de 60 s por **`setTimeout`** alineado al próximo 19:00 local + listener **`visibilitychange`** para recalcular al volver a la pestaña.
+- El candado desaparece a las 19:00 sin recargar la app (complementa el cron `cron-slot-abierto` para notificaciones push).
+
+### 7. Botón «Copiar llista clubs» (coordinador)
+
+- En **Partidos**, solo visible para `isCoord`: copia lista plana `Partits [fecha] — [club]` con jugadores numerados por **`nombreCompleto`** (sin agrupación por pista ni nickname).
+- Función `buildClubsListText()` + `handleCopyClubsList()`.
+
+### 8. Número de pista editable por coordinador
+
+- **PartidoCard.jsx**: input numérico «Pista» con debounce 800 ms.
+- **`usePartidos.js`**: `asignarNumeroPista` → RPC **`asignar_numero_pista(p_pista_id, p_numero_pista)`**.
+- Texto WhatsApp (`buildWaText`): `*Pista ${numeroPista} (${hora})*`.
+- Migración: `supabase/migrations/20260604110000_rpc_asignar_numero_pista.sql`
+
+### 9. Validación automática al confirmar + modal
+
+- Al pulsar «Guardar», modal en catalán: «Confirmes el resultat? Un cop confirmat s'actualitzarà el rànquing automàticament.»
+- **`guardarResultado`**: guarda con `validado_por` / `validado_at` del usuario actual, llama **`actualizar_ranking`** y notifica `resultat_validat` al resto de jugadores de la pista.
+- Eliminados botones «Validar» en la UI; el coordinador solo ve «Modificar» si el resultado ya estaba validado (`modificar_resultado` sigue disponible).
+- `puedeValidar: false` en `resultadosUtils.js`.
+
+### 10. Eliminada UI de mover jugadores entre partidos
+
+- Quitados botón ↕️ en **PartidoCard**, modal **MoverJugador** y estado `moverState` en **Partidos.jsx**.
+- La lógica en `usePartidos.js` / `MoverJugador.jsx` permanece en el código pero sin acceso desde la UI.
+- Commit: `fix: eliminar UI de mover jugadores entre partidos`
 
 ### Sanciones
 
@@ -67,8 +100,9 @@ Documento de referencia para el estado del proyecto y decisiones recientes.
 
 ### Slots y resultados
 
-- **Slots:** `tick` cada 60 s en `useSlots` para que el candado desaparezca a las **19:00** sin relogar (`isSlotOpen` se recalcula).
-- **Resultados validados:** desbloqueo del coordinador con RPC **`modificar_resultado`** (sustituye UPDATE directo PostgREST en el paso «Modificar»).
+- **Slots:** `setTimeout` alineado a las **19:00** + `visibilitychange` en `useSlots` (ver punto 6 del 04/06/2026).
+- **Resultados:** validación automática al confirmar guardado; desbloqueo del coordinador con RPC **`modificar_resultado`** en el paso «Modificar».
+- **Partidos:** número de pista manual (`asignar_numero_pista`); botón «Copiar llista clubs» para coordinadores.
 
 ### Operaciones staging
 
