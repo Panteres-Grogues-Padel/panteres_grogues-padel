@@ -162,6 +162,16 @@ export default function DetalleSlot({
 
       <div className="slot-meta slot-info">{labelPistas}</div>
 
+      {!enrolled ? (
+        <div className="enroll-box">
+          <div className="checkbox-row">
+            <input type="checkbox" id="sc-slot" />
+            <label htmlFor="sc-slot">{t("jugar.detalle.memberCheckbox")}</label>
+          </div>
+          <div className="checkbox-sub">{t("jugar.detalle.memberHint")}</div>
+        </div>
+      ) : null}
+
       {!enrolled && slot.abierto && rivalSlot ? (
         <div className="baja-locked">
           {t("jugar.detalle.alreadyEnrolledElsewhere", {
@@ -173,11 +183,6 @@ export default function DetalleSlot({
 
       {!enrolled && slot.abierto && !rivalSlot ? (
         <div className="enroll-box">
-          <div className="checkbox-row">
-            <input type="checkbox" id="sc-slot" />
-            <label htmlFor="sc-slot">{t("jugar.detalle.memberCheckbox")}</label>
-          </div>
-          <div className="checkbox-sub">{t("jugar.detalle.memberHint")}</div>
           <button
             type="button"
             className="btn btn-primary btn-sm btn-block"
