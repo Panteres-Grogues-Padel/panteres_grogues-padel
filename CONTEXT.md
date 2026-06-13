@@ -6,62 +6,71 @@ Documento de referencia para el estado del proyecto y decisiones recientes.
 
 ## Implementado hoy (04/06/2026)
 
-### 1. Coordinador del día — prioridad al apuntarse
-
-- Tabla **`coordinador_dia`** (`dia_semana` 1–7, `jugador_id`) con asignación por día de la semana.
-- RPC **`es_coordinador_dia(p_slot_id)`** comprueba si el usuario autenticado es el coordinador de ese día.
-- Al apuntarse, el coordinador del día recibe **`inscrito_at` mínimo** (`1970-01-01T00:00:00Z`) para quedar primero en el orden de llegada (titulares y reservas).
-- Migración: `supabase/migrations/20260602130000_coordinador_dia.sql`
-
-### 2. Bloqueo de generación de partidos (resultados pendientes)
-
-- RPC **`hay_resultados_pendientes()`** devuelve `true` si existe algún resultado con `introducido_por` relleno, sin validar (`validado_por` / `validado_at` NULL) y `fecha <= CURRENT_DATE` (incluye hoy).
-- En **Partidos**, «Generar» / «Regenerar» llama a la RPC y bloquea con mensaje si hay pendientes.
-- Migraciones: `20260602140000_rpc_hay_resultados_pendientes.sql`, `20260604100000_fix_hay_resultados_pendientes.sql`
-
-### 3. Resultados — ventana del coordinador
-
-- **`enVentanaCoordResultados`**: el coordinador ve y gestiona resultados de **cualquier fecha pasada o hoy** (`fecha <= hoy`), igual que el jugador en el calendario; sin partidos futuros.
-- Hint UI: «Pots veure tots els resultats passats» / «Puedes ver todos los resultados pasados».
-
-### 4. Sets inválidos → 0-0 con aviso
-
-- Al guardar, marcadores no válidos en pádel (fuera de 6-0…6-4, 7-5, 7-6) se normalizan a **0-0** vía `setParaGuardar` en `useResultados.js`.
-- Respuesta `{ ok: true, warning: "…" }` + toast informativo en **App.jsx**.
-
-### 5. `setsDraft` se limpia tras guardar
-
-- Tras guardar con éxito, **`setsDraft`** se limpia en **Resultados.jsx** para que la UI muestre los datos de BD (p. ej. 0-0) y no el draft inválido que había escrito el jugador.
-
-### 6. Apertura de slots exactamente a las 19:00
-
-- **`useSlots.js`**: sustituido `setInterval` de 60 s por **`setTimeout`** alineado al próximo 19:00 local + listener **`visibilitychange`** para recalcular al volver a la pestaña.
-- El candado desaparece a las 19:00 sin recargar la app (complementa el cron `cron-slot-abierto` para notificaciones push).
-
-### 7. Botón «Copiar llista clubs» (coordinador)
-
-- En **Partidos**, solo visible para `isCoord`: copia lista plana `Partits [fecha] — [club]` con jugadores numerados por **`nombreCompleto`** (sin agrupación por pista ni nickname).
-- Función `buildClubsListText()` + `handleCopyClubsList()`.
-
-### 8. Número de pista editable por coordinador
-
-- **PartidoCard.jsx**: input numérico «Pista» con debounce 800 ms.
-- **`usePartidos.js`**: `asignarNumeroPista` → RPC **`asignar_numero_pista(p_pista_id, p_numero_pista)`**.
-- Texto WhatsApp (`buildWaText`): `*Pista ${numeroPista} (${hora})*`.
-- Migración: `supabase/migrations/20260604110000_rpc_asignar_numero_pista.sql`
-
-### 9. Validación automática al confirmar + modal
+### 1. Validación automática al confirmar + modal
 
 - Al pulsar «Guardar», modal en catalán: «Confirmes el resultat? Un cop confirmat s'actualitzarà el rànquing automàticament.»
 - **`guardarResultado`**: guarda con `validado_por` / `validado_at` del usuario actual, llama **`actualizar_ranking`** y notifica `resultat_validat` al resto de jugadores de la pista.
 - Eliminados botones «Validar» en la UI; el coordinador solo ve «Modificar» si el resultado ya estaba validado (`modificar_resultado` sigue disponible).
 - `puedeValidar: false` en `resultadosUtils.js`.
 
-### 10. Eliminada UI de mover jugadores entre partidos
+### 2. Eliminada UI de mover jugadores entre partidos
 
 - Quitados botón ↕️ en **PartidoCard**, modal **MoverJugador** y estado `moverState` en **Partidos.jsx**.
 - La lógica en `usePartidos.js` / `MoverJugador.jsx` permanece en el código pero sin acceso desde la UI.
-- Commit: `fix: eliminar UI de mover jugadores entre partidos`
+
+### 3. Fondo del hero personalizable (bandera / blau)
+
+- Columna **`fondo_hero`** en `jugadores` (`bandera` | `blau`, default `bandera`).
+- RPC **`actualizar_perfil_jugador`** guarda `fondo_hero`; **`get_perfil_jugador`** / **`get_mi_perfil_jugador`** lo devuelven.
+- **PerfilJugador.jsx**: sección «Fons de pantalla» con dos opciones visuales (gradiente bandera / azul `#0c5673`).
+- **Bienvenida.jsx**: clase `hero-pride--blau` según `currentUser.fondo_hero`.
+- Migración: `supabase/migrations/20260604120000_fondo_hero.sql`
+
+### 4. Eliminado emoji bandera LGBT del hero
+
+- **Bienvenida.jsx**: el subtítulo de bienvenida ya no muestra 🏳️‍🌈 (se elimina al renderizar; el texto i18n no cambia).
+
+### 5. Botón «Copiar llista clubs» (coordinador)
+
+- En **Partidos**, solo visible para `isCoord`: copia lista plana `Partits [fecha] — [club]` con jugadores numerados por **`nombreCompleto`** (sin agrupación por pista ni nickname).
+- Función `buildClubsListText()` + `handleCopyClubsList()`.
+
+### 6. Número de pista editable por coordinador
+
+- **PartidoCard.jsx**: input numérico «Pista» con debounce 800 ms.
+- **`usePartidos.js`**: `asignarNumeroPista` → RPC **`asignar_numero_pista(p_pista_id, p_numero_pista)`**.
+- Texto WhatsApp (`buildWaText`): `*Pista ${numeroPista} (${hora})*`.
+- Migración: `supabase/migrations/20260604110000_rpc_asignar_numero_pista.sql`
+
+### 7. Checkbox socio UP visible antes de las 19:00
+
+- **DetalleSlot.jsx**: el checkbox «Sóc soci/a del Club Cornellà Up» se muestra en bloque separado siempre que `!enrolled`, aunque el slot esté cerrado.
+- El botón «Confirmar inscripció» sigue apareciendo solo con `slot.abierto && !rivalSlot`; al confirmar se lee el checkbox (`es_socio` en `inscripciones`).
+
+### 8. Apertura de slots exactamente a las 19:00
+
+- **`useSlots.js`**: sustituido `setInterval` de 60 s por **`setTimeout`** alineado al próximo 19:00 local + listener **`visibilitychange`** para recalcular al volver a la pestaña.
+- El candado desaparece a las 19:00 sin recargar la app (complementa el cron `cron-slot-abierto` para notificaciones push).
+
+### También el mismo día
+
+#### Coordinador del día — prioridad al apuntarse
+
+- Tabla **`coordinador_dia`** + RPC **`es_coordinador_dia(p_slot_id)`**; `inscrito_at` mínimo al apuntarse.
+- Migración: `20260602130000_coordinador_dia.sql`
+
+#### Bloqueo de generación de partidos (resultados pendientes)
+
+- RPC **`hay_resultados_pendientes()`**; bloqueo en Partidos antes de generar/regenerar.
+- Migraciones: `20260602140000_rpc_hay_resultados_pendientes.sql`, `20260604100000_fix_hay_resultados_pendientes.sql`
+
+#### Resultados — ventana del coordinador
+
+- **`enVentanaCoordResultados`**: fechas pasadas o hoy (`fecha <= hoy`), igual que el jugador.
+
+#### Sets inválidos → 0-0 y `setsDraft`
+
+- `setParaGuardar` + toast; limpieza de **`setsDraft`** tras guardar OK en **Resultados.jsx**.
 
 ### Sanciones
 
@@ -90,6 +99,7 @@ Documento de referencia para el estado del proyecto y decisiones recientes.
 
 - **`contactForm`** se inicializa con teléfono, Instagram y `ocultar_telefon` al abrir el perfil.
 - **`actualizar_perfil_jugador`** sincroniza `ocultar_telefon` y `mostrar_telefono` (columna legacy) para que el checkbox y `mapPerfilFromRpc` no se contradigan.
+- **`fondo_hero`** (`bandera` | `blau`): elección de fondo del hero en perfil propio (ver punto 3 del 04/06/2026).
 
 ### Realtime
 
@@ -100,9 +110,11 @@ Documento de referencia para el estado del proyecto y decisiones recientes.
 
 ### Slots y resultados
 
-- **Slots:** `setTimeout` alineado a las **19:00** + `visibilitychange` en `useSlots` (ver punto 6 del 04/06/2026).
+- **Slots:** `setTimeout` alineado a las **19:00** + `visibilitychange` en `useSlots` (ver punto 8 del 04/06/2026).
+- **Inscripciones:** checkbox socio UP visible antes de apertura del slot (`DetalleSlot.jsx`).
 - **Resultados:** validación automática al confirmar guardado; desbloqueo del coordinador con RPC **`modificar_resultado`** en el paso «Modificar».
 - **Partidos:** número de pista manual (`asignar_numero_pista`); botón «Copiar llista clubs» para coordinadores.
+- **Hero/Bienvenida:** fondo personalizable (`fondo_hero`); sin emoji 🏳️‍🌈 en subtítulo.
 
 ### Operaciones staging
 

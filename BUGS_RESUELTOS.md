@@ -42,6 +42,8 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 - **Marcadores inválidos guardados tal cual** — Solución: `setParaGuardar` normaliza a 0-0 + `warning` en respuesta y toast en App.
 - **Botones «Validar» redundantes tras nuevo flujo** — Solución: validación automática en `guardarResultado` con modal de confirmación; `puedeValidar: false`.
 - **UI de mover jugadores sin lógica operativa** — Solución: eliminados botón ↕️, modal `MoverJugador` y props `onOpenMover`/`onMover` en Partidos/PartidoCard (lógica backend intacta).
+- **Checkbox socio UP oculto con slot cerrado** — El usuario no podía marcar «soci Up» antes de las 19:00. Solución: checkbox en bloque separado en `DetalleSlot.jsx` visible con `!enrolled` independientemente de `slot.abierto`; confirmación sigue condicionada a apertura.
+- **Emoji 🏳️‍🌈 en subtítulo del hero** — Solución: eliminado al renderizar en `Bienvenida.jsx` (texto i18n sin cambiar).
 
 ### Operaciones (staging)
 
@@ -84,6 +86,8 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 - **Copiar llista clubs** (coordinador): lista plana con nombres completos, sin agrupación por pista (`buildClubsListText`)
 - **Número de pista manual:** input en PartidoCard + RPC `asignar_numero_pista`; reflejado en texto WhatsApp
 - **Notificación `resultat_validat`** a otros jugadores de la pista tras confirmar resultado
+- **Fondo del hero personalizable:** `fondo_hero` en perfil (`bandera` gradiente pride | `blau` `#0c5673`); RPC `actualizar_perfil_jugador` + sección en PerfilJugador
+- **Checkbox socio UP** visible en detalle de slot antes de las 19:00; valor `es_socio` leído al confirmar inscripción
 
 ---
 
@@ -107,7 +111,7 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 | `actualizar_ranking` | `p_resultado_id` | Recalcular ranking tras validar resultado |
 | `get_perfil_jugador` | `p_jugador_id` | Perfil público de un jugador |
 | `get_mi_perfil_jugador` | — | Perfil del jugador autenticado |
-| `actualizar_perfil_jugador` | `p_jugador_id`, teléfono, instagram, ocultar, nickname | Actualizar contacto y privacidad (propietario) |
+| `actualizar_perfil_jugador` | `p_jugador_id`, teléfono, instagram, ocultar, nickname, fondo_hero | Actualizar contacto, privacidad y fondo del hero (propietario) |
 | `actualizar_nickname_jugador` | `p_jugador_id`, `p_nickname` | Cambiar nickname visible (solo coordinador) |
 | `modificar_resultado` | `p_resultado_id` | Desbloquear resultado validado para edición (solo coordinador) |
 | `hay_resultados_pendientes` | — | Bloquear generación de partidos si hay resultados sin validar (hasta hoy inclusive) |
@@ -176,3 +180,4 @@ Las escrituras (INSERT, UPDATE, DELETE) pueden usar la API de tabla con RLS; las
 - `20260602140000_rpc_hay_resultados_pendientes.sql`
 - `20260604100000_fix_hay_resultados_pendientes.sql`
 - `20260604110000_rpc_asignar_numero_pista.sql`
+- `20260604120000_fondo_hero.sql`
