@@ -22,6 +22,7 @@ export function mapPerfilFromRpc(row) {
     activo: row.activo ?? true,
     sancionat: Boolean(row.sancionat),
     sancio_fins: row.sancio_fins ?? null,
+    fondo_hero: row.fondo_hero === "blau" ? "blau" : "bandera",
     pj: row.partidos_jugados ?? 0,
     pg: row.partidos_ganados ?? 0,
     jj: row.juegos_jugados ?? 0,
@@ -57,7 +58,7 @@ export async function fetchMiPerfilJugadorRpc(client) {
 export async function actualizarPerfilJugadorRpc(
   client,
   jugadorId,
-  { nickname, telefono, instagram, ocultar_telefon }
+  { nickname, telefono, instagram, ocultar_telefon, fondo_hero }
 ) {
   if (!client || !jugadorId) return { ok: false, perfil: null };
   const { data, error } = await client.rpc("actualizar_perfil_jugador", {
@@ -65,7 +66,8 @@ export async function actualizarPerfilJugadorRpc(
     p_telefon: telefono ?? "",
     p_instagram: instagram ?? "",
     p_ocultar_telefon: Boolean(ocultar_telefon),
-    p_nickname: nickname ?? ""
+    p_nickname: nickname ?? "",
+    p_fondo_hero: fondo_hero ?? null
   });
   if (error) return { ok: false, error: error.message, perfil: null };
   if (typeof window !== "undefined") {

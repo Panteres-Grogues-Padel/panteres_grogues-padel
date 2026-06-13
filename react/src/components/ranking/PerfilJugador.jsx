@@ -58,6 +58,9 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
   const [nicknameError, setNicknameError] = useState("");
   const [contactSaving, setContactSaving] = useState(false);
   const [contactError, setContactError] = useState("");
+  const [fondoHero, setFondoHero] = useState("bandera");
+  const [fondoHeroSaving, setFondoHeroSaving] = useState(false);
+  const [fondoHeroError, setFondoHeroError] = useState("");
   const [sancioLocal, setSancioLocal] = useState({ sancionat: false, sancio_fins: "" });
   const [sancioSaving, setSancioSaving] = useState(false);
   const [sancioError, setSancioError] = useState("");
@@ -79,6 +82,7 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
         )
       });
       setNicknameForm(esPropi.nickname ?? "");
+      setFondoHero(esPropi.fondo_hero === "blau" ? "blau" : "bandera");
       setNicknameError("");
       setContactError("");
       setSancioLocal({
@@ -106,6 +110,7 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
         });
       }
       setNicknameForm(perfil.nickname ?? "");
+      setFondoHero(perfil.fondo_hero === "blau" ? "blau" : "bandera");
       setSancioLocal({
         sancionat: Boolean(perfil.sancionat),
         sancio_fins: perfil.sancio_fins ?? ""
@@ -162,7 +167,8 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
     setContactSaving(true);
     const { ok, perfil, error } = await actualizarPerfilJugadorRpc(supabase, view.id, {
       ...contactForm,
-      nickname: view.nickname ?? ""
+      nickname: view.nickname ?? "",
+      fondo_hero: fondoHero
     });
     setContactSaving(false);
     if (!ok || !perfil) {
@@ -177,7 +183,32 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
     });
     onJugadorUpdated?.({ id: view.id, ...perfil });
     void refreshJugador();
-  }, [isOwn, view, contactForm, onJugadorUpdated, refreshJugador]);
+  }, [isOwn, view, contactForm, fondoHero, onJugadorUpdated, refreshJugador]);
+
+  const handleSelectFondoHero = useCallback(
+    async (value) => {
+      if (!isOwn || !view?.id || !supabase || value === fondoHero || fondoHeroSaving) return;
+      setFondoHeroError("");
+      setFondoHero(value);
+      setFondoHeroSaving(true);
+      const { ok, perfil, error } = await actualizarPerfilJugadorRpc(supabase, view.id, {
+        ...contactForm,
+        nickname: view.nickname ?? "",
+        fondo_hero: value
+      });
+      setFondoHeroSaving(false);
+      if (!ok || !perfil) {
+        setFondoHeroError(error ?? t("ranking.profile.contactSaveError"));
+        setFondoHero(view.fondo_hero === "blau" ? "blau" : "bandera");
+        return;
+      }
+      setView((prev) => mergePerfilView(prev, perfil));
+      setFondoHero(perfil.fondo_hero === "blau" ? "blau" : "bandera");
+      onJugadorUpdated?.({ id: view.id, ...perfil });
+      void refreshJugador();
+    },
+    [isOwn, view, contactForm, fondoHero, fondoHeroSaving, onJugadorUpdated, refreshJugador]
+  );
 
   const handleSaveNickname = useCallback(async () => {
     if (!isCoord || !view?.id || !supabase) return;
@@ -433,6 +464,68 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
               >
                 {contactSaving ? t("common.saving") : t("ranking.profile.saveContact")}
               </button>
+            </div>
+
+            <div className="sheet-divider" />
+            <div className="privacy-section">
+              <div className="privacy-title">Fons de pantalla</div>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button
+                  type="button"
+                  className="profile-hero-option"
+                  disabled={fondoHeroSaving}
+                  aria-pressed={fondoHero === "bandera"}
+                  onClick={() => void handleSelectFondoHero("bandera")}
+                  style={{
+                    flex: 1,
+                    padding: 10,
+                    borderRadius: "var(--radius)",
+                    border:
+                      fondoHero === "bandera" ? "2px solid var(--navy)" : "0.5px solid var(--border2)",
+                    background: "var(--bg)",
+                    cursor: fondoHeroSaving ? "wait" : "pointer"
+                  }}
+                >
+                  <div
+                    aria-hidden
+                    style={{
+                      height: 44,
+                      borderRadius: 6,
+                      marginBottom: 8,
+                      background:
+                        "linear-gradient(135deg, #000 0%, #784f17 10%, #55cdfc 20%, #f7a8b8 30%, #fff 38%, #f7a8b8 46%, #55cdfc 54%, #e40303 62%, #ff8c00 70%, #ffed00 78%, #008026 86%, #004dff 93%, #750787 100%)"
+                    }}
+                  />
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>Bandera</div>
+                </button>
+                <button
+                  type="button"
+                  className="profile-hero-option"
+                  disabled={fondoHeroSaving}
+                  aria-pressed={fondoHero === "blau"}
+                  onClick={() => void handleSelectFondoHero("blau")}
+                  style={{
+                    flex: 1,
+                    padding: 10,
+                    borderRadius: "var(--radius)",
+                    border: fondoHero === "blau" ? "2px solid var(--navy)" : "0.5px solid var(--border2)",
+                    background: "var(--bg)",
+                    cursor: fondoHeroSaving ? "wait" : "pointer"
+                  }}
+                >
+                  <div
+                    aria-hidden
+                    style={{
+                      height: 44,
+                      borderRadius: 6,
+                      marginBottom: 8,
+                      background: "#0c5673"
+                    }}
+                  />
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>Blau</div>
+                </button>
+              </div>
+              {fondoHeroError ? <p className="profile-photo-error">{fondoHeroError}</p> : null}
             </div>
           </>
         ) : null}

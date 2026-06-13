@@ -116,6 +116,14 @@ export default function Bienvenida({
   const pj = rk?.pj ?? 0;
   const isCoord = Boolean(currentUser?.es_coordinador || currentUser?.isCoord);
   const mananaJuegas = useMananaJuegas(currentUser);
+  const fondoHero = jugadorHero?.fondo_hero === "blau" ? "blau" : "bandera";
+  const heroClassName = [
+    "hero-pride",
+    mananaJuegas ? "hero-pride--manana" : "",
+    fondoHero === "blau" ? "hero-pride--blau" : ""
+  ]
+    .filter(Boolean)
+    .join(" ");
   const entradasLog = isCoord && logFiltro ? activityLog.filter((e) => e.jugadorId === logFiltro) : activityLog;
   const jugadoresLog = useMemo(() => {
     const jugadores = new Map();
@@ -169,7 +177,7 @@ export default function Bienvenida({
 
   return (
     <div>
-      <div className={`hero-pride${mananaJuegas ? " hero-pride--manana" : ""}`}>
+      <div className={heroClassName}>
         <button
           type="button"
           className="hero-avatar-btn"

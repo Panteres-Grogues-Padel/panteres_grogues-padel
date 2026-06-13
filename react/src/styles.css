@@ -635,6 +635,14 @@ select {
   z-index: 0;
 }
 
+.hero-pride--blau {
+  background: #0c5673;
+}
+
+.hero-pride--blau::before {
+  background: rgba(0, 0, 0, 0.12);
+}
+
 .hero-pride > * {
   position: relative;
   z-index: 1;
