@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import PartidoCard from "./PartidoCard";
-import MoverJugador from "./MoverJugador";
 import { copyTextToClipboard } from "../../utils/clipboard";
 import {
   buildOpcionesDropdownPartidos,
@@ -83,7 +82,6 @@ export default function Partidos({
   onHora,
   onNumeroPista,
   onIndoor,
-  onMover,
   onConfirmar,
   isCoord,
   deepLink
@@ -97,7 +95,6 @@ export default function Partidos({
 
   const [opcionId, setOpcionId] = useState("");
   const [franjas, setFranjas] = useState(() => [createFranjaInicial()]);
-  const [moverState, setMoverState] = useState({ open: false, origen: null, jugador: null });
   const autoPickJugadorRef = useRef(false);
 
   useEffect(() => {
@@ -330,15 +327,6 @@ export default function Partidos({
     await copyTextToClipboard(texto);
   }
 
-  function onOpenMover(origenPartido, jugador) {
-    setMoverState({ open: true, origen: origenPartido, jugador });
-  }
-
-  async function onMove(destinoId) {
-    const ok = await onMover(moverState.origen.id, destinoId, moverState.jugador.jugadorId);
-    if (ok) setMoverState({ open: false, origen: null, jugador: null });
-  }
-
   return (
     <div>
       <h2 className="section-title">{t("partidos.title")}</h2>
@@ -498,7 +486,6 @@ export default function Partidos({
                 onHora={onHora}
                 onNumeroPista={onNumeroPista}
                 onIndoor={onIndoor}
-                onOpenMover={onOpenMover}
                 rankingPosByJugador={rankingPosByJugador}
               />
             ))}
@@ -530,15 +517,6 @@ export default function Partidos({
           </div>
         </>
       )}
-
-      <MoverJugador
-        open={moverState.open}
-        origenPartido={moverState.origen}
-        jugador={moverState.jugador}
-        destinos={partidosFiltrados.filter((p) => p.id !== moverState.origen?.id)}
-        onClose={() => setMoverState({ open: false, origen: null, jugador: null })}
-        onMove={onMove}
-      />
     </div>
   );
 }

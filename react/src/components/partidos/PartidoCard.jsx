@@ -28,7 +28,6 @@ export default function PartidoCard({
   onHora,
   onNumeroPista,
   onIndoor,
-  onOpenMover,
   rankingPosByJugador
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -118,15 +117,6 @@ export default function PartidoCard({
                 ) : (
                   <span style={{ fontSize: "11px", color: "var(--text3)" }}>—</span>
                 )}
-                {isCoord ? (
-                  <button
-                    className="btn btn-sm"
-                    style={{ fontSize: "10px", padding: "2px 6px", color: "var(--text2)" }}
-                    onClick={() => onOpenMover(partido, j)}
-                  >
-                    ↕️
-                  </button>
-                ) : null}
               </div>
             );
           })}
