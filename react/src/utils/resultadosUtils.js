@@ -53,7 +53,7 @@ export function getPermisosResultado({ partido, resultado, currentUser, isCoord,
       puedeEditar: enVentana && !validado,
       puedeGuardar: enVentana && !validado,
       puedeModificar: enVentana && validado,
-      puedeValidar: enVentana && Boolean(resultado) && estado === "pendiente"
+      puedeValidar: false
     };
   }
 

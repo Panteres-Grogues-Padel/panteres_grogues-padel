@@ -140,6 +140,9 @@ export function useResultados(partidos, currentUser, isCoord) {
       if (!enVentanaCoordResultados(fecha)) {
         return { ok: false, error: t("hooks.resultados.coordWindow") };
       }
+      if (prev?.validado_por) {
+        return { ok: false, error: t("hooks.resultados.coordOnlyModify") };
+      }
       return { ok: true };
     }
 
@@ -176,6 +179,7 @@ export function useResultados(partidos, currentUser, isCoord) {
     const set1 = setParaGuardar(sets[0]);
     const set2 = setParaGuardar(sets[1]);
     const set3 = setParaGuardar(sets[2]);
+    const validadoAt = new Date().toISOString();
 
     const payload = {
       pista_id: partidoId,
@@ -187,20 +191,33 @@ export function useResultados(partidos, currentUser, isCoord) {
       set3_p1: set3.p1,
       set3_p2: set3.p2,
       introducido_por: prev?.introducido_por ?? currentUser.id,
-      validado_por: null,
-      validado_at: null
+      validado_por: currentUser.id,
+      validado_at: validadoAt
     };
 
-    let query;
+    let resultadoId;
     if (prev) {
-      query = supabase.from("resultados").update(payload).eq("id", prev.id);
+      const { error: saveError } = await supabase.from("resultados").update(payload).eq("id", prev.id);
+      if (saveError) return { ok: false, error: saveError.message };
+      resultadoId = prev.id;
     } else {
-      query = supabase.from("resultados").insert(payload);
+      const { data, error: saveError } = await supabase
+        .from("resultados")
+        .insert(payload)
+        .select("id")
+        .single();
+      if (saveError) return { ok: false, error: saveError.message };
+      resultadoId = data?.id;
     }
-    const { error: saveError } = await query;
-    if (saveError) return { ok: false, error: saveError.message };
+
+    if (!resultadoId) return { ok: false, error: t("hooks.resultados.noResultToValidate") };
 
     lastSaveRef.current = Date.now();
+
+    const { error: rpcError } = await supabase.rpc("actualizar_ranking", {
+      p_resultado_id: resultadoId
+    });
+    if (rpcError) return { ok: false, error: rpcError.message };
 
     await createActivityLog({
       jugadorId: currentUser.id,
@@ -210,18 +227,16 @@ export function useResultados(partidos, currentUser, isCoord) {
         : t("hooks.resultados.activity.introduce", { id: partidoId, date: fechaPartido })
     });
 
-    if (!isCoord) {
-      const notifications = partido.jugadores
-        .filter((j) => j.jugadorId !== currentUser.id)
-        .map((j) => ({
-          jugadorId: j.jugadorId,
-          tipo: "resultat_introduit",
-          titulo: t("hooks.resultados.notifications.pendingTitle"),
-          texto: t("hooks.resultados.notifications.pendingText", { date: fechaPartido }),
-          data: { fecha: fechaPartido }
-        }));
-      await createNotifications(notifications);
-    }
+    const notifications = partido.jugadores
+      .filter((j) => j.jugadorId !== currentUser.id)
+      .map((j) => ({
+        jugadorId: j.jugadorId,
+        tipo: "resultat_validat",
+        titulo: t("hooks.resultados.notifications.validatedTitle"),
+        texto: t("hooks.resultados.notifications.validatedText", { date: fechaPartido }),
+        data: { fecha: fechaPartido }
+      }));
+    await createNotifications(notifications);
 
     await loadResultados();
 

@@ -37,8 +37,7 @@ function PartidoResultadoCard({
   resultado,
   setsDraft,
   onUpdateSet,
-  onGuardar,
-  onValidar,
+  onRequestGuardar,
   onModificar,
   currentUser,
   isCoord,
@@ -131,22 +130,13 @@ function PartidoResultadoCard({
               </div>
             </div>
           ))}
-          {isCoord ? (
-            <button
-              type="button"
-              className="btn btn-primary btn-sm btn-block res-validar-btn"
-              onClick={() => onValidar(partido.id, sets)}
-            >
-              {t("resultados.validateResult")}
-            </button>
-          ) : (
-            <button type="button" className="btn btn-primary btn-sm btn-block" onClick={() => onGuardar(partido.id, sets)}>
-              {resultado ? t("resultados.saveChanges") : t("resultados.saveResult")}
-            </button>
-          )}
-          {!isCoord && !resultado ? (
-            <p className="slot-meta res-hint">{t("resultados.coordMustValidate")}</p>
-          ) : null}
+          <button
+            type="button"
+            className="btn btn-primary btn-sm btn-block"
+            onClick={() => onRequestGuardar(partido.id, sets)}
+          >
+            {resultado ? t("resultados.saveChanges") : t("resultados.saveResult")}
+          </button>
         </div>
       ) : (
         <div className="res-sets-view">
@@ -176,16 +166,6 @@ function PartidoResultadoCard({
           {t("resultados.modifyResult")}
         </button>
       ) : null}
-
-      {isCoord && permisos.puedeValidar && !permisos.puedeEditar ? (
-        <button type="button" className="btn btn-primary btn-sm btn-block res-validar-btn" onClick={() => onValidar(partido.id)}>
-          {t("resultados.validateResult")}
-        </button>
-      ) : null}
-
-      {!isCoord && permisos.estado === "pendiente" ? (
-        <p className="slot-meta res-hint">{t("resultados.pendingCoordValidation")}</p>
-      ) : null}
     </article>
   );
 }
@@ -193,7 +173,6 @@ function PartidoResultadoCard({
 export default function Resultados({
   partidos,
   onGuardar,
-  onValidar,
   onModificar,
   currentUser,
   isCoord,
@@ -204,6 +183,7 @@ export default function Resultados({
   const diasDisponibles = useMemo(() => getDiasDisponiblesResultados(partidos, isCoord), [partidos, isCoord]);
   const [fechaSel, setFechaSel] = useState("");
   const [setsDraft, setSetsDraft] = useState({});
+  const [confirmGuardar, setConfirmGuardar] = useState(null);
 
   useEffect(() => {
     if (!diasDisponibles.length) {
@@ -246,14 +226,15 @@ export default function Resultados({
     return res;
   }
 
-  async function handleValidar(partidoId, sets) {
-    const partido = partidos.find((p) => p.id === partidoId);
-    const fecha = partido?.fechaPartido ?? fechaSel;
-    if (isCoord && sets) {
-      const saveRes = await onGuardar(partidoId, fecha, sets);
-      if (!saveRes?.ok) return;
-    }
-    await onValidar(partidoId, fecha);
+  function requestGuardar(partidoId, sets) {
+    setConfirmGuardar({ partidoId, sets });
+  }
+
+  async function confirmGuardarResultado() {
+    if (!confirmGuardar) return;
+    const { partidoId, sets } = confirmGuardar;
+    setConfirmGuardar(null);
+    await handleGuardar(partidoId, sets);
   }
 
   function handleModificar(partidoId) {
@@ -308,8 +289,7 @@ export default function Resultados({
               resultado={resultado}
               setsDraft={setsDraft[p.id]}
               onUpdateSet={updateSet}
-              onGuardar={handleGuardar}
-              onValidar={handleValidar}
+              onRequestGuardar={requestGuardar}
               onModificar={handleModificar}
               currentUser={currentUser}
               isCoord={isCoord}
@@ -318,6 +298,24 @@ export default function Resultados({
           );
         })
       )}
+
+      {confirmGuardar ? (
+        <div className="overlay open" onClick={() => setConfirmGuardar(null)}>
+          <div className="overlay-sheet open" onClick={(e) => e.stopPropagation()}>
+            <p style={{ fontSize: "14px", color: "var(--text)", marginBottom: "1rem", lineHeight: 1.5 }}>
+              Confirmes el resultat? Un cop confirmat s&apos;actualitzarà el rànquing automàticament.
+            </p>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button type="button" className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={() => void confirmGuardarResultado()}>
+                Confirmar
+              </button>
+              <button type="button" className="btn btn-sm" style={{ flex: 1 }} onClick={() => setConfirmGuardar(null)}>
+                Cancel·lar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
