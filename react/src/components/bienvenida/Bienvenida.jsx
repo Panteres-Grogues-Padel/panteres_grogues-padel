@@ -190,7 +190,11 @@ export default function Bienvenida({
           {saludoPorHora()}
           {t("bienvenida.greetingSuffix", { name: nombre })}
         </div>
-        <div className="hero-sub">{t("bienvenida.welcomeSubtitle")}</div>
+        <div className="hero-sub">
+          {t("bienvenida.welcomeSubtitle")
+            .replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}\uFE0F]/gu, "")
+            .trim()}
+        </div>
         {mananaJuegas ? <div className="hero-manana">{t("bienvenida.playTomorrow")}</div> : null}
       </div>
 
