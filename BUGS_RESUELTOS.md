@@ -48,6 +48,7 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 ### Operaciones (staging)
 
 - Email de usuario de prueba actualizado: `sergic@pa.com` → `sergir@pa.com` en `auth.users` y `jugadores`.
+- Super admins asignados manualmente: `manul@pa.com`, `jordib@pa.com`, `vipe@pa.com` (`es_super_admin = true`).
 
 ---
 
@@ -88,6 +89,10 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 - **Notificación `resultat_validat`** a otros jugadores de la pista tras confirmar resultado
 - **Fondo del hero personalizable:** `fondo_hero` en perfil (`bandera` gradiente pride | `blau` `#0c5673`); RPC `actualizar_perfil_jugador` + sección en PerfilJugador
 - **Checkbox socio UP** visible en detalle de slot antes de las 19:00; valor `es_socio` leído al confirmar inscripción
+- **Panel de administración:** pestaña Admin con 4 secciones (Jugadors, Coordinadors, Cuotes, Pendents); acceso super admin o tesorero (tesorero solo Cuotes)
+- **Campos admin en jugadores:** `primer_apellido`, `segundo_apellido`, `numero_socio`, `id_app_antigua`, `es_super_admin`, `es_tesorero`
+- **Cuotas de socio:** tabla `cuotas` (anual/trimestral, período, pagada, `fecha_pago`, `fecha_inicio`, `fecha_fin`); marcar pagada desde panel; fechas calculadas automáticamente por tipo/período
+- **Gestión jugadores admin:** crear, editar, activar/desactivar, asignar coordinador; RPCs `get_jugadores_admin`, `crear_jugador_admin`, `editar_jugador_admin`, `get_cuotas`, `marcar_cuota_pagada`
 
 ---
 
@@ -119,8 +124,13 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 | `sancionar_jugador` | `p_jugador_id`, `p_fins` | Sancionar, bajar inscripciones afectadas y notificar |
 | `desancionar_jugador` | `p_jugador_id` | Quitar sanción |
 | `asignar_numero_pista` | `p_pista_id`, `p_numero_pista` | Asignar número de pista manualmente (solo coordinador) |
+| `get_jugadores_admin` | — | Listado de jugadores para panel admin (super admin o tesorero) |
+| `crear_jugador_admin` | nombre, apellidos, nickname, email, numero_socio | Alta de jugador (solo super admin) |
+| `editar_jugador_admin` | `p_jugador_id` + campos opcionales | Editar jugador, roles y `activo` (solo super admin) |
+| `get_cuotas` | `p_jugador_id` | Cuotas de un jugador (super admin o tesorero) |
+| `marcar_cuota_pagada` | `p_jugador_id`, `p_tipo`, `p_periodo`, `p_fecha_inicio`?, `p_fecha_fin`? | Marcar cuota pagada; fechas opcionales (calculadas si null) |
 
-Funciones auxiliares en BD: `es_coordinador()` (RLS).
+Funciones auxiliares en BD: `es_coordinador()` (RLS), `es_super_admin()`, `es_tesorero()`, `es_admin_o_tesorero()`, `cuotas_fechas_desde_periodo(tipo, periodo)`.
 
 ---
 
@@ -181,3 +191,5 @@ Las escrituras (INSERT, UPDATE, DELETE) pueden usar la API de tabla con RLS; las
 - `20260604100000_fix_hay_resultados_pendientes.sql`
 - `20260604110000_rpc_asignar_numero_pista.sql`
 - `20260604120000_fondo_hero.sql`
+- `20260609100000_panel_admin.sql`
+- `20260609110000_cuotas_fechas.sql`

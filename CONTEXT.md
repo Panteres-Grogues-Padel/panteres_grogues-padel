@@ -4,6 +4,62 @@ Documento de referencia para el estado del proyecto y decisiones recientes.
 
 ---
 
+## Implementado hoy (09/06/2026)
+
+### 1. Panel de administración — campos nuevos en `jugadores`
+
+- **`primer_apellido`**, **`segundo_apellido`**, **`numero_socio`**, **`id_app_antigua`**
+- **`es_super_admin`**, **`es_tesorero`** (boolean, default `false`)
+- Helpers de permisos: **`es_super_admin()`**, **`es_tesorero()`**, **`es_admin_o_tesorero()`**
+- Migración: `supabase/migrations/20260609100000_panel_admin.sql`
+
+### 2. Tabla `cuotas`
+
+- Columnas: `jugador_id`, `tipo` (`anual` | `trimestral`), `periodo`, `pagada`, `fecha_pago`, **`fecha_inicio`**, **`fecha_fin`**
+- Restricción `UNIQUE (jugador_id, tipo, periodo)`
+- **Período anual:** `"YYYY"` (ej. `"2026"`)
+- **Período trimestral:** `"YYYY-T1"` … `"YYYY-T4"`
+- Migraciones: `20260609100000_panel_admin.sql`, `20260609110000_cuotas_fechas.sql`
+
+### 3. RPCs de administración
+
+| RPC | Permiso | Uso |
+|-----|---------|-----|
+| `get_jugadores_admin` | super admin o tesorero | Listado completo de jugadores para el panel |
+| `crear_jugador_admin` | solo super admin | Alta de jugador + fila en `ranking` |
+| `editar_jugador_admin` | solo super admin | Edición de datos, roles (`es_coordinador`, `es_tesorero`, `es_super_admin`) y `activo` |
+| `get_cuotas` | super admin o tesorero | Historial de cuotas de un jugador |
+| `marcar_cuota_pagada` | super admin o tesorero | Marca cuota pagada; acepta `p_fecha_inicio` / `p_fecha_fin` opcionales |
+
+Función auxiliar BD: **`cuotas_fechas_desde_periodo(tipo, periodo)`** — calcula rango de fechas del período.
+
+### 4. UI — pestaña Admin
+
+- Nueva pestaña **Admin** en `BottomNav` / `App.jsx` (visible si `es_super_admin` o `es_tesorero` vía `useAdminAccess`)
+- Componentes: **`Admin.jsx`**, **`admin.css`**, hook **`useAdmin.js`**, utilidades **`adminJugador.js`**
+- **4 secciones** (pestañas internas):
+  - **Jugadors** (solo super admin): listado, edición modal, activar/desactivar
+  - **Coordinadors** (solo super admin): asignar/quitar coordinador
+  - **Cuotes** (super admin y tesorero): cuota anual y trimestral del período vigente; marcar pagada
+  - **Pendents** (solo super admin): jugadores inactivos pendientes de aprobación
+- El **tesorero** solo ve la sección Cuotes (resto de pestañas ocultas)
+- Botón «Actualitzar llista» (solo super admin): recarga `get_jugadores_admin`
+
+### 5. Cuotas con fechas de inicio y fin
+
+- Cálculo automático según tipo y período (en BD y cliente):
+  - Anual `"2026"`: 01/01/2026 → 31/12/2026
+  - Trimestral `T1`…`T4`: Q1 01/01–31/03, Q2 01/04–30/06, Q3 01/07–30/09, Q4 01/10–31/12
+- **`marcar_cuota_pagada`**: si no se pasan fechas, las calcula; el cliente también envía `p_fecha_inicio` / `p_fecha_fin` desde `fechasCuotaDesdePeriodo`
+- UI: rango de fechas visible en cada tarjeta de jugador (formato `ca-ES`)
+- Migración: `supabase/migrations/20260609110000_cuotas_fechas.sql`
+
+### 6. Super admins en staging (manual)
+
+- `manul@pa.com`, `jordib@pa.com`, `vipe@pa.com` → `es_super_admin = true` (SQL directo en staging)
+
+---
+
 ## Implementado hoy (04/06/2026)
 
 ### 1. Validación automática al confirmar + modal
@@ -115,10 +171,12 @@ Documento de referencia para el estado del proyecto y decisiones recientes.
 - **Resultados:** validación automática al confirmar guardado; desbloqueo del coordinador con RPC **`modificar_resultado`** en el paso «Modificar».
 - **Partidos:** número de pista manual (`asignar_numero_pista`); botón «Copiar llista clubs» para coordinadores.
 - **Hero/Bienvenida:** fondo personalizable (`fondo_hero`); sin emoji 🏳️‍🌈 en subtítulo.
+- **Panel admin:** pestaña Admin (`Admin.jsx`); cuotas con fechas; super admins en staging (`manul@pa.com`, `jordib@pa.com`, `vipe@pa.com`).
 
 ### Operaciones staging
 
 - Email de prueba actualizado: `sergic@pa.com` → `sergir@pa.com` (`auth.users` + `jugadores`).
+- Super admins en staging: `manul@pa.com`, `jordib@pa.com`, `vipe@pa.com` (`es_super_admin = true`, SQL manual).
 
 ---
 
