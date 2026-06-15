@@ -185,6 +185,12 @@
   color: #0c5673;
 }
 
+.admin-cuota-dates {
+  font-size: 11px;
+  color: var(--text2);
+  line-height: 1.3;
+}
+
 .admin-cuota-state {
   font-size: 12px;
   font-weight: 600;

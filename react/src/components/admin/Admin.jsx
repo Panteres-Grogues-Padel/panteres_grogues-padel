@@ -4,7 +4,10 @@ import { useAdminJugadores } from "../../hooks/useAdmin";
 import {
   cuotaPagada,
   estadoJugador,
+  fechasCuotaDesdePeriodo,
+  fechasCuotaDisplay,
   filtrarJugadoresBusqueda,
+  formatRangoCuota,
   nombreAdminJugador,
   periodoAnualActual,
   periodoTrimestralActual
@@ -302,7 +305,8 @@ function CuotesSection({ jugadores, fetchCuotas, marcarCuotaPagada, onMessage })
 
   async function handleMarcar(jugador, tipo, periodo) {
     setBusyId(jugador.id);
-    const res = await marcarCuotaPagada(jugador.id, tipo, periodo);
+    const fechas = fechasCuotaDesdePeriodo(tipo, periodo);
+    const res = await marcarCuotaPagada(jugador.id, tipo, periodo, fechas);
     setBusyId(null);
     if (!res.ok) {
       onMessage(res.error);
@@ -335,6 +339,8 @@ function CuotesSection({ jugadores, fetchCuotas, marcarCuotaPagada, onMessage })
           const cuotas = cuotasMap[j.id] ?? [];
           const anualOk = cuotaPagada(cuotas, "anual", periodoAnual);
           const trimOk = cuotaPagada(cuotas, "trimestral", periodoTrim);
+          const anualFechas = fechasCuotaDisplay(cuotas, "anual", periodoAnual);
+          const trimFechas = fechasCuotaDisplay(cuotas, "trimestral", periodoTrim);
           return (
             <div key={j.id} className="admin-card admin-card--cuota">
               <div className="admin-card-main">
@@ -344,6 +350,7 @@ function CuotesSection({ jugadores, fetchCuotas, marcarCuotaPagada, onMessage })
               <div className="admin-cuota-cols">
                 <div className="admin-cuota-col">
                   <span className="admin-cuota-label">{t("admin.cuotas.annual")}</span>
+                  <span className="admin-cuota-dates">{formatRangoCuota(anualFechas)}</span>
                   <span className={`admin-cuota-state ${anualOk ? "paid" : "pending"}`}>
                     {anualOk ? t("admin.cuotas.paid") : t("admin.cuotas.pending")}
                   </span>
@@ -360,6 +367,7 @@ function CuotesSection({ jugadores, fetchCuotas, marcarCuotaPagada, onMessage })
                 </div>
                 <div className="admin-cuota-col">
                   <span className="admin-cuota-label">{t("admin.cuotas.quarterly")}</span>
+                  <span className="admin-cuota-dates">{formatRangoCuota(trimFechas)}</span>
                   <span className={`admin-cuota-state ${trimOk ? "paid" : "pending"}`}>
                     {trimOk ? t("admin.cuotas.paid") : t("admin.cuotas.pending")}
                   </span>

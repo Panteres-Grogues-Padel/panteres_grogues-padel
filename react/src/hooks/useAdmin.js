@@ -103,12 +103,14 @@ export function useAdminJugadores(enabled) {
     return { ok: true, cuotas: Array.isArray(data) ? data : [] };
   }, []);
 
-  const marcarCuotaPagada = useCallback(async (jugadorId, tipo, periodo) => {
+  const marcarCuotaPagada = useCallback(async (jugadorId, tipo, periodo, fechas = null) => {
     if (!supabase) return { ok: false, error: "No connection" };
     const { error: rpcError } = await supabase.rpc("marcar_cuota_pagada", {
       p_jugador_id: jugadorId,
       p_tipo: tipo,
-      p_periodo: periodo
+      p_periodo: periodo,
+      p_fecha_inicio: fechas?.fecha_inicio ?? null,
+      p_fecha_fin: fechas?.fecha_fin ?? null
     });
     if (rpcError) return { ok: false, error: rpcError.message };
     return { ok: true };
