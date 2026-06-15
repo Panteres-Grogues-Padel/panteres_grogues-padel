@@ -75,10 +75,30 @@ const TABS = [
   }
 ];
 
-export default function BottomNav({ activeTab, setActiveTab }) {
+const ADMIN_TAB = {
+  id: "admin",
+  labelKey: "nav.admin",
+  svg: (
+    <svg viewBox="0 0 24 24" width={22} height={22} aria-hidden>
+      <path d="M12 15v2" />
+      <path d="M12 3v2" />
+      <path d="M4.22 4.22l1.42 1.42" />
+      <path d="M18.36 18.36l1.42 1.42" />
+      <path d="M1 12h2" />
+      <path d="M21 12h2" />
+      <path d="M4.22 19.78l1.42-1.42" />
+      <path d="M18.36 5.64l1.42-1.42" />
+      <circle cx="12" cy="12" r="4" />
+    </svg>
+  )
+};
+
+export default function BottomNav({ activeTab, setActiveTab, showAdmin }) {
+  const tabs = showAdmin ? [...TABS, ADMIN_TAB] : TABS;
+
   return (
-    <nav className="bottom-nav">
-      {TABS.map(({ id, labelKey, svg }) => (
+    <nav className={`bottom-nav${showAdmin ? " bottom-nav--admin" : ""}`}>
+      {tabs.map(({ id, labelKey, svg }) => (
         <button
           key={id}
           type="button"

@@ -1,0 +1,294 @@
+.admin-panel {
+  background: #fefce8;
+  min-height: calc(100vh - var(--nav-h) - 80px);
+  margin: -0.5rem -1rem 0;
+  padding: 1rem 1rem 5rem;
+}
+
+.admin-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0c5673;
+  margin: 0 0 0.75rem;
+}
+
+.admin-hint {
+  font-size: 12px;
+  color: #0c5673;
+  opacity: 0.85;
+  margin: 0 0 0.75rem;
+}
+
+.admin-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.admin-tab {
+  border: 1px solid #0c5673;
+  background: #fff;
+  color: #0c5673;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-tab.active {
+  background: #0c5673;
+  color: #fde047;
+}
+
+.admin-toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.admin-search,
+.admin-select {
+  flex: 1;
+  min-width: 140px;
+  height: 38px;
+  border: 1px solid #0c5673;
+  border-radius: var(--radius);
+  padding: 0 10px;
+  font-size: 13px;
+  background: #fff;
+  color: var(--text);
+}
+
+.admin-subtitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0c5673;
+  margin: 1rem 0 0.5rem;
+}
+
+.admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: #fff;
+  border: 1px solid rgba(12, 86, 115, 0.2);
+  border-radius: var(--radius-lg);
+  padding: 10px 12px;
+}
+
+.admin-card--cuota {
+  flex-direction: column;
+}
+
+.admin-card-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.admin-card-meta {
+  font-size: 11px;
+  color: var(--text2);
+  margin-top: 2px;
+}
+
+.admin-badge {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.admin-badge--actiu {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.admin-badge--inactiu {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.admin-badge--sancionat {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.admin-badge--pendent {
+  background: #fde047;
+  color: #0c5673;
+}
+
+.admin-row-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.admin-btn {
+  border-color: #0c5673;
+  color: #0c5673;
+}
+
+.admin-btn--primary {
+  background: #0c5673;
+  color: #fde047;
+  border-color: #0c5673;
+}
+
+.admin-btn--danger {
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.admin-cuota-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+}
+
+.admin-cuota-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  background: #fefce8;
+  border-radius: var(--radius);
+  border: 1px solid rgba(12, 86, 115, 0.15);
+}
+
+.admin-cuota-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #0c5673;
+}
+
+.admin-cuota-state {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.admin-cuota-state.paid {
+  color: #166534;
+}
+
+.admin-cuota-state.pending {
+  color: #b45309;
+}
+
+.admin-empty {
+  font-size: 13px;
+  color: var(--text2);
+  text-align: center;
+  padding: 1.5rem 0;
+}
+
+.admin-error {
+  font-size: 13px;
+  color: var(--danger);
+  padding: 0.5rem 0;
+}
+
+.admin-refresh {
+  margin-top: 1rem;
+  border-color: #0c5673;
+  color: #0c5673;
+}
+
+.admin-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 86, 115, 0.35);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.admin-modal {
+  width: 100%;
+  max-width: 480px;
+  background: #fefce8;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: 1rem 1rem 1.25rem;
+  border: 1px solid #0c5673;
+}
+
+.admin-modal-title {
+  margin: 0;
+  font-size: 16px;
+  color: #0c5673;
+}
+
+.admin-modal-sub {
+  margin: 4px 0 12px;
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.admin-form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #0c5673;
+}
+
+.admin-field input {
+  height: 36px;
+  border: 1px solid rgba(12, 86, 115, 0.35);
+  border-radius: var(--radius);
+  padding: 0 10px;
+  font-size: 13px;
+  background: #fff;
+}
+
+.admin-modal-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.admin-modal-actions .btn {
+  flex: 1;
+}
+
+.bottom-nav--admin {
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.bottom-nav--admin .nav-label {
+  font-size: 9px;
+}

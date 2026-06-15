@@ -53,7 +53,8 @@
     "ranking": "Rànquing",
     "agenda": "Agenda",
     "coordinacion": "Coordinació",
-    "logout": "Sortir"
+    "logout": "Sortir",
+    "admin": "Admin"
   },
 
   "topbar": {
@@ -556,6 +557,67 @@
       "oct": "Oct",
       "nov": "Nov",
       "dec": "Des"
+    }
+  },
+
+  "admin": {
+    "title": "Administració",
+    "treasurerHint": "Mode tesorer: només gestió de quotes.",
+    "tabs": {
+      "players": "Jugadors",
+      "coords": "Coordinadors",
+      "fees": "Quotes",
+      "pending": "Pendents"
+    },
+    "searchPlaceholder": "Cercar jugador/a…",
+    "filterAll": "Tots els estats",
+    "noPlayers": "Cap jugador/a coincideix amb el filtre.",
+    "editPlayer": "Editar jugador/a",
+    "refresh": "Actualitzar llista",
+    "savedOk": "Canvis desats.",
+    "activatedOk": "Jugador/a activat/da.",
+    "deactivatedOk": "Jugador/a desactivat/da.",
+    "coordAssignedOk": "Rol de coordinador/a assignat.",
+    "coordRemovedOk": "Rol de coordinador/a eliminat.",
+    "status": {
+      "active": "Actiu",
+      "inactive": "Inactiu",
+      "sanctioned": "Sancionat",
+      "pending": "Pendent"
+    },
+    "fields": {
+      "name": "Nom",
+      "firstSurname": "Primer cognom",
+      "secondSurname": "Segon cognom",
+      "nickname": "Nom visible",
+      "memberNumber": "Núm. soci",
+      "legacyId": "ID app antiga"
+    },
+    "actions": {
+      "edit": "Editar",
+      "activate": "Activar",
+      "deactivate": "Desactivar",
+      "approve": "Aprovar"
+    },
+    "coords": {
+      "current": "Coordinadors actuals",
+      "none": "Cap coordinador/a assignat/da.",
+      "add": "Afegir coordinador/a",
+      "remove": "Treure rol",
+      "assign": "Assignar"
+    },
+    "cuotas": {
+      "periodHint": "Període actual: anual {{anual}} · trimestral {{trim}}",
+      "annual": "Anual",
+      "quarterly": "Trimestral",
+      "paid": "Pagada",
+      "pending": "Pendent",
+      "markPaid": "Marcar pagada",
+      "markedOk": "Quota marcada com a pagada."
+    },
+    "pending": {
+      "hint": "Jugadors/es amb compte inactiu i sense sanció.",
+      "none": "No hi ha sol·licituds pendents."
     }
   }
 }

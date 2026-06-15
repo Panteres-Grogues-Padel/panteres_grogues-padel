@@ -52,7 +52,8 @@
     "ranking": "Ranking",
     "agenda": "Agenda",
     "coordinacion": "Coordinación",
-    "logout": "Salir"
+    "logout": "Salir",
+    "admin": "Admin"
   },
 
   "topbar": {
@@ -553,6 +554,67 @@
       "oct": "Oct",
       "nov": "Nov",
       "dec": "Dic"
+    }
+  },
+
+  "admin": {
+    "title": "Administración",
+    "treasurerHint": "Modo tesorero: solo gestión de cuotas.",
+    "tabs": {
+      "players": "Jugadores",
+      "coords": "Coordinadores",
+      "fees": "Cuotas",
+      "pending": "Pendientes"
+    },
+    "searchPlaceholder": "Buscar jugador/a…",
+    "filterAll": "Todos los estados",
+    "noPlayers": "Ningún jugador coincide con el filtro.",
+    "editPlayer": "Editar jugador/a",
+    "refresh": "Actualizar lista",
+    "savedOk": "Cambios guardados.",
+    "activatedOk": "Jugador/a activado/a.",
+    "deactivatedOk": "Jugador/a desactivado/a.",
+    "coordAssignedOk": "Rol de coordinador/a asignado.",
+    "coordRemovedOk": "Rol de coordinador/a eliminado.",
+    "status": {
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "sanctioned": "Sancionado",
+      "pending": "Pendiente"
+    },
+    "fields": {
+      "name": "Nombre",
+      "firstSurname": "Primer apellido",
+      "secondSurname": "Segundo apellido",
+      "nickname": "Nombre visible",
+      "memberNumber": "Nº socio",
+      "legacyId": "ID app antigua"
+    },
+    "actions": {
+      "edit": "Editar",
+      "activate": "Activar",
+      "deactivate": "Desactivar",
+      "approve": "Aprobar"
+    },
+    "coords": {
+      "current": "Coordinadores actuales",
+      "none": "Ningún coordinador/a asignado/a.",
+      "add": "Añadir coordinador/a",
+      "remove": "Quitar rol",
+      "assign": "Asignar"
+    },
+    "cuotas": {
+      "periodHint": "Período actual: anual {{anual}} · trimestral {{trim}}",
+      "annual": "Anual",
+      "quarterly": "Trimestral",
+      "paid": "Pagada",
+      "pending": "Pendiente",
+      "markPaid": "Marcar pagada",
+      "markedOk": "Cuota marcada como pagada."
+    },
+    "pending": {
+      "hint": "Jugadores con cuenta inactiva y sin sanción.",
+      "none": "No hay solicitudes pendientes."
     }
   }
 }

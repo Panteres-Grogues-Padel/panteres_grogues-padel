@@ -8,6 +8,7 @@ import Partidos from "./components/partidos/Partidos";
 import Resultados from "./components/resultados/Resultados";
 import Agenda from "./components/agenda/Agenda";
 import Seccion from "./components/seccion/Seccion";
+import Admin from "./components/admin/Admin";
 import BottomNav from "./components/layout/BottomNav";
 import Topbar from "./components/layout/Topbar";
 import { useAuth } from "./hooks/useAuth";
@@ -17,6 +18,7 @@ import { usePartidos } from "./hooks/usePartidos";
 import { useEventos } from "./hooks/useEventos";
 import { useResultados } from "./hooks/useResultados";
 import { resolveNotificacionDeepLink, useNotificaciones } from "./hooks/useNotificaciones";
+import { useAdminAccess } from "./hooks/useAdmin";
 import { isJugadorUuid, jugadoresCoinciden } from "./utils/jugador";
 import PerfilJugador from "./components/ranking/PerfilJugador";
 import { CurrentJugadorProvider, useCurrentJugador } from "./context/CurrentJugadorContext";
@@ -96,6 +98,7 @@ function AppAuthed({ auth }) {
     marcarLeida,
     marcarTodasLeidas
   } = useNotificaciones(auth.currentUser);
+  const adminAccess = useAdminAccess();
 
   function showMessage(msg) {
     setFlashMessage(msg);
@@ -335,9 +338,12 @@ function AppAuthed({ auth }) {
             </>
           ) : null}
           {activeTab === "seccion" ? <Seccion /> : null}
+          {activeTab === "admin" && adminAccess.canAccess ? (
+            <Admin isSuperAdmin={adminAccess.superAdmin} onMessage={showMessage} />
+          ) : null}
         </main>
 
-        <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+        <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} showAdmin={adminAccess.canAccess} />
       </div>
       {flashMessage ? <div className="toast">{flashMessage}</div> : null}
       <PerfilJugador
