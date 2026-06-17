@@ -640,7 +640,7 @@ select {
 }
 
 .hero-pride--blau::before {
-  background: rgba(0, 0, 0, 0.12);
+  display: none;
 }
 
 .hero-pride > * {
