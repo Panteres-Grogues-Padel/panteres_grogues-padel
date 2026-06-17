@@ -4,13 +4,15 @@ import { useAdminJugadores } from "../../hooks/useAdmin";
 import {
   cuotaPagada,
   estadoJugador,
+  etiquetaPeriodoTrimestral,
   fechasCuotaDesdePeriodo,
   fechasCuotaDisplay,
   filtrarJugadoresBusqueda,
+  formatCuotaFecha,
   formatRangoCuota,
   nombreAdminJugador,
-  periodoAnualActual,
-  periodoTrimestralActual
+  periodoTrimestralActual,
+  periodosTrimestralesHistorial
 } from "../../utils/adminJugador";
 import { t } from "../../i18n";
 
@@ -259,12 +261,142 @@ function CoordinadorsSection({ jugadores, onToggleCoord, busyId }) {
   );
 }
 
-function CuotesSection({ jugadores, fetchCuotas, marcarCuotaPagada, onMessage }) {
-  const periodoAnual = periodoAnualActual();
-  const periodoTrim = periodoTrimestralActual();
-  const [cuotasMap, setCuotasMap] = useState({});
-  const [loadingCuotas, setLoadingCuotas] = useState(false);
-  const [busyId, setBusyId] = useState(null);
+function CuotaJugadorDetalle({
+  jugador,
+  fetchCuotas,
+  marcarCuotaPagada,
+  desmarcarCuotaPagada,
+  onBack,
+  onMessage
+}) {
+  const [cuotas, setCuotas] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [busyPeriodo, setBusyPeriodo] = useState(null);
+  const periodoActual = periodoTrimestralActual();
+
+  const periodos = useMemo(() => periodosTrimestralesHistorial(cuotas), [cuotas]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      const res = await fetchCuotas(jugador.id);
+      if (cancelled) return;
+      setCuotas(res.ok ? res.cuotas : []);
+      setLoading(false);
+    }
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [jugador.id, fetchCuotas]);
+
+  async function refresh() {
+    const res = await fetchCuotas(jugador.id);
+    if (res.ok) setCuotas(res.cuotas);
+    return res;
+  }
+
+  async function handleMarcar(periodo) {
+    setBusyPeriodo(periodo);
+    const fechas = fechasCuotaDesdePeriodo("trimestral", periodo);
+    const res = await marcarCuotaPagada(jugador.id, "trimestral", periodo, fechas);
+    setBusyPeriodo(null);
+    if (!res.ok) {
+      onMessage(res.error);
+      return;
+    }
+    await refresh();
+    onMessage(t("admin.cuotas.markedOk"));
+  }
+
+  async function handleDesmarcar(periodo) {
+    setBusyPeriodo(periodo);
+    const res = await desmarcarCuotaPagada(jugador.id, "trimestral", periodo);
+    setBusyPeriodo(null);
+    if (!res.ok) {
+      onMessage(res.error);
+      return;
+    }
+    await refresh();
+    onMessage(t("admin.cuotas.unmarkedOk"));
+  }
+
+  return (
+    <div className="admin-section">
+      <button type="button" className="admin-cuota-back" onClick={onBack}>
+        {t("admin.cuotas.back")}
+      </button>
+      <div className="admin-cuota-detail-header">
+        <h3 className="admin-subtitle admin-subtitle--flush">{nombreAdminJugador(jugador)}</h3>
+        <p className="admin-card-meta">
+          {jugador.numero_socio ? `#${jugador.numero_socio}` : jugador.email}
+        </p>
+      </div>
+      <p className="admin-hint">{t("admin.cuotas.historyHint")}</p>
+      {loading ? <p className="admin-empty">{t("common.loading")}</p> : null}
+      {!loading ? (
+        <div className="admin-list">
+          {periodos.map((periodo) => {
+            const pagada = cuotaPagada(cuotas, "trimestral", periodo);
+            const fechas = fechasCuotaDisplay(cuotas, "trimestral", periodo);
+            const row = cuotas.find((c) => c.tipo === "trimestral" && c.periodo === periodo);
+            const busy = busyPeriodo === periodo;
+            const esActual = periodo === periodoActual;
+
+            return (
+              <div key={periodo} className="admin-card admin-card--cuota-row">
+                <div className="admin-card-main">
+                  <div className="admin-card-name">
+                    {etiquetaPeriodoTrimestral(periodo)}
+                    {esActual ? (
+                      <span className="admin-cuota-current">{t("admin.cuotas.current")}</span>
+                    ) : null}
+                  </div>
+                  <span className="admin-cuota-dates">{formatRangoCuota(fechas)}</span>
+                  <span className={`admin-cuota-state ${pagada ? "paid" : "pending"}`}>
+                    {pagada ? t("admin.cuotas.paid") : t("admin.cuotas.pending")}
+                  </span>
+                  {pagada && row?.fecha_pago ? (
+                    <span className="admin-cuota-paid-date">
+                      {t("admin.cuotas.paidOn", { date: formatCuotaFecha(row.fecha_pago) })}
+                    </span>
+                  ) : null}
+                </div>
+                <div className="admin-row-actions">
+                  {pagada ? (
+                    <button
+                      type="button"
+                      className="btn btn-sm admin-btn admin-btn--danger"
+                      disabled={busy}
+                      onClick={() => void handleDesmarcar(periodo)}
+                    >
+                      {t("admin.cuotas.markUnpaid")}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn btn-sm admin-btn admin-btn--primary"
+                      disabled={busy}
+                      onClick={() => void handleMarcar(periodo)}
+                    >
+                      {t("admin.cuotas.markPaid")}
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function CuotesSection({ jugadores, fetchCuotas, marcarCuotaPagada, desmarcarCuotaPagada, onMessage }) {
+  const [selectedJugador, setSelectedJugador] = useState(null);
   const [busqueda, setBusqueda] = useState("");
 
   const activos = useMemo(
@@ -276,47 +408,17 @@ function CuotesSection({ jugadores, fetchCuotas, marcarCuotaPagada, onMessage })
     [jugadores, busqueda]
   );
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadAll() {
-      setLoadingCuotas(true);
-      const entries = await Promise.all(
-        activos.map(async (j) => {
-          const res = await fetchCuotas(j.id);
-          return [j.id, res.ok ? res.cuotas : []];
-        })
-      );
-      if (cancelled) return;
-      setCuotasMap(Object.fromEntries(entries));
-      setLoadingCuotas(false);
-    }
-
-    if (activos.length) void loadAll();
-    else {
-      setCuotasMap({});
-      setLoadingCuotas(false);
-    }
-
-    return () => {
-      cancelled = true;
-    };
-  }, [activos, fetchCuotas]);
-
-  async function handleMarcar(jugador, tipo, periodo) {
-    setBusyId(jugador.id);
-    const fechas = fechasCuotaDesdePeriodo(tipo, periodo);
-    const res = await marcarCuotaPagada(jugador.id, tipo, periodo, fechas);
-    setBusyId(null);
-    if (!res.ok) {
-      onMessage(res.error);
-      return;
-    }
-    const refreshed = await fetchCuotas(jugador.id);
-    if (refreshed.ok) {
-      setCuotasMap((prev) => ({ ...prev, [jugador.id]: refreshed.cuotas }));
-    }
-    onMessage(t("admin.cuotas.markedOk"));
+  if (selectedJugador) {
+    return (
+      <CuotaJugadorDetalle
+        jugador={selectedJugador}
+        fetchCuotas={fetchCuotas}
+        marcarCuotaPagada={marcarCuotaPagada}
+        desmarcarCuotaPagada={desmarcarCuotaPagada}
+        onBack={() => setSelectedJugador(null)}
+        onMessage={onMessage}
+      />
+    );
   }
 
   return (
@@ -330,62 +432,27 @@ function CuotesSection({ jugadores, fetchCuotas, marcarCuotaPagada, onMessage })
           onChange={(e) => setBusqueda(e.target.value)}
         />
       </div>
-      <p className="admin-hint">
-        {t("admin.cuotas.periodHint", { anual: periodoAnual, trim: periodoTrim })}
-      </p>
-      {loadingCuotas ? <p className="admin-empty">{t("common.loading")}</p> : null}
+      <p className="admin-hint">{t("admin.cuotas.listHint")}</p>
       <div className="admin-list">
-        {activos.map((j) => {
-          const cuotas = cuotasMap[j.id] ?? [];
-          const anualOk = cuotaPagada(cuotas, "anual", periodoAnual);
-          const trimOk = cuotaPagada(cuotas, "trimestral", periodoTrim);
-          const anualFechas = fechasCuotaDisplay(cuotas, "anual", periodoAnual);
-          const trimFechas = fechasCuotaDisplay(cuotas, "trimestral", periodoTrim);
-          return (
-            <div key={j.id} className="admin-card admin-card--cuota">
-              <div className="admin-card-main">
-                <div className="admin-card-name">{nombreAdminJugador(j)}</div>
-                <div className="admin-card-meta">{j.numero_socio ? `#${j.numero_socio}` : j.email}</div>
-              </div>
-              <div className="admin-cuota-cols">
-                <div className="admin-cuota-col">
-                  <span className="admin-cuota-label">{t("admin.cuotas.annual")}</span>
-                  <span className="admin-cuota-dates">{formatRangoCuota(anualFechas)}</span>
-                  <span className={`admin-cuota-state ${anualOk ? "paid" : "pending"}`}>
-                    {anualOk ? t("admin.cuotas.paid") : t("admin.cuotas.pending")}
-                  </span>
-                  {!anualOk ? (
-                    <button
-                      type="button"
-                      className="btn btn-sm admin-btn admin-btn--primary"
-                      disabled={busyId === j.id}
-                      onClick={() => void handleMarcar(j, "anual", periodoAnual)}
-                    >
-                      {t("admin.cuotas.markPaid")}
-                    </button>
-                  ) : null}
-                </div>
-                <div className="admin-cuota-col">
-                  <span className="admin-cuota-label">{t("admin.cuotas.quarterly")}</span>
-                  <span className="admin-cuota-dates">{formatRangoCuota(trimFechas)}</span>
-                  <span className={`admin-cuota-state ${trimOk ? "paid" : "pending"}`}>
-                    {trimOk ? t("admin.cuotas.paid") : t("admin.cuotas.pending")}
-                  </span>
-                  {!trimOk ? (
-                    <button
-                      type="button"
-                      className="btn btn-sm admin-btn admin-btn--primary"
-                      disabled={busyId === j.id}
-                      onClick={() => void handleMarcar(j, "trimestral", periodoTrim)}
-                    >
-                      {t("admin.cuotas.markPaid")}
-                    </button>
-                  ) : null}
-                </div>
+        {activos.length === 0 ? <p className="admin-empty">{t("admin.noPlayers")}</p> : null}
+        {activos.map((j) => (
+          <button
+            key={j.id}
+            type="button"
+            className="admin-card admin-card--clickable"
+            onClick={() => setSelectedJugador(j)}
+          >
+            <div className="admin-card-main">
+              <div className="admin-card-name">{nombreAdminJugador(j)}</div>
+              <div className="admin-card-meta">
+                {j.numero_socio ? `#${j.numero_socio}` : j.email}
               </div>
             </div>
-          );
-        })}
+            <span className="admin-cuota-chevron" aria-hidden>
+              ›
+            </span>
+          </button>
+        ))}
       </div>
     </div>
   );
@@ -429,7 +496,7 @@ function PendentsSection({ jugadores, onToggleActivo, busyId }) {
 
 export default function Admin({ isSuperAdmin, onMessage }) {
   const enabled = isSuperAdmin;
-  const { jugadores, loading, error, editarJugador, fetchCuotas, marcarCuotaPagada, reload } =
+  const { jugadores, loading, error, editarJugador, fetchCuotas, marcarCuotaPagada, desmarcarCuotaPagada, reload } =
     useAdminJugadores(true);
 
   const sections = useMemo(() => {
@@ -527,6 +594,7 @@ export default function Admin({ isSuperAdmin, onMessage }) {
           jugadores={jugadores}
           fetchCuotas={fetchCuotas}
           marcarCuotaPagada={marcarCuotaPagada}
+          desmarcarCuotaPagada={desmarcarCuotaPagada}
           onMessage={onMessage}
         />
       ) : null}

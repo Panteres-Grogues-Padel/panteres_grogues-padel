@@ -604,13 +604,17 @@
       "assign": "Asignar"
     },
     "cuotas": {
-      "periodHint": "Período actual: anual {{anual}} · trimestral {{trim}}",
-      "annual": "Anual",
-      "quarterly": "Trimestral",
+      "listHint": "Cuotas trimestrales. Selecciona un jugador/a para ver el historial.",
+      "historyHint": "Historial de cuotas trimestrales. Puedes marcar o desmarcar cada trimestre.",
+      "back": "← Volver a la lista",
+      "current": "Actual",
       "paid": "Pagada",
       "pending": "Pendiente",
       "markPaid": "Marcar pagada",
-      "markedOk": "Cuota marcada como pagada."
+      "markUnpaid": "Desmarcar",
+      "markedOk": "Cuota marcada como pagada.",
+      "unmarkedOk": "Cuota marcada como pendiente.",
+      "paidOn": "Pagada el {{date}}"
     },
     "pending": {
       "hint": "Jugadores con cuenta inactiva y sin sanción.",

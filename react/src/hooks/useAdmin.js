@@ -116,6 +116,17 @@ export function useAdminJugadores(enabled) {
     return { ok: true };
   }, []);
 
+  const desmarcarCuotaPagada = useCallback(async (jugadorId, tipo, periodo) => {
+    if (!supabase) return { ok: false, error: "No connection" };
+    const { error: rpcError } = await supabase.rpc("desmarcar_cuota_pagada", {
+      p_jugador_id: jugadorId,
+      p_tipo: tipo,
+      p_periodo: periodo
+    });
+    if (rpcError) return { ok: false, error: rpcError.message };
+    return { ok: true };
+  }, []);
+
   return {
     jugadores,
     loading,
@@ -123,6 +134,7 @@ export function useAdminJugadores(enabled) {
     reload,
     editarJugador,
     fetchCuotas,
-    marcarCuotaPagada
+    marcarCuotaPagada,
+    desmarcarCuotaPagada
   };
 }

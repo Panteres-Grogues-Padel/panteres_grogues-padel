@@ -607,13 +607,17 @@
       "assign": "Assignar"
     },
     "cuotas": {
-      "periodHint": "Període actual: anual {{anual}} · trimestral {{trim}}",
-      "annual": "Anual",
-      "quarterly": "Trimestral",
+      "listHint": "Quotes trimestrals. Selecciona un/a jugador/a per veure l'historial.",
+      "historyHint": "Historial de quotes trimestrals. Pots marcar o desmarcar cada trimestre.",
+      "back": "← Tornar a la llista",
+      "current": "Actual",
       "paid": "Pagada",
       "pending": "Pendent",
       "markPaid": "Marcar pagada",
-      "markedOk": "Quota marcada com a pagada."
+      "markUnpaid": "Desmarcar",
+      "markedOk": "Quota marcada com a pagada.",
+      "unmarkedOk": "Quota marcada com a pendent.",
+      "paidOn": "Pagada el {{date}}"
     },
     "pending": {
       "hint": "Jugadors/es amb compte inactiu i sense sanció.",

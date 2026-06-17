@@ -103,6 +103,51 @@ export function formatRangoCuota(fechas) {
   return `${formatCuotaFecha(fechas.fecha_inicio)} – ${formatCuotaFecha(fechas.fecha_fin)}`;
 }
 
+/** Etiqueta legible del període trimestral (ex. «2026 · T1»). */
+export function etiquetaPeriodoTrimestral(periodo) {
+  const m = /^(\d{4})-T([1-4])$/.exec(String(periodo).trim());
+  if (!m) return String(periodo);
+  return `${m[1]} · T${m[2]}`;
+}
+
+function comparePeriodosTrimestrales(a, b) {
+  const ma = /^(\d{4})-T([1-4])$/.exec(String(a).trim());
+  const mb = /^(\d{4})-T([1-4])$/.exec(String(b).trim());
+  if (!ma || !mb) return String(a).localeCompare(String(b));
+  const ya = Number.parseInt(ma[1], 10);
+  const yb = Number.parseInt(mb[1], 10);
+  if (ya !== yb) return ya - yb;
+  return Number.parseInt(ma[2], 10) - Number.parseInt(mb[2], 10);
+}
+
+/** Períodes trimestrals de desdeYear fins al trimestre actual (inclusiu). */
+export function listarPeriodosTrimestrales(desdeYear = 2024, now = new Date()) {
+  const actual = periodoTrimestralActual(now);
+  const m = /^(\d{4})-T([1-4])$/.exec(actual);
+  if (!m) return [];
+  const endYear = Number.parseInt(m[1], 10);
+  const endTrim = Number.parseInt(m[2], 10);
+  const periods = [];
+
+  for (let year = desdeYear; year <= endYear; year += 1) {
+    const maxTrim = year === endYear ? endTrim : 4;
+    for (let trim = 1; trim <= maxTrim; trim += 1) {
+      periods.push(`${year}-T${trim}`);
+    }
+  }
+
+  return periods;
+}
+
+/** Historial trimestral: períodes estàndard + qualsevol fila extra a BD, més recent primer. */
+export function periodosTrimestralesHistorial(cuotas, desdeYear = 2024, now = new Date()) {
+  const periodSet = new Set(listarPeriodosTrimestrales(desdeYear, now));
+  for (const c of cuotas ?? []) {
+    if (c.tipo === "trimestral" && c.periodo) periodSet.add(c.periodo);
+  }
+  return [...periodSet].sort((a, b) => comparePeriodosTrimestrales(b, a));
+}
+
 export function sancioVigent(j, hoy = hoyLocalStr()) {
   return Boolean(j?.sancionat && j?.sancio_fins && j.sancio_fins >= hoy);
 }
