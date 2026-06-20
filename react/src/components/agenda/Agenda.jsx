@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { jugadoresCoinciden } from "../../utils/jugador";
 import { avatarClassFromNombre, initialsFromNombre } from "../../utils/avatar";
+import { copyTextToClipboard } from "../../utils/clipboard";
 import { DATE_LOCALE, formatHoraInput, monthName, monthShortCapitalName, weekdayShortName } from "../../utils/dates";
 import { getNombreVisible } from "../../utils/nombres";
 import { t, pluralSuffix } from "../../i18n";
@@ -10,6 +11,30 @@ const TIPO_LABEL = {
   social: () => t("agenda.types.social"),
   otro: () => t("agenda.types.otro")
 };
+
+function formatFechaEventoLista(fecha) {
+  if (!fecha) return "";
+  const s = String(fecha).slice(0, 10);
+  const [y, m, d] = s.split("-");
+  if (!y || !m || !d) return s;
+  return `${d}/${m}/${y}`;
+}
+
+function nombreCompletoInscrito(ins) {
+  const name = (ins?.nombreCompleto ?? ins?.nombre ?? "").trim();
+  return name || t("common.player");
+}
+
+function buildEventoListaText(evento) {
+  if (!evento?.inscritos?.length) return "";
+  const fecha = formatFechaEventoLista(evento.fecha);
+  let text = `${evento.titulo} - ${fecha}\n\n`;
+  evento.inscritos.forEach((ins, idx) => {
+    const estado = ins.pagoConfirmado ? "Pagat" : "Pendent";
+    text += `${idx + 1}. ${nombreCompletoInscrito(ins)} - ${estado}\n`;
+  });
+  return text.trimEnd();
+}
 
 function parejaNombre(parejaRef, inscritos) {
   if (!parejaRef) return "";
@@ -85,6 +110,13 @@ export default function Agenda({
   const [formError, setFormError] = useState("");
   const [guardando, setGuardando] = useState(false);
   const listaEvento = listaEventoId != null ? eventos.find((x) => x.id === listaEventoId) ?? null : null;
+
+  async function handleCopyEventoLista() {
+    if (!listaEvento) return;
+    const texto = buildEventoListaText(listaEvento);
+    if (!texto) return;
+    await copyTextToClipboard(texto);
+  }
 
   const evsMes = useMemo(() => eventosEnMes(eventos, calYear, calMonth), [eventos, calYear, calMonth]);
 
@@ -416,6 +448,16 @@ export default function Agenda({
                 </div>
               );
             })}
+            {isCoord && listaEvento.inscritos.length ? (
+              <button
+                type="button"
+                className="btn btn-sm btn-block"
+                style={{ marginTop: 12, fontSize: 12 }}
+                onClick={() => void handleCopyEventoLista()}
+              >
+                {t("agenda.copyList")}
+              </button>
+            ) : null}
             <button type="button" className="close-btn" onClick={() => setListaEventoId(null)}>
               {t("common.close")}
             </button>

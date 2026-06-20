@@ -255,6 +255,7 @@
     "paymentConfirmed": "✅ Pago confirmado",
     "paymentPendingEmoji": "⏳ Pago pendiente",
     "deleteConfirm": "¿Seguro que quieres borrar este evento?",
+    "copyList": "Copiar lista",
     "types": {
       "torneo": "Torneo",
       "social": "Social",

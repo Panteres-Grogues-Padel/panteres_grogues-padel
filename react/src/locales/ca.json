@@ -256,6 +256,7 @@
     "paymentConfirmed": "✅ Pagament confirmat",
     "paymentPendingEmoji": "⏳ Pagament pendent",
     "deleteConfirm": "Segur que vols esborrar aquest esdeveniment?",
+    "copyList": "Copiar llista",
     "types": {
       "torneo": "Torneig",
       "social": "Social",
