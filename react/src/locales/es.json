@@ -87,9 +87,16 @@
     "onboarding": {
       "title": "¡Bienvenido/a!",
       "subtitle": "Completa tus datos para unirte al club.",
-      "phone": "Telefono",
-      "submit": "Enviar solicitud",
-      "nameRequired": "El nombre es obligatorio."
+      "pronoun": "Pronombre",
+      "memberNumber": "Numero de socio Panteres Grogues",
+      "legacyId": "ID app antigua",
+      "legacyIdHint": "Numero de usuario de la app antigua. Si no tienes, pon 000",
+      "nicknameHint": "Nombre con el que te veran en el ranking, partidos e inscripciones. Se recomienda poner el nombre y la inicial de los apellidos (ej: JotaLB)",
+      "idDocument": "Documento de identidad (DNI/NIE/Pasaporte)",
+      "idDocumentPlaceholder": "DNI 12345678A",
+      "contactEmail": "Email de contacto",
+      "contactPhone": "Telefono de contacto",
+      "submit": "Enviar solicitud"
     },
     "pending": {
       "title": "Esperando aprobacion del coordinador",

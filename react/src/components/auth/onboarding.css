@@ -20,6 +20,12 @@
   text-align: center;
 }
 
+.onboarding-card--form {
+  max-height: calc(100vh - 2.5rem);
+  display: flex;
+  flex-direction: column;
+}
+
 .onboarding-title {
   font-size: 20px;
   font-weight: 700;
@@ -38,6 +44,32 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  padding-right: 2px;
+}
+
+.onboarding-hint {
+  font-size: 11px;
+  color: var(--text2);
+  line-height: 1.35;
+  margin: 0 0 6px;
+}
+
+.onboarding-submit {
+  margin-top: 12px;
+  flex-shrink: 0;
+}
+
+.onboarding-form select {
+  width: 100%;
+  height: 42px;
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  background: #fff;
+  font-size: 14px;
 }
 
 .onboarding-label {

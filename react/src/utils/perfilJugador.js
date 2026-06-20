@@ -81,10 +81,15 @@ export async function crearJugadorPendienteRpc(client) {
 export async function completarOnboardingRpc(client, fields) {
   if (!client) return { ok: false, perfil: null };
   const { data, error } = await client.rpc("completar_onboarding", {
+    p_pronombre: fields.pronombre ?? "",
     p_nombre: fields.nombre ?? "",
     p_primer_apellido: fields.primer_apellido ?? "",
     p_segundo_apellido: fields.segundo_apellido ?? "",
     p_nickname: fields.nickname ?? "",
+    p_numero_socio: fields.numero_socio ?? "",
+    p_id_app_antigua: fields.id_app_antigua ?? "",
+    p_documento_identidad: fields.documento_identidad ?? "",
+    p_email_contacto: fields.email_contacto ?? "",
     p_telefono: fields.telefono ?? ""
   });
   if (error) return { ok: false, error: error.message, perfil: null };

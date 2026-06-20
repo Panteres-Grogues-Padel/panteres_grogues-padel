@@ -88,9 +88,16 @@
     "onboarding": {
       "title": "Benvingut/da!",
       "subtitle": "Completa les teves dades per unir-te al club.",
-      "phone": "Telèfon",
-      "submit": "Enviar sol·licitud",
-      "nameRequired": "El nom és obligatori."
+      "pronoun": "Pronom",
+      "memberNumber": "Número de soci Panteres Grogues",
+      "legacyId": "ID app antiga",
+      "legacyIdHint": "Número d'usuari de l'app antiga. Si no en tens, posa 000",
+      "nicknameHint": "Nom pel qual et veuran al rànquing, partits i inscripcions. Es recomana posar el nom i la inicial dels cognoms (ex: JotaLB)",
+      "idDocument": "Document d'identitat (DNI/NIE/Passaport)",
+      "idDocumentPlaceholder": "DNI 12345678A",
+      "contactEmail": "Email de contacte",
+      "contactPhone": "Telèfon de contacte",
+      "submit": "Enviar sol·licitud"
     },
     "pending": {
       "title": "Esperant aprovació del coordinador",

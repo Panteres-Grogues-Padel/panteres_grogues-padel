@@ -308,14 +308,6 @@ export function useAuth() {
 
   async function completeOnboarding(fields) {
     setError("");
-    if (!fields?.privacyAccepted) {
-      setError(t("auth.errors.privacyRequired"));
-      return { ok: false, error: t("auth.errors.privacyRequired") };
-    }
-    if (!String(fields.nombre ?? "").trim()) {
-      setError(t("auth.onboarding.nameRequired"));
-      return { ok: false, error: t("auth.onboarding.nameRequired") };
-    }
     if (!supabase) {
       setError(t("auth.errors.supabaseEnvMissing"));
       return { ok: false, error: t("auth.errors.supabaseEnvMissing") };
