@@ -321,17 +321,17 @@ export function useAuth() {
         return { ok: false, error: res.error };
       }
 
-      const refreshed = await fetchMiPerfilPendienteRpc(supabase);
-      if (!refreshed.ok || !refreshed.perfil) {
-        setError(refreshed.error ?? t("auth.errors.connection"));
-        return { ok: false, error: refreshed.error };
+      if (!res.perfil) {
+        setError(t("auth.errors.connection"));
+        return { ok: false, error: t("auth.errors.connection") };
       }
 
       applyJugadorSesionResult({
         ok: true,
         pendingApproval: true,
-        jugador: jugadorToState(refreshed.perfil)
+        jugador: jugadorToState(res.perfil)
       });
+      setAuthEpoch((n) => n + 1);
       return { ok: true };
     } finally {
       setLoading(false);

@@ -21,6 +21,7 @@ export function mapPerfilFromRpc(row) {
     es_coordinador: Boolean(row.es_coordinador),
     auth_id: row.auth_id ?? null,
     email: row.email ?? null,
+    numero_socio: row.numero_socio ?? "",
     activo: row.activo ?? true,
     sancionat: Boolean(row.sancionat),
     sancio_fins: row.sancio_fins ?? null,

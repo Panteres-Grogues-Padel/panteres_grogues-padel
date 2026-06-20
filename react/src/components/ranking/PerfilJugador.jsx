@@ -352,7 +352,9 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
             </div>
             <div className="profile-socio-line">
               <span className="profile-socio-label">{t("ranking.profile.memberNumber")}</span>
-              <span className="profile-socio-val">{numeroSocioPanteres(view.id)}</span>
+              <span className="profile-socio-val">
+                {(view.numero_socio ?? "").trim() || numeroSocioPanteres(view.id)}
+              </span>
             </div>
             {sancioVigent ? (
               <div className="profile-sanction-badge">
