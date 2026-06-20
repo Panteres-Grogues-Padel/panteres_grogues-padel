@@ -35,27 +35,46 @@ function EstadoBadge({ jugador }) {
   return <span className={`admin-badge ${ESTADO_CLASS[estado]}`}>{t(ESTADO_LABEL[estado])}</span>;
 }
 
+const PRONOMBRES = ["Ell", "Ella", "Elle", "Altre", "Prefereixo no dir-ho"];
+
+function metaLineaJugador(j) {
+  const parts = [j.email].filter(Boolean);
+  if (j.numero_socio) parts.push(`#${j.numero_socio}`);
+  const contact = (j.email_contacto ?? "").trim();
+  const main = (j.email ?? "").trim();
+  if (contact && contact.toLowerCase() !== main.toLowerCase()) {
+    parts.push(contact);
+  }
+  return parts.join(" · ");
+}
+
 function EditJugadorModal({ jugador, open, onClose, onSave, saving }) {
   const [form, setForm] = useState({
+    pronombre: "",
     nombre: "",
     primer_apellido: "",
     segundo_apellido: "",
     nickname: "",
     email: "",
     numero_socio: "",
-    id_app_antigua: ""
+    id_app_antigua: "",
+    documento_identidad: "",
+    email_contacto: ""
   });
 
   useEffect(() => {
     if (!jugador || !open) return;
     setForm({
+      pronombre: jugador.pronombre ?? "",
       nombre: jugador.nombre ?? "",
       primer_apellido: jugador.primer_apellido ?? "",
       segundo_apellido: jugador.segundo_apellido ?? "",
       nickname: jugador.nickname ?? "",
       email: jugador.email ?? "",
       numero_socio: jugador.numero_socio ?? "",
-      id_app_antigua: jugador.id_app_antigua ?? ""
+      id_app_antigua: jugador.id_app_antigua ?? "",
+      documento_identidad: jugador.documento_identidad ?? "",
+      email_contacto: jugador.email_contacto ?? ""
     });
   }, [jugador, open]);
 
@@ -72,6 +91,20 @@ function EditJugadorModal({ jugador, open, onClose, onSave, saving }) {
         <h3 className="admin-modal-title">{t("admin.editPlayer")}</h3>
         <p className="admin-modal-sub">{nombreAdminJugador(jugador)}</p>
         <div className="admin-form-grid">
+          <label className="admin-field">
+            <span>{t("auth.onboarding.pronoun")}</span>
+            <select
+              value={form.pronombre}
+              onChange={(e) => setForm((prev) => ({ ...prev, pronombre: e.target.value }))}
+            >
+              <option value="">{t("common.selectPlaceholder")}</option>
+              {PRONOMBRES.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </label>
           {[
             ["nombre", t("admin.fields.name")],
             ["primer_apellido", t("admin.fields.firstSurname")],
@@ -79,7 +112,9 @@ function EditJugadorModal({ jugador, open, onClose, onSave, saving }) {
             ["nickname", t("admin.fields.nickname")],
             ["email", t("common.email")],
             ["numero_socio", t("admin.fields.memberNumber")],
-            ["id_app_antigua", t("admin.fields.legacyId")]
+            ["id_app_antigua", t("admin.fields.legacyId")],
+            ["documento_identidad", t("auth.onboarding.idDocument")],
+            ["email_contacto", t("auth.onboarding.contactEmail")]
           ].map(([key, label]) => (
             <label key={key} className="admin-field">
               <span>{label}</span>
@@ -179,10 +214,7 @@ function JugadorsSection({ jugadores, onEdit, onToggleActivo, busyId }) {
           <div key={j.id} className="admin-card">
             <div className="admin-card-main">
               <div className="admin-card-name">{nombreAdminJugador(j)}</div>
-              <div className="admin-card-meta">
-                {j.email}
-                {j.numero_socio ? ` · #${j.numero_socio}` : ""}
-              </div>
+              <div className="admin-card-meta">{metaLineaJugador(j)}</div>
               <EstadoBadge jugador={j} />
             </div>
             <JugadorRowActions

@@ -13,6 +13,9 @@ export function mapJugadorAdminRow(row) {
     email: row.email ?? "",
     numero_socio: row.numero_socio ?? "",
     id_app_antigua: row.id_app_antigua ?? "",
+    pronombre: row.pronombre ?? "",
+    documento_identidad: row.documento_identidad ?? "",
+    email_contacto: row.email_contacto ?? "",
     es_coordinador: Boolean(row.es_coordinador),
     es_super_admin: Boolean(row.es_super_admin),
     es_tesorero: Boolean(row.es_tesorero),
@@ -163,7 +166,11 @@ export function filtrarJugadoresBusqueda(jugadores, query) {
       j.nickname,
       j.nombre_completo,
       j.email,
-      j.numero_socio
+      j.numero_socio,
+      j.id_app_antigua,
+      j.pronombre,
+      j.documento_identidad,
+      j.email_contacto
     ]
       .filter(Boolean)
       .join(" ")
