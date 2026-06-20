@@ -2,7 +2,7 @@ import { useState } from "react";
 import { t } from "../../i18n";
 import "./onboarding.css";
 
-const PRONOMBRES = ["Ell", "Ella", "Elle"];
+const PRONOMBRES = ["Ell", "Ella", "Elle", "Altre", "Prefereixo no dir-ho"];
 
 function emptyForm(email = "") {
   return {
@@ -129,7 +129,7 @@ export default function OnboardingScreen({ auth }) {
                 autoComplete="off"
                 value={form.documento_identidad}
                 onChange={(e) => updateField("documento_identidad", e.target.value)}
-                placeholder={t("auth.onboarding.idDocumentPlaceholder")}
+                placeholder="12345678A"
               />
             </div>
 
