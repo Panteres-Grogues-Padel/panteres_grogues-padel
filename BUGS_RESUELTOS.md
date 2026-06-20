@@ -44,6 +44,8 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 - **UI de mover jugadores sin lógica operativa** — Solución: eliminados botón ↕️, modal `MoverJugador` y props `onOpenMover`/`onMover` en Partidos/PartidoCard (lógica backend intacta).
 - **Checkbox socio UP oculto con slot cerrado** — El usuario no podía marcar «soci Up» antes de las 19:00. Solución: checkbox en bloque separado en `DetalleSlot.jsx` visible con `!enrolled` independientemente de `slot.abierto`; confirmación sigue condicionada a apertura.
 - **Emoji 🏳️‍🌈 en subtítulo del hero** — Solución: eliminado al renderizar en `Bienvenida.jsx` (texto i18n sin cambiar).
+- **Perfil mostraba número de socio generado (hash del UUID)** en lugar del valor real de BD — Solución: `numero_socio` en RPCs de perfil + `mapPerfilFromRpc` + `PerfilJugador.jsx` muestra el campo real con fallback al hash solo si está vacío. Migración: `20260620130000_perfil_numero_socio.sql`.
+- **Datos incorrectos tras completar onboarding Google** (teléfono, etc. de sesión anterior) — Causa: race entre `completeOnboarding()` y listener `onAuthStateChange` → `aplicarSesionSupabase`. Solución: usar `res.perfil` de `completarOnboardingRpc` directamente (sin refetch) + `setAuthEpoch` al completar.
 
 ### Operaciones (staging)
 
@@ -93,6 +95,12 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 - **Campos admin en jugadores:** `primer_apellido`, `segundo_apellido`, `numero_socio`, `id_app_antigua`, `es_super_admin`, `es_tesorero`
 - **Cuotas de socio:** tabla `cuotas` (anual/trimestral, período, pagada, `fecha_pago`, `fecha_inicio`, `fecha_fin`); marcar pagada desde panel; fechas calculadas automáticamente por tipo/período
 - **Gestión jugadores admin:** crear, editar, activar/desactivar, asignar coordinador; RPCs `get_jugadores_admin`, `crear_jugador_admin`, `editar_jugador_admin`, `get_cuotas`, `marcar_cuota_pagada`
+- **Google OAuth:** login con cuenta Google (Google Cloud Console + Supabase Auth); redirect a `window.location.origin`
+- **Onboarding nuevos usuarios:** formulario completo (`OnboardingScreen.jsx`) — pronombre, nombre, apellidos, nickname, numero_socio, id_app_antigua, documento_identidad, email_contacto, telefono; RPC `completar_onboarding`
+- **Pantalla pendent d'aprovació:** `PendingApprovalScreen.jsx` para jugadores con `activo = false` tras onboarding; activación manual por super admin
+- **Vincular Google con jugador existente:** RPC `vincular_jugador_existente` — empareja por email si `auth_id IS NULL`
+- **Panel admin — campos onboarding:** pronombre, documento_identidad, email_contacto, telefono visibles, editables y buscables; `editar_jugador_admin` ampliada
+- **Número de socio real en perfil:** columna `numero_socio` de BD en lugar del hash `PG-XXXXXX` derivado del UUID
 
 ---
 
@@ -126,9 +134,13 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 | `asignar_numero_pista` | `p_pista_id`, `p_numero_pista` | Asignar número de pista manualmente (solo coordinador) |
 | `get_jugadores_admin` | — | Listado de jugadores para panel admin (super admin o tesorero) |
 | `crear_jugador_admin` | nombre, apellidos, nickname, email, numero_socio | Alta de jugador (solo super admin) |
-| `editar_jugador_admin` | `p_jugador_id` + campos opcionales | Editar jugador, roles y `activo` (solo super admin) |
+| `editar_jugador_admin` | `p_jugador_id` + campos opcionales (incl. pronombre, documento, email_contacto, telefono) | Editar jugador, roles y `activo` (solo super admin) |
 | `get_cuotas` | `p_jugador_id` | Cuotas de un jugador (super admin o tesorero) |
 | `marcar_cuota_pagada` | `p_jugador_id`, `p_tipo`, `p_periodo`, `p_fecha_inicio`?, `p_fecha_fin`? | Marcar cuota pagada; fechas opcionales (calculadas si null) |
+| `crear_jugador_pendiente` | — | Crea fila `jugadores` inactiva para OAuth sin perfil (SECURITY DEFINER) |
+| `get_mi_perfil_pendiente` | — | Perfil del jugador autenticado sin exigir `activo = true` |
+| `completar_onboarding` | pronombre, nombre, apellidos, nickname, numero_socio, id_app_antigua, documento, email_contacto, telefono | Guarda datos del formulario de bienvenida |
+| `vincular_jugador_existente` | — | Vincula `auth_id` a jugador existente por coincidencia de email |
 
 Funciones auxiliares en BD: `es_coordinador()` (RLS), `es_super_admin()`, `es_tesorero()`, `es_admin_o_tesorero()`, `cuotas_fechas_desde_periodo(tipo, periodo)`.
 
@@ -141,7 +153,7 @@ Funciones auxiliares en BD: `es_coordinador()` (RLS), `es_super_admin()`, `es_te
 - Horarios aleatorios — pendiente probar con 8+ jugadores
 - Sistema de padrinos/ahijados — implementado (ver `CONTEXT.md`); revisar UX si hace falta
 - Migrar `guardarResultado` a RPC (INSERT/UPDATE de sets) para alinear con regla PostgREST
-- Google OAuth
+- ~~Google OAuth~~ — Implementado (20/06/2026): OAuth + onboarding + pendent + vincular por email
 - Organigrama en Coordinación
 - Migración usuarios desde Google Sheets
 - i18n catalán/inglés
@@ -193,3 +205,9 @@ Las escrituras (INSERT, UPDATE, DELETE) pueden usar la API de tabla con RLS; las
 - `20260604120000_fondo_hero.sql`
 - `20260609100000_panel_admin.sql`
 - `20260609110000_cuotas_fechas.sql`
+- `20260620100000_onboarding_google.sql`
+- `20260620110000_vincular_jugador_google.sql`
+- `20260620120000_onboarding_campos.sql`
+- `20260620130000_perfil_numero_socio.sql`
+- `20260620140000_editar_jugador_campos_onboarding.sql`
+- `20260620150000_editar_jugador_telefono.sql`

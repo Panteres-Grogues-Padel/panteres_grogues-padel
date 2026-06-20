@@ -4,6 +4,70 @@ Documento de referencia para el estado del proyecto y decisiones recientes.
 
 ---
 
+## Implementado hoy (20/06/2026)
+
+### 1. Google OAuth
+
+- **Google Cloud Console:** cliente OAuth 2.0 configurado (origen JavaScript + URI de redirección de la app).
+- **Supabase Dashboard:** proveedor Google activado; **Site URL** y **Redirect URLs** apuntan al dominio de staging/producción (en local, `http://localhost:5173` o el puerto Vite).
+- **Frontend:** `loginGoogle()` en `useAuth.js` con `signInWithOAuth({ provider: "google", redirectTo: window.location.origin })`.
+- Login con email/contraseña sigue igual; OAuth usa flujo `allowPending: true` para jugadores nuevos o inactivos.
+
+### 2. Onboarding — nuevos usuarios Google
+
+- **Pantalla** `OnboardingScreen.jsx`: formulario obligatorio con 10 campos en este orden:
+  - `pronombre` (Ell / Ella / Elle / Altre / Prefereixo no dir-ho)
+  - `nombre`, `primer_apellido`, `segundo_apellido`
+  - `nickname` (nombre visible en ranking/partidos)
+  - `numero_socio`, `id_app_antigua`, `documento_identidad`
+  - `email_contacto` (prellenado con email Google), `telefono`
+- **RPCs:** `crear_jugador_pendiente`, `get_mi_perfil_pendiente`, `completar_onboarding` (10 parámetros).
+- **Columnas nuevas en `jugadores`:** `pronombre`, `documento_identidad`, `email_contacto`.
+- Migraciones: `20260620100000_onboarding_google.sql`, `20260620120000_onboarding_campos.sql`.
+
+### 3. Pantalla «Pendent d'aprovació»
+
+- **`PendingApprovalScreen.jsx`:** tras completar onboarding, el jugador queda con `activo = false` y ve mensaje de espera + botón cerrar sesión.
+- **`authStatus`** en `useAuth.js`: `'onboarding' | 'pending' | 'active' | null`.
+- El super admin activa desde Admin → **Pendents** o **Jugadors** (`editar_jugador_admin` con `p_activo = true`).
+
+### 4. Vincular cuenta Google con jugador existente
+
+- **RPC `vincular_jugador_existente()`:** si el email de Google coincide con un `jugadores.email` sin `auth_id`, asigna `auth_id = auth.uid()` y devuelve el perfil.
+- Se invoca en `fetchJugadorSesion` antes de crear jugador pendiente (evita duplicados al migrar usuarios con email ya en BD).
+- Migración: `20260620110000_vincular_jugador_google.sql`.
+
+### 5. Flujo auth OAuth (`useAuth.js`)
+
+1. `get_mi_perfil_jugador` (solo `activo = true`).
+2. Si null y OAuth: `vincular_jugador_existente` → `get_mi_perfil_pendiente` / `crear_jugador_pendiente`.
+3. Sin nombre → `authStatus = 'onboarding'`.
+4. Con nombre y `activo = false` → `'pending'`.
+5. `activo = true` → app normal.
+
+### 6. Panel admin — campos onboarding
+
+- **`mapJugadorAdminRow`:** incluye `pronombre`, `documento_identidad`, `email_contacto`, `telefono`.
+- **Modal Editar jugador:** todos los campos anteriores + nombre, apellidos, nickname, email, `numero_socio`, `id_app_antigua`.
+- **Lista Jugadors:** meta línea con email, `#numero_socio` y `email_contacto` si difiere del email principal.
+- **Búsqueda:** incluye todos los campos del onboarding.
+- **`editar_jugador_admin`:** acepta `p_pronombre`, `p_documento_identidad`, `p_email_contacto`, `p_telefono`.
+- Migraciones: `20260620140000_editar_jugador_campos_onboarding.sql`, `20260620150000_editar_jugador_telefono.sql`.
+
+### 7. Perfil — número de socio real
+
+- **`get_perfil_jugador`** y **`get_mi_perfil_pendiente`** exponen `numero_socio` en el JSON.
+- **`mapPerfilFromRpc`** mapea `numero_socio`.
+- **`PerfilJugador.jsx`:** muestra `view.numero_socio` si existe; fallback a `numeroSocioPanteres(id)` solo si no hay valor en BD.
+- Migración: `20260620130000_perfil_numero_socio.sql`.
+
+### 8. Fix race condition en `completeOnboarding`
+
+- **Problema:** tras enviar el formulario, `onAuthStateChange` podía ejecutar `aplicarSesionSupabase` en paralelo y sobrescribir `currentUser` con datos antiguos.
+- **Solución:** usar directamente `res.perfil` de `completarOnboardingRpc` (sin segundo fetch `get_mi_perfil_pendiente`) + `setAuthEpoch(n + 1)` para invalidar caché de hooks (`useSlots`, etc.).
+
+---
+
 ## Implementado hoy (09/06/2026)
 
 ### 1. Panel de administración — campos nuevos en `jugadores`
@@ -171,7 +235,8 @@ Función auxiliar BD: **`cuotas_fechas_desde_periodo(tipo, periodo)`** — calcu
 - **Resultados:** validación automática al confirmar guardado; desbloqueo del coordinador con RPC **`modificar_resultado`** en el paso «Modificar».
 - **Partidos:** número de pista manual (`asignar_numero_pista`); botón «Copiar llista clubs» para coordinadores.
 - **Hero/Bienvenida:** fondo personalizable (`fondo_hero`); sin emoji 🏳️‍🌈 en subtítulo.
-- **Panel admin:** pestaña Admin (`Admin.jsx`); cuotas con fechas; super admins en staging (`manul@pa.com`, `jordib@pa.com`, `vipe@pa.com`).
+- **Panel admin:** pestaña Admin (`Admin.jsx`); cuotas con fechas; super admins en staging; **campos onboarding visibles/editables** (pronombre, documento, email contacto, teléfono).
+- **Google OAuth + onboarding:** login Google, formulario completo, pantalla pendent, vinculación por email existente.
 
 ### Operaciones staging
 
@@ -294,7 +359,8 @@ Migración: `supabase/migrations/20250520190000_cron_slot_abierto.sql`
 
 ## Pendientes añadidos
 
-- **Onboarding nuevos jugadores:** formulario de bienvenida + email automático con Resend
+- ~~**Google OAuth + onboarding**~~ — Implementado (20/06/2026): OAuth Google, formulario completo, pendent d'aprovació, vincular por email.
+- **Email automático bienvenida** tras alta (Resend) — pendiente
 - **Notificación push móvil** cuando la app está cerrada (Firebase FCM — futuro)
 - **RPC `guardar_resultado`:** migrar INSERT/UPDATE de sets desde PostgREST directo (alinear con regla de escrituras)
 
