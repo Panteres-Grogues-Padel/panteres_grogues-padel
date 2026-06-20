@@ -88,7 +88,8 @@ export function tabFromNotificacionTipo(tipo, titulo) {
     slot_obert: "jugar",
     inscripcio: "jugar",
     baixa: "jugar",
-    agenda: "agenda"
+    agenda: "agenda",
+    pago_confirmat: "agenda"
   };
   return map[t] ?? null;
 }
@@ -106,7 +107,8 @@ export function iconoNotificacionTipo(tipo, titulo) {
     slot_obert: "📅",
     inscripcio: "📅",
     baixa: "📅",
-    agenda: "🗓️"
+    agenda: "🗓️",
+    pago_confirmat: "🗓️"
   };
   return map[t] ?? "🔔";
 }
@@ -159,7 +161,7 @@ export function resolveNotificacionDeepLink(notif) {
     return { tab: "resultados", partidosDeepLink: null, jugarDeepLink: null };
   }
 
-  if (tipo === "agenda") {
+  if (tipo === "agenda" || tipo === "pago_confirmat") {
     return { tab: "agenda", partidosDeepLink: null, jugarDeepLink: null };
   }
 
