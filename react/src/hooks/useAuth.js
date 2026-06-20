@@ -6,7 +6,8 @@ import {
   crearJugadorPendienteRpc,
   fetchMiPerfilJugadorRpc,
   fetchMiPerfilPendienteRpc,
-  fetchPerfilJugadorRpc
+  fetchPerfilJugadorRpc,
+  vincularJugadorExistenteRpc
 } from "../utils/perfilJugador";
 import { isJugadorUuid, normalizeJugadorUuid } from "../utils/jugador";
 import { hoyLocalStr } from "../utils/dates";
@@ -91,6 +92,20 @@ export function useAuth() {
     return () => window.removeEventListener("jugador-actualizado", onJugadorActualizado);
   }, [refreshCurrentJugador]);
 
+  function evaluarPerfilOAuth(perfil) {
+    const jugador = jugadorToState(perfil);
+
+    if (!String(perfil.nombre ?? "").trim()) {
+      return { ok: true, needsOnboarding: true, jugador };
+    }
+
+    if (!perfil.activo) {
+      return { ok: true, pendingApproval: true, jugador };
+    }
+
+    return { ok: true, jugador };
+  }
+
   async function fetchJugadorSesion({ allowPending = false } = {}) {
     let { ok, perfil, error: rpcError } = await fetchMiPerfilJugadorRpc(supabase);
     if (!ok) return { ok: false, message: rpcError ?? t("auth.errors.connection") };
@@ -113,6 +128,14 @@ export function useAuth() {
       return { ok: false, message: t("auth.errors.userNotFound") };
     }
 
+    const vinculado = await vincularJugadorExistenteRpc(supabase);
+    if (!vinculado.ok) {
+      return { ok: false, message: vinculado.error ?? t("auth.errors.connection") };
+    }
+    if (vinculado.perfil) {
+      return evaluarPerfilOAuth(vinculado.perfil);
+    }
+
     let pendingRes = await fetchMiPerfilPendienteRpc(supabase);
     if (!pendingRes.ok) {
       return { ok: false, message: pendingRes.error ?? t("auth.errors.connection") };
@@ -131,17 +154,7 @@ export function useAuth() {
       pending = pendingRes.perfil;
     }
 
-    const jugador = jugadorToState(pending);
-
-    if (!String(pending.nombre ?? "").trim()) {
-      return { ok: true, needsOnboarding: true, jugador };
-    }
-
-    if (!pending.activo) {
-      return { ok: true, pendingApproval: true, jugador };
-    }
-
-    return { ok: true, jugador };
+    return evaluarPerfilOAuth(pending);
   }
 
   function applyJugadorSesionResult(result) {

@@ -64,6 +64,13 @@ export async function fetchMiPerfilPendienteRpc(client) {
   return { ok: true, perfil: mapPerfilFromRpc(data) };
 }
 
+export async function vincularJugadorExistenteRpc(client) {
+  if (!client) return { ok: false, perfil: null };
+  const { data, error } = await client.rpc("vincular_jugador_existente", {});
+  if (error) return { ok: false, error: error.message, perfil: null };
+  return { ok: true, perfil: mapPerfilFromRpc(data) };
+}
+
 export async function crearJugadorPendienteRpc(client) {
   if (!client) return { ok: false, perfil: null };
   const { data, error } = await client.rpc("crear_jugador_pendiente", {});
