@@ -83,6 +83,18 @@
       "timeout": "Tiempo de espera agotado. Revisa la conexion.",
       "sessionFailed": "No se pudo obtener la sesion. Vuelve a intentarlo.",
       "googleLogin": "Error al iniciar sesion con Google."
+    },
+    "onboarding": {
+      "title": "¡Bienvenido/a!",
+      "subtitle": "Completa tus datos para unirte al club.",
+      "phone": "Telefono",
+      "submit": "Enviar solicitud",
+      "nameRequired": "El nombre es obligatorio."
+    },
+    "pending": {
+      "title": "Esperando aprobacion del coordinador",
+      "subtitle": "Tu solicitud se ha enviado. Cuando un coordinador la apruebe, podras acceder a la app.",
+      "logout": "Cerrar sesion"
     }
   },
 

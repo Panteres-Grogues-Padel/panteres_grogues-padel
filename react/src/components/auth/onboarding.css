@@ -1,0 +1,54 @@
+.onboarding-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem 1.25rem;
+  background: var(--bg3);
+}
+
+.onboarding-card {
+  width: 100%;
+  max-width: 420px;
+  background: #fefce8;
+  border: 1px solid rgba(12, 86, 115, 0.2);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1rem 1.5rem;
+}
+
+.onboarding-card--pending {
+  text-align: center;
+}
+
+.onboarding-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0c5673;
+  margin-bottom: 6px;
+}
+
+.onboarding-sub {
+  font-size: 14px;
+  color: var(--text2);
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.onboarding-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.onboarding-label {
+  font-size: 13px;
+  color: #0c5673;
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+
+.onboarding-pending-icon {
+  font-size: 40px;
+  margin-bottom: 0.75rem;
+}

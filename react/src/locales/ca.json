@@ -84,6 +84,18 @@
       "timeout": "Temps d'espera esgotat. Revisa la connexió.",
       "sessionFailed": "No s'ha pogut obtenir la sessió. Torna-ho a provar.",
       "googleLogin": "Error en iniciar sessió amb Google."
+    },
+    "onboarding": {
+      "title": "Benvingut/da!",
+      "subtitle": "Completa les teves dades per unir-te al club.",
+      "phone": "Telèfon",
+      "submit": "Enviar sol·licitud",
+      "nameRequired": "El nom és obligatori."
+    },
+    "pending": {
+      "title": "Esperant aprovació del coordinador",
+      "subtitle": "La teva sol·licitud s'ha enviat. Quan un coordinador l'aprovi, podràs accedir a l'app.",
+      "logout": "Tancar sessió"
     }
   },
 

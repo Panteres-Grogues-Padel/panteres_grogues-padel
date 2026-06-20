@@ -6,6 +6,8 @@ export function mapPerfilFromRpc(row) {
   return {
     id: normalizeJugadorUuid(row.id),
     nombre: row.nombre ?? "",
+    primer_apellido: row.primer_apellido ?? "",
+    segundo_apellido: row.segundo_apellido ?? "",
     nickname: row.nickname?.trim() || null,
     nombreCompleto: row.nombre_completo ?? row.nombre ?? "",
     telefono: row.telefono ?? "",
@@ -51,6 +53,33 @@ export async function fetchPerfilJugadorRpc(client, jugadorId) {
 export async function fetchMiPerfilJugadorRpc(client) {
   if (!client) return { ok: false, perfil: null };
   const { data, error } = await client.rpc("get_mi_perfil_jugador", {});
+  if (error) return { ok: false, error: error.message, perfil: null };
+  return { ok: true, perfil: mapPerfilFromRpc(data) };
+}
+
+export async function fetchMiPerfilPendienteRpc(client) {
+  if (!client) return { ok: false, perfil: null };
+  const { data, error } = await client.rpc("get_mi_perfil_pendiente", {});
+  if (error) return { ok: false, error: error.message, perfil: null };
+  return { ok: true, perfil: mapPerfilFromRpc(data) };
+}
+
+export async function crearJugadorPendienteRpc(client) {
+  if (!client) return { ok: false, perfil: null };
+  const { data, error } = await client.rpc("crear_jugador_pendiente", {});
+  if (error) return { ok: false, error: error.message, perfil: null };
+  return { ok: true, perfil: mapPerfilFromRpc(data) };
+}
+
+export async function completarOnboardingRpc(client, fields) {
+  if (!client) return { ok: false, perfil: null };
+  const { data, error } = await client.rpc("completar_onboarding", {
+    p_nombre: fields.nombre ?? "",
+    p_primer_apellido: fields.primer_apellido ?? "",
+    p_segundo_apellido: fields.segundo_apellido ?? "",
+    p_nickname: fields.nickname ?? "",
+    p_telefono: fields.telefono ?? ""
+  });
   if (error) return { ok: false, error: error.message, perfil: null };
   return { ok: true, perfil: mapPerfilFromRpc(data) };
 }

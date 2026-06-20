@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { avatarUrlBase } from "../utils/avatarUrl";
-import { fetchMiPerfilJugadorRpc, fetchPerfilJugadorRpc } from "../utils/perfilJugador";
+import {
+  completarOnboardingRpc,
+  crearJugadorPendienteRpc,
+  fetchMiPerfilJugadorRpc,
+  fetchMiPerfilPendienteRpc,
+  fetchPerfilJugadorRpc
+} from "../utils/perfilJugador";
 import { isJugadorUuid, normalizeJugadorUuid } from "../utils/jugador";
 import { hoyLocalStr } from "../utils/dates";
 import { t } from "../i18n";
@@ -39,6 +45,8 @@ export function useAuth() {
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  /** null | 'active' | 'onboarding' | 'pending' */
+  const [authStatus, setAuthStatus] = useState(null);
   const [authEpoch, setAuthEpoch] = useState(0);
   const ultimoAuthIdCargadoRef = useRef(null);
   const currentUserRef = useRef(null);
@@ -83,22 +91,70 @@ export function useAuth() {
     return () => window.removeEventListener("jugador-actualizado", onJugadorActualizado);
   }, [refreshCurrentJugador]);
 
-  async function fetchJugadorSesion() {
+  async function fetchJugadorSesion({ allowPending = false } = {}) {
     let { ok, perfil, error: rpcError } = await fetchMiPerfilJugadorRpc(supabase);
     if (!ok) return { ok: false, message: rpcError ?? t("auth.errors.connection") };
-    if (!perfil) return { ok: false, message: t("auth.errors.userNotFound") };
 
-    if (perfil.sancionat && perfil.sancio_fins && perfil.sancio_fins < hoyLocalStr()) {
-      const { error: desancionarError } = await supabase.rpc("desancionar_jugador", {
-        p_jugador_id: perfil.id
-      });
-      if (desancionarError) return { ok: false, message: desancionarError.message };
+    if (perfil) {
+      if (perfil.sancionat && perfil.sancio_fins && perfil.sancio_fins < hoyLocalStr()) {
+        const { error: desancionarError } = await supabase.rpc("desancionar_jugador", {
+          p_jugador_id: perfil.id
+        });
+        if (desancionarError) return { ok: false, message: desancionarError.message };
 
-      const refreshed = await fetchMiPerfilJugadorRpc(supabase);
-      if (refreshed.ok && refreshed.perfil) perfil = refreshed.perfil;
+        const refreshed = await fetchMiPerfilJugadorRpc(supabase);
+        if (refreshed.ok && refreshed.perfil) perfil = refreshed.perfil;
+      }
+
+      return { ok: true, jugador: jugadorToState(perfil) };
     }
 
-    return { ok: true, jugador: jugadorToState(perfil) };
+    if (!allowPending) {
+      return { ok: false, message: t("auth.errors.userNotFound") };
+    }
+
+    let pendingRes = await fetchMiPerfilPendienteRpc(supabase);
+    if (!pendingRes.ok) {
+      return { ok: false, message: pendingRes.error ?? t("auth.errors.connection") };
+    }
+
+    let pending = pendingRes.perfil;
+    if (!pending) {
+      const created = await crearJugadorPendienteRpc(supabase);
+      if (!created.ok) {
+        return { ok: false, message: created.error ?? t("auth.errors.connection") };
+      }
+      pendingRes = await fetchMiPerfilPendienteRpc(supabase);
+      if (!pendingRes.ok || !pendingRes.perfil) {
+        return { ok: false, message: pendingRes.error ?? t("auth.errors.connection") };
+      }
+      pending = pendingRes.perfil;
+    }
+
+    const jugador = jugadorToState(pending);
+
+    if (!String(pending.nombre ?? "").trim()) {
+      return { ok: true, needsOnboarding: true, jugador };
+    }
+
+    if (!pending.activo) {
+      return { ok: true, pendingApproval: true, jugador };
+    }
+
+    return { ok: true, jugador };
+  }
+
+  function applyJugadorSesionResult(result) {
+    setError("");
+    setCurrentUser(result.jugador);
+    bumpAvatarVersion();
+    if (result.needsOnboarding) {
+      setAuthStatus("onboarding");
+    } else if (result.pendingApproval) {
+      setAuthStatus("pending");
+    } else {
+      setAuthStatus("active");
+    }
   }
 
   async function aplicarSesionSupabase(authUser) {
@@ -107,6 +163,7 @@ export function useAuth() {
       setCurrentUser(null);
       setAvatarVersion(0);
       setError("");
+      setAuthStatus(null);
       setAuthEpoch((n) => n + 1);
       return;
     }
@@ -115,24 +172,24 @@ export function useAuth() {
 
     setLoading(true);
     try {
-      const result = await fetchJugadorSesion();
+      const result = await fetchJugadorSesion({ allowPending: true });
       if (!result.ok) {
         setError(result.message);
         setCurrentUser(null);
         setAvatarVersion(0);
+        setAuthStatus(null);
         ultimoAuthIdCargadoRef.current = null;
         await supabase.auth.signOut({ scope: "local" });
         return;
       }
-      setError("");
-      setCurrentUser(result.jugador);
-      bumpAvatarVersion();
+      applyJugadorSesionResult(result);
       ultimoAuthIdCargadoRef.current = authUser.id;
       if (!mismoAuthId) setAuthEpoch((n) => n + 1);
     } catch (e) {
       setError(e?.message ?? t("auth.errors.connection"));
       setCurrentUser(null);
       setAvatarVersion(0);
+      setAuthStatus(null);
       ultimoAuthIdCargadoRef.current = null;
       try {
         await supabase.auth.signOut({ scope: "local" });
@@ -159,6 +216,7 @@ export function useAuth() {
         setCurrentUser(null);
         setAvatarVersion(0);
         setError("");
+        setAuthStatus(null);
         setLoading(false);
         setAuthEpoch((n) => n + 1);
       }
@@ -219,9 +277,7 @@ export function useAuth() {
         return;
       }
 
-      setError("");
-      setCurrentUser(result.jugador);
-      bumpAvatarVersion();
+      applyJugadorSesionResult(result);
       ultimoAuthIdCargadoRef.current = authUser.id;
       setAuthEpoch((n) => n + 1);
     } catch (e) {
@@ -232,6 +288,46 @@ export function useAuth() {
       } catch {
         /* ignore */
       }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function completeOnboarding(fields) {
+    setError("");
+    if (!fields?.privacyAccepted) {
+      setError(t("auth.errors.privacyRequired"));
+      return { ok: false, error: t("auth.errors.privacyRequired") };
+    }
+    if (!String(fields.nombre ?? "").trim()) {
+      setError(t("auth.onboarding.nameRequired"));
+      return { ok: false, error: t("auth.onboarding.nameRequired") };
+    }
+    if (!supabase) {
+      setError(t("auth.errors.supabaseEnvMissing"));
+      return { ok: false, error: t("auth.errors.supabaseEnvMissing") };
+    }
+
+    setLoading(true);
+    try {
+      const res = await completarOnboardingRpc(supabase, fields);
+      if (!res.ok) {
+        setError(res.error ?? t("auth.errors.connection"));
+        return { ok: false, error: res.error };
+      }
+
+      const refreshed = await fetchMiPerfilPendienteRpc(supabase);
+      if (!refreshed.ok || !refreshed.perfil) {
+        setError(refreshed.error ?? t("auth.errors.connection"));
+        return { ok: false, error: refreshed.error };
+      }
+
+      applyJugadorSesionResult({
+        ok: true,
+        pendingApproval: true,
+        jugador: jugadorToState(refreshed.perfil)
+      });
+      return { ok: true };
     } finally {
       setLoading(false);
     }
@@ -273,6 +369,7 @@ export function useAuth() {
     setLoading(false);
     setCurrentUser(null);
     setAvatarVersion(0);
+    setAuthStatus(null);
     setPassword("");
     setEmail("");
     setError("");
@@ -296,8 +393,10 @@ export function useAuth() {
     setPrivacyAccepted,
     error,
     loading,
+    authStatus,
     loginEmail,
     loginGoogle,
+    completeOnboarding,
     logout,
     patchCurrentUser,
     refreshCurrentJugador

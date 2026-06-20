@@ -1,6 +1,8 @@
 import { useMemo, useRef, useState } from "react";
 import NotificacionesPanel from "./components/notificaciones/NotificacionesPanel";
 import LoginScreen from "./components/auth/LoginScreen";
+import OnboardingScreen from "./components/auth/OnboardingScreen";
+import PendingApprovalScreen from "./components/auth/PendingApprovalScreen";
 import Bienvenida from "./components/bienvenida/Bienvenida";
 import Ranking from "./components/ranking/Ranking";
 import Jugar from "./components/jugar/Jugar";
@@ -28,6 +30,14 @@ export default function App() {
   const auth = useAuth();
 
   if (!auth.currentUser) return <LoginScreen auth={auth} />;
+
+  if (auth.authStatus === "onboarding") {
+    return <OnboardingScreen auth={auth} />;
+  }
+
+  if (auth.authStatus === "pending") {
+    return <PendingApprovalScreen auth={auth} />;
+  }
 
   return (
     <CurrentJugadorProvider
