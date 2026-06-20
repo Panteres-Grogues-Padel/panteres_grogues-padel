@@ -59,7 +59,8 @@ function EditJugadorModal({ jugador, open, onClose, onSave, saving }) {
     numero_socio: "",
     id_app_antigua: "",
     documento_identidad: "",
-    email_contacto: ""
+    email_contacto: "",
+    telefono: ""
   });
 
   useEffect(() => {
@@ -74,7 +75,8 @@ function EditJugadorModal({ jugador, open, onClose, onSave, saving }) {
       numero_socio: jugador.numero_socio ?? "",
       id_app_antigua: jugador.id_app_antigua ?? "",
       documento_identidad: jugador.documento_identidad ?? "",
-      email_contacto: jugador.email_contacto ?? ""
+      email_contacto: jugador.email_contacto ?? "",
+      telefono: jugador.telefono ?? ""
     });
   }, [jugador, open]);
 
@@ -114,12 +116,13 @@ function EditJugadorModal({ jugador, open, onClose, onSave, saving }) {
             ["numero_socio", t("admin.fields.memberNumber")],
             ["id_app_antigua", t("admin.fields.legacyId")],
             ["documento_identidad", t("auth.onboarding.idDocument")],
-            ["email_contacto", t("auth.onboarding.contactEmail")]
+            ["email_contacto", t("auth.onboarding.contactEmail")],
+            ["telefono", t("auth.onboarding.contactPhone")]
           ].map(([key, label]) => (
             <label key={key} className="admin-field">
               <span>{label}</span>
               <input
-                type={key === "email" ? "email" : "text"}
+                type={key === "email" || key === "email_contacto" ? "email" : key === "telefono" ? "tel" : "text"}
                 value={form[key]}
                 onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
               />

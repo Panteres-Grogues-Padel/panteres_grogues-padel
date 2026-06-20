@@ -16,6 +16,7 @@ export function mapJugadorAdminRow(row) {
     pronombre: row.pronombre ?? "",
     documento_identidad: row.documento_identidad ?? "",
     email_contacto: row.email_contacto ?? "",
+    telefono: row.telefono ?? "",
     es_coordinador: Boolean(row.es_coordinador),
     es_super_admin: Boolean(row.es_super_admin),
     es_tesorero: Boolean(row.es_tesorero),
@@ -170,7 +171,8 @@ export function filtrarJugadoresBusqueda(jugadores, query) {
       j.id_app_antigua,
       j.pronombre,
       j.documento_identidad,
-      j.email_contacto
+      j.email_contacto,
+      j.telefono
     ]
       .filter(Boolean)
       .join(" ")
