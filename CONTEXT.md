@@ -4,6 +4,42 @@ Documento de referencia para el estado del proyecto y decisiones recientes.
 
 ---
 
+## Implementado hoy (24/06/2026)
+
+### 1. Nickname visible al apuntarse a un slot
+
+- **Problema:** en la lista de apuntados aparecía el `nombre` real en lugar del `nickname` tras inscribirse.
+- **Causa:** la actualización optimista en `apuntarEnSlot` (`useSlots.js`) solo guardaba `jugadores: { nombre }` sin `nickname`.
+- **Solución:** incluir `nickname: currentUser.nickname?.trim() || null` en el objeto optimista + `await reloadInscripciones()` tras el INSERT (alineado con `bajaEnSlot`).
+- Commit: `de216da`.
+
+### 2. No cerrar detalle del slot tras recargar inscripciones
+
+- **Problema:** tras apuntarse, la app volvía a la lista de slots en lugar de mantener `DetalleSlot`.
+- **Causa:** el `useEffect` de sincronización en `Jugar.jsx` llamaba `setShowLista(false)` cada vez que `slotsVisibles` cambiaba de referencia (p. ej. tras `reloadInscripciones`), aunque el slot siguiera existiendo.
+- **Solución:** si `showLista === true` y el slot en detalle sigue en `slotsVisibles` (por `id`), no cerrar; solo cerrar si el slot ya no existe. Sincronizar `selectedSlotId` si estaba vacío.
+- Archivo: `react/src/components/jugar/Jugar.jsx`.
+
+### 3. Panel admin — campos onboarding (completado)
+
+- Campos visibles, editables y buscables: `pronombre`, `documento_identidad`, `email_contacto`, `telefono` (+ los ya existentes).
+- Migraciones: `20260620140000_editar_jugador_campos_onboarding.sql`, `20260620150000_editar_jugador_telefono.sql`.
+- Commits: `2c62e12`, `93c2bac`.
+
+### 4. Decisión: migración de jugadores a producción
+
+- **No se usará script desde Google Sheets** para cargar jugadores reales en producción.
+- **Flujo acordado:** cada jugador nuevo entra con **Google OAuth + onboarding** (formulario completo → pendent d'aprovació → activación por super admin).
+- Los datos históricos de staging/producción se gestionan caso a caso vía panel admin, no importación masiva desde hoja de cálculo.
+
+### 5. Decisión: coordinadores y jugadores actuales (staging → producción)
+
+- Perfiles ya creados en BD **sin** `auth_id` deben tener el **`email` en `jugadores.email` igual al de su cuenta Google** antes del primer login OAuth.
+- El super admin actualiza el email en **Admin → Editar jugador** si el jugador cambió de correo o el registro antiguo no coincide.
+- Al entrar con Google, `vincular_jugador_existente()` empareja por email y asigna `auth_id` sin duplicar fila ni pasar por onboarding de cero.
+
+---
+
 ## Implementado hoy (20/06/2026)
 
 ### 1. Google OAuth
@@ -230,7 +266,7 @@ Función auxiliar BD: **`cuotas_fechas_desde_periodo(tipo, periodo)`** — calcu
 
 ### Slots y resultados
 
-- **Slots:** `setTimeout` alineado a las **19:00** + `visibilitychange` en `useSlots` (ver punto 8 del 04/06/2026).
+- **Slots:** `setTimeout` alineado a las **19:00** + `visibilitychange` en `useSlots` (ver punto 8 del 04/06/2026). Tras apuntarse: nickname en lista de inscritos + detalle de slot no se cierra al recargar inscripciones (24/06/2026).
 - **Inscripciones:** checkbox socio UP visible antes de apertura del slot (`DetalleSlot.jsx`).
 - **Resultados:** validación automática al confirmar guardado; desbloqueo del coordinador con RPC **`modificar_resultado`** en el paso «Modificar».
 - **Partidos:** número de pista manual (`asignar_numero_pista`); botón «Copiar llista clubs» para coordinadores.
@@ -360,6 +396,7 @@ Migración: `supabase/migrations/20250520190000_cron_slot_abierto.sql`
 ## Pendientes añadidos
 
 - ~~**Google OAuth + onboarding**~~ — Implementado (20/06/2026): OAuth Google, formulario completo, pendent d'aprovació, vincular por email.
+- ~~**Migración jugadores desde Google Sheets**~~ — Descartado (24/06/2026): alta en producción vía OAuth + onboarding; perfiles existentes se vinculan por email (ver decisiones 24/06).
 - **Email automático bienvenida** tras alta (Resend) — pendiente
 - **Notificación push móvil** cuando la app está cerrada (Firebase FCM — futuro)
 - **RPC `guardar_resultado`:** migrar INSERT/UPDATE de sets desde PostgREST directo (alinear con regla de escrituras)

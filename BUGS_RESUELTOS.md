@@ -46,6 +46,8 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 - **Emoji 🏳️‍🌈 en subtítulo del hero** — Solución: eliminado al renderizar en `Bienvenida.jsx` (texto i18n sin cambiar).
 - **Perfil mostraba número de socio generado (hash del UUID)** en lugar del valor real de BD — Solución: `numero_socio` en RPCs de perfil + `mapPerfilFromRpc` + `PerfilJugador.jsx` muestra el campo real con fallback al hash solo si está vacío. Migración: `20260620130000_perfil_numero_socio.sql`.
 - **Datos incorrectos tras completar onboarding Google** (teléfono, etc. de sesión anterior) — Causa: race entre `completeOnboarding()` y listener `onAuthStateChange` → `aplicarSesionSupabase`. Solución: usar `res.perfil` de `completarOnboardingRpc` directamente (sin refetch) + `setAuthEpoch` al completar.
+- **Nickname no visible en lista de apuntados tras inscribirse** — Causa: update optimista en `apuntarEnSlot` solo incluía `nombre` sin `nickname`. Solución: incluir `nickname` en `jugadores` optimista + `reloadInscripciones()` tras INSERT (`useSlots.js`). Commit `de216da`.
+- **Detalle de slot se cerraba al apuntarse** — Causa: `useEffect` en `Jugar.jsx` ponía `showLista(false)` al cambiar `slotsVisibles` tras `reloadInscripciones`. Solución: no cerrar detalle si `showLista` y el slot sigue existiendo por `id`; solo cerrar si el slot desaparece del listado.
 
 ### Operaciones (staging)
 
@@ -99,8 +101,9 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 - **Onboarding nuevos usuarios:** formulario completo (`OnboardingScreen.jsx`) — pronombre, nombre, apellidos, nickname, numero_socio, id_app_antigua, documento_identidad, email_contacto, telefono; RPC `completar_onboarding`
 - **Pantalla pendent d'aprovació:** `PendingApprovalScreen.jsx` para jugadores con `activo = false` tras onboarding; activación manual por super admin
 - **Vincular Google con jugador existente:** RPC `vincular_jugador_existente` — empareja por email si `auth_id IS NULL`
-- **Panel admin — campos onboarding:** pronombre, documento_identidad, email_contacto, telefono visibles, editables y buscables; `editar_jugador_admin` ampliada
+- **Panel admin — campos onboarding:** pronombre, documento_identidad, email_contacto, telefono visibles, editables y buscables; `editar_jugador_admin` ampliada (migraciones `20260620140000`, `20260620150000`)
 - **Número de socio real en perfil:** columna `numero_socio` de BD en lugar del hash `PG-XXXXXX` derivado del UUID
+- **Apuntarse a slot:** nickname correcto en lista de inscritos (optimista + reload); usuario permanece en `DetalleSlot` tras inscribirse
 
 ---
 
@@ -154,8 +157,8 @@ Funciones auxiliares en BD: `es_coordinador()` (RLS), `es_super_admin()`, `es_te
 - Sistema de padrinos/ahijados — implementado (ver `CONTEXT.md`); revisar UX si hace falta
 - Migrar `guardarResultado` a RPC (INSERT/UPDATE de sets) para alinear con regla PostgREST
 - ~~Google OAuth~~ — Implementado (20/06/2026): OAuth + onboarding + pendent + vincular por email
+- ~~Migración usuarios desde Google Sheets~~ — Descartado (24/06/2026): producción vía OAuth + onboarding; jugadores/coordinadores existentes: actualizar `email` en admin antes del primer login Google para vincular con `vincular_jugador_existente`
 - Organigrama en Coordinación
-- Migración usuarios desde Google Sheets
 - i18n catalán/inglés
 - Penalización ranking por inactividad (2 meses sin jugar → bajada máx. 30 posiciones)
 
