@@ -505,10 +505,15 @@ export function useSlots(currentUser, authEpoch = 0) {
           semana,
           es_socio: Boolean(options.socio),
           inscrito_at: inscritoAtLocal,
-          jugadores: { nombre: currentUser.nombre }
+          jugadores: {
+            nombre: currentUser.nombre,
+            nickname: currentUser.nickname?.trim() || null
+          }
         }
       ];
     });
+
+    await reloadInscripciones();
 
     void createActivityLog({
       jugadorId: currentUser.id,
