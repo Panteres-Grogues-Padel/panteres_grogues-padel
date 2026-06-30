@@ -97,9 +97,9 @@ export async function completarOnboardingRpc(client, fields) {
     p_nickname: fields.nickname ?? "",
     p_numero_socio: fields.numero_socio ?? "",
     p_id_app_antigua: fields.id_app_antigua ?? "",
-    p_documento_identidad: fields.documento_identidad ?? "",
     p_email_contacto: fields.email_contacto ?? "",
-    p_telefono: fields.telefono ?? ""
+    p_telefono: fields.telefono ?? "",
+    p_acepto_privacidad: Boolean(fields.acepto_privacidad)
   });
   if (error) return { ok: false, error: error.message, perfil: null };
   return { ok: true, perfil: mapPerfilFromRpc(data) };

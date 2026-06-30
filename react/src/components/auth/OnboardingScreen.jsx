@@ -1,5 +1,10 @@
 import { useState } from "react";
 import { t } from "../../i18n";
+import {
+  buildFechaNacimiento,
+  DIAS_NACIMIENTO,
+  MESES_NACIMIENTO
+} from "../../utils/fechaNacimientoDm";
 import "./onboarding.css";
 
 const PRONOMBRES = ["Ell", "Ella", "Elle", "Altre", "Prefereixo no dir-ho"];
@@ -10,13 +15,14 @@ function emptyForm(email = "") {
     nombre: "",
     primer_apellido: "",
     segundo_apellido: "",
-    fecha_nacimiento: "",
+    birth_day: "",
+    birth_month: "",
     nickname: "",
     numero_socio: "",
     id_app_antigua: "",
-    documento_identidad: "",
     email_contacto: email,
-    telefono: ""
+    telefono: "",
+    acepto_privacidad: false
   };
 }
 
@@ -29,8 +35,16 @@ export default function OnboardingScreen({ auth }) {
 
   async function handleSubmit(ev) {
     ev.preventDefault();
-    await auth.completeOnboarding(form);
+    if (!form.acepto_privacidad) {
+      return;
+    }
+    const fecha_nacimiento = buildFechaNacimiento(form.birth_day, form.birth_month);
+    if (!fecha_nacimiento) return;
+    const { birth_day: _d, birth_month: _m, ...rest } = form;
+    await auth.completeOnboarding({ ...rest, fecha_nacimiento });
   }
+
+  const birthDateValid = Boolean(buildFechaNacimiento(form.birth_day, form.birth_month));
 
   return (
     <section className="screen active">
@@ -79,16 +93,37 @@ export default function OnboardingScreen({ auth }) {
             ))}
 
             <div className="form-group">
-              <label className="onboarding-label" htmlFor="onb-fecha_nacimiento">
-                {t("auth.onboarding.birthDate")} *
-              </label>
-              <input
-                id="onb-fecha_nacimiento"
-                type="date"
-                required
-                value={form.fecha_nacimiento}
-                onChange={(e) => updateField("fecha_nacimiento", e.target.value)}
-              />
+              <span className="onboarding-label">{t("auth.onboarding.birthDate")} *</span>
+              <div className="onboarding-birth-row">
+                <select
+                  id="onb-birth_day"
+                  required
+                  aria-label={t("auth.onboarding.birthDay")}
+                  value={form.birth_day}
+                  onChange={(e) => updateField("birth_day", e.target.value)}
+                >
+                  <option value="">{t("auth.onboarding.birthDay")}</option>
+                  {DIAS_NACIMIENTO.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  id="onb-birth_month"
+                  required
+                  aria-label={t("auth.onboarding.birthMonth")}
+                  value={form.birth_month}
+                  onChange={(e) => updateField("birth_month", e.target.value)}
+                >
+                  <option value="">{t("auth.onboarding.birthMonth")}</option>
+                  {MESES_NACIMIENTO.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="form-group">
@@ -133,21 +168,6 @@ export default function OnboardingScreen({ auth }) {
             </div>
 
             <div className="form-group">
-              <label className="onboarding-label" htmlFor="onb-documento_identidad">
-                {t("auth.onboarding.idDocument")} *
-              </label>
-              <input
-                id="onb-documento_identidad"
-                type="text"
-                required
-                autoComplete="off"
-                value={form.documento_identidad}
-                onChange={(e) => updateField("documento_identidad", e.target.value)}
-                placeholder="12345678A"
-              />
-            </div>
-
-            <div className="form-group">
               <label className="onboarding-label" htmlFor="onb-email_contacto">
                 {t("auth.onboarding.contactEmail")} *
               </label>
@@ -173,7 +193,22 @@ export default function OnboardingScreen({ auth }) {
               />
             </div>
 
-            <button type="submit" className="btn btn-primary btn-block onboarding-submit" disabled={auth.loading}>
+            <label className="privacy-row onboarding-privacy-row">
+              <input
+                className="onboarding-privacy-check"
+                type="checkbox"
+                required
+                checked={form.acepto_privacidad}
+                onChange={(e) => updateField("acepto_privacidad", e.target.checked)}
+              />
+              <span className="onboarding-privacy-text">{t("auth.privacyAccept")}</span>
+            </label>
+
+            <button
+              type="submit"
+              className="btn btn-primary btn-block onboarding-submit"
+              disabled={auth.loading || !form.acepto_privacidad || !birthDateValid}
+            >
               {auth.loading ? t("common.saving") : t("auth.onboarding.submit")}
             </button>
           </form>

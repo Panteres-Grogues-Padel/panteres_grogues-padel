@@ -84,3 +84,18 @@
   font-size: 40px;
   margin-bottom: 0.75rem;
 }
+
+.onboarding-birth-row {
+  display: flex;
+  gap: 8px;
+}
+
+.onboarding-birth-row select {
+  flex: 1;
+  min-width: 0;
+}
+
+.onboarding-privacy-row {
+  margin-top: 8px;
+  flex-shrink: 0;
+}

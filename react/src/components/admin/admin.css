@@ -344,6 +344,25 @@
   background: #fff;
 }
 
+.admin-field select {
+  height: 36px;
+  border: 1px solid rgba(12, 86, 115, 0.35);
+  border-radius: var(--radius);
+  padding: 0 10px;
+  font-size: 13px;
+  background: #fff;
+}
+
+.admin-birth-row {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-birth-row select {
+  flex: 1;
+  min-width: 0;
+}
+
 .admin-modal-actions {
   display: flex;
   gap: 8px;

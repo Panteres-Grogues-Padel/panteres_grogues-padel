@@ -14,7 +14,6 @@ export function mapJugadorAdminRow(row) {
     numero_socio: row.numero_socio ?? "",
     id_app_antigua: row.id_app_antigua ?? "",
     pronombre: row.pronombre ?? "",
-    documento_identidad: row.documento_identidad ?? "",
     email_contacto: row.email_contacto ?? "",
     telefono: row.telefono ?? "",
     fecha_nacimiento: row.fecha_nacimiento ? String(row.fecha_nacimiento).slice(0, 10) : "",
@@ -171,7 +170,6 @@ export function filtrarJugadoresBusqueda(jugadores, query) {
       j.numero_socio,
       j.id_app_antigua,
       j.pronombre,
-      j.documento_identidad,
       j.email_contacto,
       j.telefono,
       j.fecha_nacimiento

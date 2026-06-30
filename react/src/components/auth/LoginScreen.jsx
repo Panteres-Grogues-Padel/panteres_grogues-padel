@@ -28,16 +28,6 @@ export default function LoginScreen({ auth }) {
             />
           </div>
 
-          <label className="privacy-row login-privacy-row">
-            <input
-              className="login-privacy-check"
-              type="checkbox"
-              checked={auth.privacyAccepted}
-              onChange={(e) => auth.setPrivacyAccepted(e.target.checked)}
-            />
-            <span className="login-privacy-text">{t("auth.privacyAccept")}</span>
-          </label>
-
           <button className="btn btn-primary btn-block" onClick={auth.loginEmail} disabled={auth.loading}>
             {auth.loading ? t("auth.entering") : t("auth.enter")}
           </button>

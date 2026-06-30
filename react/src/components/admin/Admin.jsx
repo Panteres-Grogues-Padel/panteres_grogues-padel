@@ -14,6 +14,12 @@ import {
   periodoTrimestralActual,
   periodosTrimestralesHistorial
 } from "../../utils/adminJugador";
+import {
+  buildFechaNacimiento,
+  DIAS_NACIMIENTO,
+  MESES_NACIMIENTO,
+  parseFechaNacimientoDm
+} from "../../utils/fechaNacimientoDm";
 import { t } from "../../i18n";
 
 const ESTADO_LABEL = {
@@ -54,29 +60,30 @@ function EditJugadorModal({ jugador, open, onClose, onSave, saving }) {
     nombre: "",
     primer_apellido: "",
     segundo_apellido: "",
-    fecha_nacimiento: "",
+    birth_day: "",
+    birth_month: "",
     nickname: "",
     email: "",
     numero_socio: "",
     id_app_antigua: "",
-    documento_identidad: "",
     email_contacto: "",
     telefono: ""
   });
 
   useEffect(() => {
     if (!jugador || !open) return;
+    const { dia, mes } = parseFechaNacimientoDm(jugador.fecha_nacimiento);
     setForm({
       pronombre: jugador.pronombre ?? "",
       nombre: jugador.nombre ?? "",
       primer_apellido: jugador.primer_apellido ?? "",
       segundo_apellido: jugador.segundo_apellido ?? "",
-      fecha_nacimiento: jugador.fecha_nacimiento ?? "",
+      birth_day: dia,
+      birth_month: mes,
       nickname: jugador.nickname ?? "",
       email: jugador.email ?? "",
       numero_socio: jugador.numero_socio ?? "",
       id_app_antigua: jugador.id_app_antigua ?? "",
-      documento_identidad: jugador.documento_identidad ?? "",
       email_contacto: jugador.email_contacto ?? "",
       telefono: jugador.telefono ?? ""
     });
@@ -112,27 +119,63 @@ function EditJugadorModal({ jugador, open, onClose, onSave, saving }) {
           {[
             ["nombre", t("admin.fields.name")],
             ["primer_apellido", t("admin.fields.firstSurname")],
-            ["segundo_apellido", t("admin.fields.secondSurname")],
-            ["fecha_nacimiento", t("auth.onboarding.birthDate"), "date"],
+            ["segundo_apellido", t("admin.fields.secondSurname")]
+          ].map(([key, label]) => (
+            <label key={key} className="admin-field">
+              <span>{label}</span>
+              <input
+                type="text"
+                value={form[key]}
+                onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
+              />
+            </label>
+          ))}
+          <label className="admin-field admin-field--span2">
+            <span>{t("auth.onboarding.birthDate")}</span>
+            <div className="admin-birth-row">
+              <select
+                aria-label={t("auth.onboarding.birthDay")}
+                value={form.birth_day}
+                onChange={(e) => setForm((prev) => ({ ...prev, birth_day: e.target.value }))}
+              >
+                <option value="">{t("auth.onboarding.birthDay")}</option>
+                {DIAS_NACIMIENTO.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+              <select
+                aria-label={t("auth.onboarding.birthMonth")}
+                value={form.birth_month}
+                onChange={(e) => setForm((prev) => ({ ...prev, birth_month: e.target.value }))}
+              >
+                <option value="">{t("auth.onboarding.birthMonth")}</option>
+                {MESES_NACIMIENTO.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </label>
+          {[
             ["nickname", t("admin.fields.nickname")],
             ["email", t("common.email")],
             ["numero_socio", t("admin.fields.memberNumber")],
             ["id_app_antigua", t("admin.fields.legacyId")],
-            ["documento_identidad", t("auth.onboarding.idDocument")],
             ["email_contacto", t("auth.onboarding.contactEmail")],
             ["telefono", t("auth.onboarding.contactPhone")]
-          ].map(([key, label, fieldType = "text"]) => (
+          ].map(([key, label]) => (
             <label key={key} className="admin-field">
               <span>{label}</span>
               <input
                 type={
-                  fieldType === "date"
-                    ? "date"
-                    : key === "email" || key === "email_contacto"
-                      ? "email"
-                      : key === "telefono"
-                        ? "tel"
-                        : "text"
+                  key === "email" || key === "email_contacto"
+                    ? "email"
+                    : key === "telefono"
+                      ? "tel"
+                      : "text"
                 }
                 value={form[key]}
                 onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
@@ -569,7 +612,14 @@ export default function Admin({ isSuperAdmin, onMessage }) {
   async function handleSaveEdit(form) {
     if (!editTarget) return;
     setSaving(true);
-    const res = await editarJugador(editTarget.id, form);
+    const { birth_day, birth_month, ...rest } = form;
+    const payload = { ...rest };
+    if (birth_day && birth_month) {
+      payload.fecha_nacimiento = buildFechaNacimiento(birth_day, birth_month) || "";
+    } else if (!birth_day && !birth_month) {
+      payload.fecha_nacimiento = "";
+    }
+    const res = await editarJugador(editTarget.id, payload);
     setSaving(false);
     if (!res.ok) {
       onMessage?.(res.error);

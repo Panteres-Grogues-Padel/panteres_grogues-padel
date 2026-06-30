@@ -43,7 +43,6 @@ export function useAuth() {
   const [avatarVersion, setAvatarVersion] = useState(0);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   /** null | 'active' | 'onboarding' | 'pending' */
@@ -243,7 +242,6 @@ export function useAuth() {
 
   async function loginEmail() {
     setError("");
-    if (!privacyAccepted) return setError(t("auth.errors.privacyRequired"));
     if (!email || !password) return setError(t("auth.errors.emailPasswordRequired"));
     if (!email.includes("@")) return setError(t("auth.errors.emailInvalid"));
     if (password.length < 6) return setError(t("auth.errors.passwordMinLength"));
@@ -308,6 +306,10 @@ export function useAuth() {
 
   async function completeOnboarding(fields) {
     setError("");
+    if (!fields?.acepto_privacidad) {
+      setError(t("auth.errors.privacyRequired"));
+      return { ok: false, error: t("auth.errors.privacyRequired") };
+    }
     if (!supabase) {
       setError(t("auth.errors.supabaseEnvMissing"));
       return { ok: false, error: t("auth.errors.supabaseEnvMissing") };
@@ -340,7 +342,6 @@ export function useAuth() {
 
   async function loginGoogle() {
     setError("");
-    if (!privacyAccepted) return setError(t("auth.errors.privacyRequired"));
     if (!supabase) return setError(t("auth.errors.supabaseEnvMissing"));
 
     setLoading(true);
@@ -378,7 +379,6 @@ export function useAuth() {
     setPassword("");
     setEmail("");
     setError("");
-    setPrivacyAccepted(false);
     try {
       if (supabase) await supabase.auth.signOut({ scope: "local" });
     } catch {
@@ -394,8 +394,6 @@ export function useAuth() {
     setEmail,
     password,
     setPassword,
-    privacyAccepted,
-    setPrivacyAccepted,
     error,
     loading,
     authStatus,
