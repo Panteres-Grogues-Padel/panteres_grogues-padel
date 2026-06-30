@@ -188,6 +188,7 @@ export default function Resultados({
   const [confirmGuardar, setConfirmGuardar] = useState(null);
   const [esSuperAdmin, setEsSuperAdmin] = useState(false);
   const [descargandoHistorico, setDescargandoHistorico] = useState(false);
+  const [descargandoDia, setDescargandoDia] = useState(false);
 
   const puedeDescarregarHistorico = isCoord || esSuperAdmin;
 
@@ -210,11 +211,23 @@ export default function Resultados({
     if (!supabase || !puedeDescarregarHistorico || descargandoHistorico) return;
     setDescargandoHistorico(true);
     try {
-      const { data, error } = await supabase.rpc("get_resultados_historico");
+      const { data, error } = await supabase.rpc("get_resultados_historico", { p_fecha: null });
       if (error) return;
-      descargarResultadosHistoricoExcel(data);
+      descargarResultadosHistoricoExcel(data, `resultats_panteres_${hoyLocalStr()}.xlsx`);
     } finally {
       setDescargandoHistorico(false);
+    }
+  }
+
+  async function handleDescarregarDia() {
+    if (!supabase || !puedeDescarregarHistorico || descargandoDia || !fechaSel) return;
+    setDescargandoDia(true);
+    try {
+      const { data, error } = await supabase.rpc("get_resultados_historico", { p_fecha: fechaSel });
+      if (error) return;
+      descargarResultadosHistoricoExcel(data, `resultats_panteres_${fechaSel}.xlsx`);
+    } finally {
+      setDescargandoDia(false);
     }
   }
 
@@ -325,7 +338,19 @@ export default function Resultados({
           <div className="empty-state">{t("resultados.noMatchesDay")}</div>
         </div>
       ) : (
-        partidosDia.map((p) => {
+        <>
+          {puedeDescarregarHistorico ? (
+            <button
+              type="button"
+              className="btn btn-sm btn-block"
+              style={{ marginBottom: "0.75rem" }}
+              disabled={descargandoDia}
+              onClick={() => void handleDescarregarDia()}
+            >
+              {descargandoDia ? t("common.loading") : "Descarregar dia"}
+            </button>
+          ) : null}
+          {partidosDia.map((p) => {
           const resultado = getResultado?.(p.id, p.fechaPartido);
           return (
             <PartidoResultadoCard
@@ -341,7 +366,8 @@ export default function Resultados({
               mapSetsFromResultado={mapSetsFromResultado}
             />
           );
-        })
+        })}
+        </>
       )}
 
       {confirmGuardar ? (
