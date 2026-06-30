@@ -88,6 +88,7 @@ export function useAdminJugadores(enabled) {
         p_documento_identidad: fields.documento_identidad ?? null,
         p_email_contacto: fields.email_contacto ?? null,
         p_telefono: fields.telefono ?? null,
+        p_fecha_nacimiento: fields.fecha_nacimiento ?? null,
         p_es_coordinador: fields.es_coordinador ?? null,
         p_es_tesorero: fields.es_tesorero ?? null,
         p_es_super_admin: fields.es_super_admin ?? null,

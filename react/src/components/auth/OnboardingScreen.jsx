@@ -10,6 +10,7 @@ function emptyForm(email = "") {
     nombre: "",
     primer_apellido: "",
     segundo_apellido: "",
+    fecha_nacimiento: "",
     nickname: "",
     numero_socio: "",
     id_app_antigua: "",
@@ -76,6 +77,19 @@ export default function OnboardingScreen({ auth }) {
                 />
               </div>
             ))}
+
+            <div className="form-group">
+              <label className="onboarding-label" htmlFor="onb-fecha_nacimiento">
+                {t("auth.onboarding.birthDate")} *
+              </label>
+              <input
+                id="onb-fecha_nacimiento"
+                type="date"
+                required
+                value={form.fecha_nacimiento}
+                onChange={(e) => updateField("fecha_nacimiento", e.target.value)}
+              />
+            </div>
 
             <div className="form-group">
               <label className="onboarding-label" htmlFor="onb-nickname">

@@ -54,6 +54,7 @@ function EditJugadorModal({ jugador, open, onClose, onSave, saving }) {
     nombre: "",
     primer_apellido: "",
     segundo_apellido: "",
+    fecha_nacimiento: "",
     nickname: "",
     email: "",
     numero_socio: "",
@@ -70,6 +71,7 @@ function EditJugadorModal({ jugador, open, onClose, onSave, saving }) {
       nombre: jugador.nombre ?? "",
       primer_apellido: jugador.primer_apellido ?? "",
       segundo_apellido: jugador.segundo_apellido ?? "",
+      fecha_nacimiento: jugador.fecha_nacimiento ?? "",
       nickname: jugador.nickname ?? "",
       email: jugador.email ?? "",
       numero_socio: jugador.numero_socio ?? "",
@@ -111,6 +113,7 @@ function EditJugadorModal({ jugador, open, onClose, onSave, saving }) {
             ["nombre", t("admin.fields.name")],
             ["primer_apellido", t("admin.fields.firstSurname")],
             ["segundo_apellido", t("admin.fields.secondSurname")],
+            ["fecha_nacimiento", t("auth.onboarding.birthDate"), "date"],
             ["nickname", t("admin.fields.nickname")],
             ["email", t("common.email")],
             ["numero_socio", t("admin.fields.memberNumber")],
@@ -118,11 +121,19 @@ function EditJugadorModal({ jugador, open, onClose, onSave, saving }) {
             ["documento_identidad", t("auth.onboarding.idDocument")],
             ["email_contacto", t("auth.onboarding.contactEmail")],
             ["telefono", t("auth.onboarding.contactPhone")]
-          ].map(([key, label]) => (
+          ].map(([key, label, fieldType = "text"]) => (
             <label key={key} className="admin-field">
               <span>{label}</span>
               <input
-                type={key === "email" || key === "email_contacto" ? "email" : key === "telefono" ? "tel" : "text"}
+                type={
+                  fieldType === "date"
+                    ? "date"
+                    : key === "email" || key === "email_contacto"
+                      ? "email"
+                      : key === "telefono"
+                        ? "tel"
+                        : "text"
+                }
                 value={form[key]}
                 onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
               />

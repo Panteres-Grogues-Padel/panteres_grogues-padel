@@ -93,6 +93,7 @@
       "legacyId": "ID app antiga",
       "legacyIdHint": "Número d'usuari de l'app antiga. Si no en tens, posa 000",
       "nicknameHint": "Nom pel qual et veuran al rànquing, partits i inscripcions. Es recomana posar el nom i la inicial dels cognoms (ex: JotaLB)",
+      "birthDate": "Data de naixement",
       "idDocument": "Document d'identitat (DNI/NIE/Passaport)",
       "idDocumentPlaceholder": "DNI 12345678A",
       "contactEmail": "Email de contacte",

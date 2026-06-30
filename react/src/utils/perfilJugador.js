@@ -86,6 +86,7 @@ export async function completarOnboardingRpc(client, fields) {
     p_nombre: fields.nombre ?? "",
     p_primer_apellido: fields.primer_apellido ?? "",
     p_segundo_apellido: fields.segundo_apellido ?? "",
+    p_fecha_nacimiento: fields.fecha_nacimiento ?? "",
     p_nickname: fields.nickname ?? "",
     p_numero_socio: fields.numero_socio ?? "",
     p_id_app_antigua: fields.id_app_antigua ?? "",
