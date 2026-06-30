@@ -66,11 +66,25 @@ export default function Jugar({ slots, currentUser, isCoord, deepLink, onApuntar
       setShowLista(false);
       return;
     }
+
+    if (showLista) {
+      const idEnDetalle = selectedSlotId || slotsVisibles[0].id;
+      if (slotsVisibles.some((s) => s.id === idEnDetalle)) {
+        if (!selectedSlotId) {
+          setSelectedSlotId(idEnDetalle);
+        }
+        return;
+      }
+      setSelectedSlotId(slotsVisibles[0].id);
+      setShowLista(false);
+      return;
+    }
+
     if (!slotsVisibles.some((s) => s.id === selectedSlotId)) {
       setSelectedSlotId(slotsVisibles[0].id);
       setShowLista(false);
     }
-  }, [slotsVisibles, selectedSlotId]);
+  }, [slotsVisibles, selectedSlotId, showLista]);
 
   useEffect(() => {
     if (deepLink?.openLista === false) {
