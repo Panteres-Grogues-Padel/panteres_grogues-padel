@@ -5,13 +5,13 @@ const COLUMNAS = [
   ["fecha", "Data"],
   ["pista", "Pista"],
   ["jugador", "Jugador"],
+  ["resultat", "Resultat"],
   ["set1", "Set 1"],
   ["set2", "Set 2"],
   ["set3", "Set 3"],
   ["introducido_por", "Introduït per"],
   ["validado_por", "Validat per"],
-  ["validado_el", "Validat el"],
-  ["resultat", "Resultat"]
+  ["validado_el", "Validat el"]
 ];
 
 function rowsFromRpc(data) {
