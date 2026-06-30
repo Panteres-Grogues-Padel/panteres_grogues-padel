@@ -12,3 +12,9 @@ major_version = 15
 # Programar con supabase/cron_slot_abierto_schedule.sql o Dashboard → Cron → Edge Function.
 [functions.cron-slot-abierto]
 verify_jwt = false
+
+# Edge Function: notificación aniversarios a las 7:00 (Madrid).
+# Cron: 0 5 * * * UTC (≈ 7:00 CEST; en CET serían 6:00 locales).
+# Programar con supabase/cron_cumpleanos_schedule.sql o Dashboard → Cron → Edge Function.
+[functions.cron-cumpleanos]
+verify_jwt = false
