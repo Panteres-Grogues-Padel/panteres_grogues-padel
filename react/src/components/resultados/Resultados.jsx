@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import { supabase } from "../../lib/supabase";
 import { getDiasDisponiblesResultados, hoyLocalStr } from "../../utils/dates";
+import { descargarResultadosHistoricoExcel } from "../../utils/descargarResultadosExcel";
 import {
   getEstadoLabel,
   getPermisosResultado,
@@ -184,6 +186,37 @@ export default function Resultados({
   const [fechaSel, setFechaSel] = useState("");
   const [setsDraft, setSetsDraft] = useState({});
   const [confirmGuardar, setConfirmGuardar] = useState(null);
+  const [esSuperAdmin, setEsSuperAdmin] = useState(false);
+  const [descargandoHistorico, setDescargandoHistorico] = useState(false);
+
+  const puedeDescarregarHistorico = isCoord || esSuperAdmin;
+
+  useEffect(() => {
+    if (!supabase) {
+      setEsSuperAdmin(false);
+      return undefined;
+    }
+    let cancelled = false;
+    void (async () => {
+      const { data } = await supabase.rpc("es_super_admin");
+      if (!cancelled) setEsSuperAdmin(data === true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function handleDescarregarHistorico() {
+    if (!supabase || !puedeDescarregarHistorico || descargandoHistorico) return;
+    setDescargandoHistorico(true);
+    try {
+      const { data, error } = await supabase.rpc("get_resultados_historico");
+      if (error) return;
+      descargarResultadosHistoricoExcel(data);
+    } finally {
+      setDescargandoHistorico(false);
+    }
+  }
 
   useEffect(() => {
     if (!diasDisponibles.length) {
@@ -258,6 +291,18 @@ export default function Resultados({
       ) : (
         <p className="slot-meta res-ventana-hint">{t("resultados.playerHint")}</p>
       )}
+
+      {puedeDescarregarHistorico ? (
+        <button
+          type="button"
+          className="btn btn-sm btn-block"
+          style={{ marginBottom: "0.75rem" }}
+          disabled={descargandoHistorico}
+          onClick={() => void handleDescarregarHistorico()}
+        >
+          {descargandoHistorico ? t("common.loading") : "Descarregar resultats"}
+        </button>
+      ) : null}
 
       <div id="resultados-days">
         {diasDisponibles.length ? (
