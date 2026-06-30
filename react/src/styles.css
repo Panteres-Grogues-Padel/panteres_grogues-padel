@@ -645,9 +645,9 @@ select {
 
 .hero-pride--cors {
   background-color: #0c5673;
-  background-image: url("https://fulqczmbmmakdxylejgw.supabase.co/storage/v1/object/public/assets/cor_muse_tile.png");
+  background-image: url("https://fulqczmbmmakdxylejgw.supabase.co/storage/v1/object/public/assets/cor_muse_tile_dense.png");
   background-repeat: repeat;
-  background-size: 200px 200px;
+  background-size: 170px 150px;
 }
 
 .hero-pride > * {
