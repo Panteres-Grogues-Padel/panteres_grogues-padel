@@ -393,6 +393,100 @@ Migración: `supabase/migrations/20250520190000_cron_slot_abierto.sql`
 
 ---
 
+## CHECKLIST PRODUCCIÓN
+
+Lista de pasos **manuales** al desplegar por primera vez (o replicar) el entorno de producción. Staging (`fulqczmbmmakdxylejgw`) sirve de referencia; sustituir URLs y `project-ref` por los de producción.
+
+### 1. Vercel
+
+- [ ] Crear cuenta Vercel con el **email de la asociación** (no personal).
+- [ ] Conectar el repositorio y desplegar la carpeta `react/`.
+- [ ] Configurar dominio de producción (p. ej. subdominio acordado con la asociación).
+
+### 2. Supabase — proyecto nuevo
+
+- [ ] Crear proyecto Supabase de **producción** (región EU recomendada).
+- [ ] Enlazar localmente si hace falta: `supabase link --project-ref <ref-produccion>`.
+
+### 3. Base de datos — migraciones
+
+- [ ] Aplicar **TODAS** las migraciones de `supabase/migrations/` **en orden cronológico** al proyecto de producción:
+  - Opción A: `supabase db push` (con proyecto enlazado a producción).
+  - Opción B: ejecutar cada `.sql` en el SQL Editor en orden de nombre (`20250515…` → `20260630…`).
+- [ ] Verificar que no queden migraciones pendientes respecto a `main`.
+
+### 4. Storage — buckets
+
+| Bucket | Uso | Configuración |
+|--------|-----|----------------|
+| **`avatars`** | Fotos de perfil | Público; MIME: `image/jpeg`, `image/png`, `image/webp`. Definido en `20250523120000_foto_perfil.sql` (o crear manualmente en Dashboard si la migración no crea buckets en prod). |
+| **`assets`** | Imágenes estáticas (fondo Cors, etc.) | Público; MIME: `image/png`, `image/jpeg`. Migración: `20260630090000_storage_assets_bucket.sql`. **Subir** `cor_muse_tile_full.png` (y el resto de assets que use la app). |
+| **`documents`** | PDFs de normativa | Público o según políticas; MIME PDF. **Subir** los PDFs actuales (p. ej. protocolo de accidentes, reglament de sancions — mismas rutas que en staging). |
+
+URLs públicas de referencia (staging):  
+`https://<project-ref>.supabase.co/storage/v1/object/public/<bucket>/<archivo>`
+
+### 5. Google OAuth (Auth)
+
+- [ ] En **Google Cloud Console**: credenciales OAuth 2.0 (nuevas para prod o reutilizar si el dominio es el mismo que staging).
+- [ ] En **Supabase → Authentication → URL Configuration**:
+  - **Site URL** = URL de producción (Vercel).
+  - **Redirect URLs** = origen de la app + `http://localhost:5173` si se desarrolla en local contra prod.
+- [ ] En **Google Cloud Console → Authorized redirect URIs**: añadir el callback de Supabase de producción (`https://<ref>.supabase.co/auth/v1/callback`).
+- [ ] Activar proveedor Google en Supabase Auth con Client ID y Secret de producción.
+
+### 6. Edge Functions
+
+Desde el repo, con proyecto enlazado a **producción**:
+
+```bash
+supabase functions deploy cron-slot-abierto
+supabase functions deploy cron-cumpleanos
+```
+
+- [ ] `supabase/config.toml` ya define `verify_jwt = false` para ambas (necesario para `pg_cron` + service role).
+- [ ] Comprobar en Dashboard → Edge Functions que ambas están activas.
+
+### 7. Crons (`pg_cron` + Vault)
+
+**Precondición:** guardar en Vault el secret `service_role_key` (service role de producción), igual que en staging.
+
+Ejecutar en el **SQL Editor de producción** (ajustar la URL del proyecto en los `.sql` si el ref cambia):
+
+- [ ] `supabase/cron_slot_abierto_schedule.sql` — notificación slot abierto (~19:00 Madrid, cron `0 17 * * *` UTC en verano).
+- [ ] `supabase/cron_cumpleanos_schedule.sql` — avisos cumpleaños (~7:00 Madrid, cron `0 5 * * *` UTC en verano).
+
+Verificar en `cron.job` que existen `cron-slot-abierto-19h` y `cron-cumpleanos-7h`.
+
+### 8. Variables de entorno (Vercel)
+
+- [ ] `VITE_SUPABASE_URL` = URL del proyecto de producción.
+- [ ] `VITE_SUPABASE_ANON_KEY` = anon key de producción (no la service role).
+- [ ] Redeploy tras cambiar variables.
+
+### 9. Roles y permisos en BD
+
+- [ ] **`es_super_admin = true`** para los usuarios que deban gestionar Admin (SQL o panel tras primer login).
+- [ ] **`coordinador_dia`** (lunes–domingo) según la tabla/slots de producción — revisar migración `20260602130000_coordinador_dia.sql` y datos en `slots` o tabla correspondiente.
+
+### 10. Jugadores reales (staging → producción)
+
+Decisión documentada (24/06/2026): **no** importación masiva desde Google Sheets.
+
+- [ ] Jugadores **nuevos** en prod: Google OAuth + onboarding + aprobación super admin.
+- [ ] Jugadores **ya existentes** en BD (sin `auth_id`): email en `jugadores.email` = email Google; primer login ejecuta `vincular_jugador_existente()`.
+- [ ] Si hay perfiles que ya completaron onboarding en **staging** y deben existir en prod: plan caso a caso (re-onboarding, edición admin, o copia selectiva de filas — **no** automatizado en repo; evaluar antes del go-live).
+
+### 11. Smoke test post-despliegue
+
+- [ ] Login Google y onboarding (usuario de prueba).
+- [ ] Hero fondos (`bandera`, `blau`, `cors` — imagen en bucket `assets`).
+- [ ] Apuntarse a slot, partidos, resultados, notificaciones.
+- [ ] Panel admin (super admin): jugadores, pendents, descarga Excel resultados.
+- [ ] Invocar manualmente las Edge Functions o esperar al cron y revisar logs.
+
+---
+
 ## Pendientes añadidos
 
 - ~~**Google OAuth + onboarding**~~ — Implementado (20/06/2026): OAuth Google, formulario completo, pendent d'aprovació, vincular por email.
