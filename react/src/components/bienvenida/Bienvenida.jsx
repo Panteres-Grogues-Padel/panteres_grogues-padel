@@ -14,7 +14,7 @@ import { useMananaJuegas } from "../../hooks/useMananaJuegas";
 import { supabase } from "../../lib/supabase";
 import PlayerAvatar from "../common/PlayerAvatar";
 import { useCurrentJugador } from "../../context/CurrentJugadorContext";
-import { DATE_LOCALE } from "../../utils/dates";
+import { DATE_LOCALE, hoyLocalStr } from "../../utils/dates";
 import { jugadoresCoinciden } from "../../utils/jugador";
 import { getNombreSaludo, getNombreVisible } from "../../utils/nombres";
 import { normalizeFondoHero } from "../../utils/perfilJugador";
@@ -108,6 +108,24 @@ function formatCumpleanosCelebracion(jugadores) {
   return `Avui celebrem l'aniversari de ${nicks.slice(0, -1).join(", ")} i ${last}!`;
 }
 
+function cumpleVistoOtrosHoy() {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(`cumple-visto-${hoyLocalStr()}`) != null;
+  } catch {
+    return false;
+  }
+}
+
+function marcarCumpleVistoOtrosHoy() {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(`cumple-visto-${hoyLocalStr()}`, "1");
+  } catch {
+    // ignore
+  }
+}
+
 function heroMensajeCumpleanos(cumpleaneros, currentUser, nombreFallback) {
   if (!cumpleaneros.length || !currentUser?.id) return null;
 
@@ -117,6 +135,8 @@ function heroMensajeCumpleanos(cumpleaneros, currentUser, nombreFallback) {
     const nick = getNombreVisible(yo) || yo?.nickname || nombreFallback || t("common.playerFallback");
     return `Bon aniversari, ${nick}! 🎂`;
   }
+
+  if (cumpleVistoOtrosHoy()) return null;
 
   return formatCumpleanosCelebracion(cumpleaneros);
 }
@@ -196,6 +216,13 @@ export default function Bienvenida({
       cancelled = true;
     };
   }, [currentUser?.fromFallback, currentUser?.id]);
+
+  useEffect(() => {
+    if (!heroCumpleanos || !cumpleanerosHoy.length || !currentUser?.id) return;
+    const yoCumple = cumpleanerosHoy.some((j) => jugadoresCoinciden(j.id, currentUser.id));
+    if (yoCumple) return;
+    marcarCumpleVistoOtrosHoy();
+  }, [heroCumpleanos, cumpleanerosHoy, currentUser?.id]);
 
   useEffect(() => {
     if (!activityOpen) return undefined;
