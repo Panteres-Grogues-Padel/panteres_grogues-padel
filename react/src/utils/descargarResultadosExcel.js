@@ -1,34 +1,27 @@
 import * as XLSX from "xlsx";
 import { hoyLocalStr } from "./dates";
 
-const COLUMNAS = [
-  ["fecha", "Data"],
-  ["pista", "Pista"],
-  ["jugador", "Jugador"],
-  ["set1", "Set 1"],
-  ["set2", "Set 2"],
-  ["set3", "Set 3"],
-  ["introducido_por", "Introduït per"],
-  ["validado_por", "Validat per"],
-  ["validado_el", "Validat el"]
-];
+const COLUMNAS = ["Player", "Resultat"];
 
 function rowsFromRpc(data) {
   if (data == null) return [];
   return Array.isArray(data) ? data : [data];
 }
 
-export function descargarResultadosHistoricoExcel(rows, nombreArchivo = `resultats_panteres_${hoyLocalStr()}.xlsx`) {
-  const sheetRows = rowsFromRpc(rows).map((row) => {
-    const out = {};
-    for (const [key, header] of COLUMNAS) {
-      const value = row?.[key];
-      out[header] = value == null ? "" : String(value);
-    }
-    return out;
-  });
+function formatResultat(row) {
+  return [row?.set1, row?.set2, row?.set3]
+    .filter((set) => set != null && String(set).trim() !== "")
+    .map((set) => String(set).trim())
+    .join(" ");
+}
 
-  const worksheet = XLSX.utils.json_to_sheet(sheetRows, { header: COLUMNAS.map(([, header]) => header) });
+export function descargarResultadosHistoricoExcel(rows, nombreArchivo = `resultats_panteres_${hoyLocalStr()}.xlsx`) {
+  const sheetRows = rowsFromRpc(rows).map((row) => ({
+    Player: row?.jugador == null ? "" : String(row.jugador),
+    Resultat: formatResultat(row)
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(sheetRows, { header: COLUMNAS });
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Resultats");
   XLSX.writeFile(workbook, nombreArchivo);
