@@ -1,6 +1,13 @@
 import { avatarUrl, avatarUrlBase } from "./avatarUrl";
 import { normalizeJugadorUuid } from "./jugador";
 
+const FONDOS_HERO_VALIDOS = new Set(["bandera", "blau", "cors"]);
+
+export function normalizeFondoHero(value) {
+  const v = typeof value === "string" ? value.trim() : "";
+  return FONDOS_HERO_VALIDOS.has(v) ? v : "bandera";
+}
+
 export function mapPerfilFromRpc(row) {
   if (!row || typeof row !== "object") return null;
   return {
@@ -25,7 +32,7 @@ export function mapPerfilFromRpc(row) {
     activo: row.activo ?? true,
     sancionat: Boolean(row.sancionat),
     sancio_fins: row.sancio_fins ?? null,
-    fondo_hero: row.fondo_hero === "blau" ? "blau" : "bandera",
+    fondo_hero: normalizeFondoHero(row.fondo_hero),
     pj: row.partidos_jugados ?? 0,
     pg: row.partidos_ganados ?? 0,
     jj: row.juegos_jugados ?? 0,

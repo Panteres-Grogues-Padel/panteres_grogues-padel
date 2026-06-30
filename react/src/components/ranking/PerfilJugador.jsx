@@ -6,7 +6,8 @@ import { useCurrentJugador } from "../../context/CurrentJugadorContext";
 import {
   actualizarPerfilJugadorRpc,
   fetchPerfilJugadorRpc,
-  mergePerfilView
+  mergePerfilView,
+  normalizeFondoHero
 } from "../../utils/perfilJugador";
 import { uploadProfilePhoto } from "../../utils/profilePhoto";
 import { numeroSocioPanteres } from "../../utils/socio";
@@ -19,6 +20,9 @@ function igUrl(igRaw) {
   if (!h) return null;
   return `https://instagram.com/${encodeURIComponent(h)}`;
 }
+
+const HERO_CORS_BG_URL =
+  "https://fulqczmbmmakdxylejgw.supabase.co/storage/v1/object/public/assets/cor_muse_web.png";
 
 function IconPhone() {
   return (
@@ -82,7 +86,7 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
         )
       });
       setNicknameForm(esPropi.nickname ?? "");
-      setFondoHero(esPropi.fondo_hero === "blau" ? "blau" : "bandera");
+      setFondoHero(normalizeFondoHero(esPropi.fondo_hero));
       setNicknameError("");
       setContactError("");
       setSancioLocal({
@@ -110,7 +114,7 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
         });
       }
       setNicknameForm(perfil.nickname ?? "");
-      setFondoHero(perfil.fondo_hero === "blau" ? "blau" : "bandera");
+      setFondoHero(normalizeFondoHero(perfil.fondo_hero));
       setSancioLocal({
         sancionat: Boolean(perfil.sancionat),
         sancio_fins: perfil.sancio_fins ?? ""
@@ -199,11 +203,11 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
       setFondoHeroSaving(false);
       if (!ok || !perfil) {
         setFondoHeroError(error ?? t("ranking.profile.contactSaveError"));
-        setFondoHero(view.fondo_hero === "blau" ? "blau" : "bandera");
+        setFondoHero(normalizeFondoHero(view.fondo_hero));
         return;
       }
       setView((prev) => mergePerfilView(prev, perfil));
-      setFondoHero(perfil.fondo_hero === "blau" ? "blau" : "bandera");
+      setFondoHero(normalizeFondoHero(perfil.fondo_hero));
       onJugadorUpdated?.({ id: view.id, ...perfil });
       void refreshJugador();
     },
@@ -525,6 +529,35 @@ export default function PerfilJugador({ jugador, open, onClose, onJugadorUpdated
                     }}
                   />
                   <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>Blau</div>
+                </button>
+                <button
+                  type="button"
+                  className="profile-hero-option"
+                  disabled={fondoHeroSaving}
+                  aria-pressed={fondoHero === "cors"}
+                  onClick={() => void handleSelectFondoHero("cors")}
+                  style={{
+                    flex: 1,
+                    padding: 10,
+                    borderRadius: "var(--radius)",
+                    border: fondoHero === "cors" ? "2px solid var(--navy)" : "0.5px solid var(--border2)",
+                    background: "var(--bg)",
+                    cursor: fondoHeroSaving ? "wait" : "pointer"
+                  }}
+                >
+                  <div
+                    aria-hidden
+                    style={{
+                      height: 44,
+                      borderRadius: 6,
+                      marginBottom: 8,
+                      backgroundColor: "#0c5673",
+                      backgroundImage: `url("${HERO_CORS_BG_URL}")`,
+                      backgroundRepeat: "repeat",
+                      backgroundSize: "40px auto"
+                    }}
+                  />
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>Cors</div>
                 </button>
               </div>
               {fondoHeroError ? <p className="profile-photo-error">{fondoHeroError}</p> : null}

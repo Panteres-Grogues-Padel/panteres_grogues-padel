@@ -16,6 +16,7 @@ import PlayerAvatar from "../common/PlayerAvatar";
 import { useCurrentJugador } from "../../context/CurrentJugadorContext";
 import { DATE_LOCALE } from "../../utils/dates";
 import { getNombreSaludo, getNombreVisible } from "../../utils/nombres";
+import { normalizeFondoHero } from "../../utils/perfilJugador";
 import { t } from "../../i18n";
 
 const LANDING_TABLER_ICON_SIZE = 34;
@@ -116,11 +117,12 @@ export default function Bienvenida({
   const pj = rk?.pj ?? 0;
   const isCoord = Boolean(currentUser?.es_coordinador || currentUser?.isCoord);
   const mananaJuegas = useMananaJuegas(currentUser);
-  const fondoHero = jugadorHero?.fondo_hero === "blau" ? "blau" : "bandera";
+  const fondoHero = normalizeFondoHero(jugadorHero?.fondo_hero);
   const heroClassName = [
     "hero-pride",
     mananaJuegas ? "hero-pride--manana" : "",
-    fondoHero === "blau" ? "hero-pride--blau" : ""
+    fondoHero === "blau" ? "hero-pride--blau" : "",
+    fondoHero === "cors" ? "hero-pride--cors" : ""
   ]
     .filter(Boolean)
     .join(" ");

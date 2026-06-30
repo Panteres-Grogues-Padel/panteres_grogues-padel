@@ -643,6 +643,13 @@ select {
   display: none;
 }
 
+.hero-pride--cors {
+  background-color: #0c5673;
+  background-image: url("https://fulqczmbmmakdxylejgw.supabase.co/storage/v1/object/public/assets/cor_muse_web.png");
+  background-repeat: repeat;
+  background-size: 160px auto;
+}
+
 .hero-pride > * {
   position: relative;
   z-index: 1;
