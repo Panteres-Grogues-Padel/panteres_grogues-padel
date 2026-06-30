@@ -15,6 +15,7 @@ import { supabase } from "../../lib/supabase";
 import PlayerAvatar from "../common/PlayerAvatar";
 import { useCurrentJugador } from "../../context/CurrentJugadorContext";
 import { DATE_LOCALE } from "../../utils/dates";
+import { jugadoresCoinciden } from "../../utils/jugador";
 import { getNombreSaludo, getNombreVisible } from "../../utils/nombres";
 import { normalizeFondoHero } from "../../utils/perfilJugador";
 import { t } from "../../i18n";
@@ -91,6 +92,35 @@ function activityDescription(entry, includeJugador) {
   return includeJugador ? `${entry.jugador}: ${texto}` : texto;
 }
 
+function rowsFromRpc(data) {
+  if (data == null) return [];
+  return Array.isArray(data) ? data : [data];
+}
+
+function formatCumpleanosCelebracion(jugadores) {
+  const nicks = jugadores
+    .map((j) => getNombreVisible(j) || j.nickname || j.nombre || "")
+    .filter(Boolean);
+  if (!nicks.length) return "";
+  if (nicks.length === 1) return `Avui celebrem l'aniversari de ${nicks[0]}!`;
+  if (nicks.length === 2) return `Avui celebrem l'aniversari de ${nicks[0]} i ${nicks[1]}!`;
+  const last = nicks[nicks.length - 1];
+  return `Avui celebrem l'aniversari de ${nicks.slice(0, -1).join(", ")} i ${last}!`;
+}
+
+function heroMensajeCumpleanos(cumpleaneros, currentUser, nombreFallback) {
+  if (!cumpleaneros.length || !currentUser?.id) return null;
+
+  const yoCumple = cumpleaneros.some((j) => jugadoresCoinciden(j.id, currentUser.id));
+  if (yoCumple) {
+    const yo = cumpleaneros.find((j) => jugadoresCoinciden(j.id, currentUser.id));
+    const nick = getNombreVisible(yo) || yo?.nickname || nombreFallback || t("common.playerFallback");
+    return `Bon aniversari, ${nick}! 🎂`;
+  }
+
+  return formatCumpleanosCelebracion(cumpleaneros);
+}
+
 export default function Bienvenida({
   currentUser,
   ranking,
@@ -108,6 +138,7 @@ export default function Bienvenida({
   const [activityLoading, setActivityLoading] = useState(false);
   const [activityError, setActivityError] = useState("");
   const [logFiltro, setLogFiltro] = useState("");
+  const [cumpleanerosHoy, setCumpleanerosHoy] = useState([]);
   const { jugador: yo } = useCurrentJugador();
   const jugadorHero = yo ?? currentUser;
   const nombre = getNombreSaludo(jugadorHero) || t("common.playerFallback");
@@ -118,6 +149,10 @@ export default function Bienvenida({
   const isCoord = Boolean(currentUser?.es_coordinador || currentUser?.isCoord);
   const mananaJuegas = useMananaJuegas(currentUser);
   const fondoHero = normalizeFondoHero(jugadorHero?.fondo_hero);
+  const heroCumpleanos = useMemo(
+    () => heroMensajeCumpleanos(cumpleanerosHoy, currentUser, nombre),
+    [cumpleanerosHoy, currentUser, nombre]
+  );
   const heroClassName = [
     "hero-pride",
     mananaJuegas ? "hero-pride--manana" : "",
@@ -139,6 +174,28 @@ export default function Bienvenida({
       a.label.localeCompare(b.label, DATE_LOCALE)
     );
   }, [activityLog, ranking]);
+
+  useEffect(() => {
+    if (!supabase || currentUser?.fromFallback) {
+      setCumpleanerosHoy([]);
+      return undefined;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      const { data, error } = await supabase.rpc("get_cumpleanos_hoy");
+      if (cancelled) return;
+      if (error) {
+        setCumpleanerosHoy([]);
+        return;
+      }
+      setCumpleanerosHoy(rowsFromRpc(data).filter((j) => j?.id));
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser?.fromFallback, currentUser?.id]);
 
   useEffect(() => {
     if (!activityOpen) return undefined;
@@ -189,13 +246,21 @@ export default function Bienvenida({
           <PlayerAvatar jugador={jugadorHero} size={80} className="hero-player-avatar" />
         </button>
         <div className="hero-title">
-          {saludoPorHora()}
-          {t("bienvenida.greetingSuffix", { name: nombre })}
+          {heroCumpleanos ? (
+            heroCumpleanos
+          ) : (
+            <>
+              {saludoPorHora()}
+              {t("bienvenida.greetingSuffix", { name: nombre })}
+            </>
+          )}
         </div>
         <div className="hero-sub">
-          {t("bienvenida.welcomeSubtitle")
-            .replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}\uFE0F]/gu, "")
-            .trim()}
+          {heroCumpleanos
+            ? null
+            : t("bienvenida.welcomeSubtitle")
+                .replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}\uFE0F]/gu, "")
+                .trim()}
         </div>
         {mananaJuegas ? <div className="hero-manana">{t("bienvenida.playTomorrow")}</div> : null}
       </div>

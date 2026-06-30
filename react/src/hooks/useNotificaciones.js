@@ -108,7 +108,8 @@ export function iconoNotificacionTipo(tipo, titulo) {
     inscripcio: "📅",
     baixa: "📅",
     agenda: "🗓️",
-    pago_confirmat: "🗓️"
+    pago_confirmat: "🗓️",
+    aniversari: "🎂"
   };
   return map[t] ?? "🔔";
 }
