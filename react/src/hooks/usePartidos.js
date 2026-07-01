@@ -357,7 +357,7 @@ export function usePartidos(currentUser) {
 
     const { data: inscripciones, error: insError } = await supabase
       .from("inscripciones")
-      .select("jugador_id, inscrito_at, jugadores(id, nombre, nombre_completo)")
+      .select("jugador_id, inscrito_at, jugadores(id, nombre, nombre_completo, nickname)")
       .eq("slot_id", slotId)
       .eq("semana", semanaNorm);
     if (insError) return { ok: false, error: insError.message };
@@ -370,9 +370,11 @@ export function usePartidos(currentUser) {
     const filas = (inscripciones ?? []).map((ins) => {
       const jid = strId(ins.jugador_id);
       const j = ins.jugadores;
+      const jugadorView = { nombre: j?.nombre, nickname: j?.nickname };
       return {
         id: jid,
-        nombre: j?.nombre ?? t("common.player"),
+        nombre: getNombreVisible(jugadorView) || t("common.player"),
+        nickname: j?.nickname?.trim() || null,
         nombreCompleto: j?.nombre_completo ?? j?.nombre ?? t("common.player"),
         rankIdx: rankIndexById.has(jid) ? rankIndexById.get(jid) : Number.MAX_SAFE_INTEGER,
         inscritoTs: ins.inscrito_at ? new Date(ins.inscrito_at).getTime() : 0
@@ -385,7 +387,12 @@ export function usePartidos(currentUser) {
 
     filasT.sort((a, b) => a.rankIdx - b.rankIdx);
 
-    const candidatos = filasT.map(({ id, nombre, nombreCompleto }) => ({ id, nombre, nombreCompleto }));
+    const candidatos = filasT.map(({ id, nombre, nickname, nombreCompleto }) => ({
+      id,
+      nombre,
+      nickname,
+      nombreCompleto
+    }));
     const titulares = candidatos;
 
     console.log("[generarPartidos] inscritos y candidatos", {
@@ -479,7 +486,8 @@ export function usePartidos(currentUser) {
       jugadores: pc.grupo.map((j, idx) => ({
         id: `${pc.pistaId}-jp-${idx}`,
         jugadorId: j.id,
-        nombre: j.nombre,
+        nombre: getNombreVisible(j) || t("common.player"),
+        nickname: j.nickname ?? null,
         nombreCompleto: j.nombreCompleto ?? j.nombre,
         posicion: idx + 1,
         confirmado: false
