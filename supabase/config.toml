@@ -5,7 +5,7 @@
 project_id = "fulqczmbmmakdxylejgw"
 
 [db]
-major_version = 15
+major_version = 17
 
 # Edge Function: notificación "slot abierto" a las 19:00 (Madrid).
 # Cron: 0 17 * * * UTC (≈ 19:00 CEST; en CET serían 18:00 locales).

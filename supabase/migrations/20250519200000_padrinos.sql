@@ -15,7 +15,6 @@ AS $$
         'id', j.id,
         'nombre', j.nombre,
         'nombre_completo', j.nombre_completo,
-        'nickname', j.nickname,
         'padrino_id', j.padrino_id,
         'padrino_nombre', p.nombre
       ) AS row_data
