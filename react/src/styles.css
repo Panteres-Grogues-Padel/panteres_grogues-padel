@@ -77,46 +77,21 @@ body {
 }
 
 .login-logo-wrap {
-  position: relative;
-  width: 84px;
-  height: 84px;
+  width: 72px;
+  height: 72px;
   margin: 0 auto 0.85rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 16px;
   background: var(--bg3);
-  border: 2px solid var(--navy);
-  box-sizing: border-box;
-}
-
-.login-tennis-seams {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  color: var(--navy);
-  pointer-events: none;
-}
-
-.login-logo-inner {
-  position: relative;
-  z-index: 1;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
 }
 
 .login-logo {
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   object-fit: cover;
-  border-radius: 50%;
+  border-radius: 12px;
   display: block;
 }
 
