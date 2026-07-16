@@ -7,6 +7,8 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 ## Bugs resueltos
 
 - **Inscripciones no persistían entre sesiones** — Causa: caché PostgREST en SELECT directo. Solución: RPC `get_inscripciones`.
+- **Producción sin `get_inscripciones`** (16/07/2026) — Causa: la RPC existía en staging pero **no estaba versionada** en `supabase/migrations/`. Solución: aplicar en prod + migración `20250515120000_get_inscripciones.sql` + `migration repair --status applied`.
+- **Vercel producción servía el prototipo `index.html`** — Causa: Root Directory / Output incorrectos (no Vite/`dist`). Solución: `react/vercel.json` (Vite, `dist`) + settings del proyecto `panteres-grogues-padel-production`.
 - **Partidos no persistían tras logout** — Causa: caché PostgREST. Solución: RPC `get_partidos_slot` / `get_partidos_generados`.
 - **Resultados no persistían al cambiar pestaña** — Causa: caché PostgREST y vaciado transitorio de `partidos`. Solución: RPC `get_resultados` + mantener estado en hooks durante recargas.
 - **Error 403 notificaciones** — Causa: política RLS sin INSERT para coordinadores. Solución: política `Coordinador inserta notificaciones`.
@@ -54,6 +56,13 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 - Email de usuario de prueba actualizado: `sergic@pa.com` → `sergir@pa.com` en `auth.users` y `jugadores`.
 - Super admins asignados manualmente: `manul@pa.com`, `jordib@pa.com`, `vipe@pa.com` (`es_super_admin = true`).
 
+### Operaciones (producción — 16/07/2026)
+
+- Proyecto Supabase `tjgjxwzxikoblbprxqwt`; migraciones + baseline aplicadas; buckets `avatars`/`assets`.
+- Google OAuth producción; Edge Functions + crons + Vault `service_role_key`.
+- Super admin: `mls.manuls@gmail.com`.
+- Vercel: `panteres-grogues-padel-production.vercel.app` (rama `main`); staging en `panteres-grogues-padel.vercel.app` (rama `staging`).
+
 ---
 
 ## Funcionalidades implementadas
@@ -97,7 +106,8 @@ Registro de incidencias corregidas y funcionalidades entregadas en la app React 
 - **Campos admin en jugadores:** `primer_apellido`, `segundo_apellido`, `numero_socio`, `id_app_antigua`, `es_super_admin`, `es_tesorero`
 - **Cuotas de socio:** tabla `cuotas` (anual/trimestral, período, pagada, `fecha_pago`, `fecha_inicio`, `fecha_fin`); marcar pagada desde panel; fechas calculadas automáticamente por tipo/período
 - **Gestión jugadores admin:** crear, editar, activar/desactivar, asignar coordinador; RPCs `get_jugadores_admin`, `crear_jugador_admin`, `editar_jugador_admin`, `get_cuotas`, `marcar_cuota_pagada`
-- **Google OAuth:** login con cuenta Google (Google Cloud Console + Supabase Auth); redirect a `window.location.origin`
+- **Google OAuth:** login con cuenta Google (Google Cloud Console + Supabase Auth); redirect a `window.location.origin`; **producción** configurada y publicada (16/07/2026)
+- **Login — «Com accedir?»:** modal con pasos de Google + onboarding (`LoginScreen.jsx`, i18n ca/es)
 - **Onboarding nuevos usuarios:** formulario completo (`OnboardingScreen.jsx`) — pronombre, nombre, apellidos, nickname, numero_socio, id_app_antigua, documento_identidad, email_contacto, telefono; RPC `completar_onboarding`
 - **Pantalla pendent d'aprovació:** `PendingApprovalScreen.jsx` para jugadores con `activo = false` tras onboarding; activación manual por super admin
 - **Vincular Google con jugador existente:** RPC `vincular_jugador_existente` — empareja por email si `auth_id IS NULL`
@@ -174,6 +184,8 @@ Las escrituras (INSERT, UPDATE, DELETE) pueden usar la API de tabla con RLS; las
 
 ## Migraciones Supabase relevantes
 
+- `20250501000000_initial_schema.sql` — baseline DDL (producción vacía)
+- `20250515120000_get_inscripciones.sql` — RPC `get_inscripciones(p_desde, p_hasta)`
 - `20250515130500_get_partidos_slot.sql`
 - `20250515140000_get_resultados.sql`
 - `20250515150000_coord_borra_resultados.sql`
