@@ -34,8 +34,26 @@ export default function LoginScreen({ auth }) {
       <div className="login-screen">
         <div className="login-card">
           <header className="login-brand">
-            <div className="login-logo-wrap">
-              <img src="/icons/landing-logo.png" alt="" width={56} height={56} className="login-logo" />
+            <div className="login-logo-wrap" aria-hidden="true">
+              <svg className="login-tennis-seams" viewBox="0 0 84 84" width="84" height="84">
+                <path
+                  d="M42 3 C14 22 14 62 42 81"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M42 3 C70 22 70 62 42 81"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="login-logo-inner">
+                <img src="/icons/landing-logo.png" alt="" width={52} height={52} className="login-logo" />
+              </div>
             </div>
             <p className="login-brand-name">{t("auth.brandName")}</p>
             <h1 className="login-brand-sport">{t("auth.brandSport")}</h1>

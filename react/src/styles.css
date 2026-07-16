@@ -77,27 +77,52 @@ body {
 }
 
 .login-logo-wrap {
-  width: 72px;
-  height: 72px;
+  position: relative;
+  width: 84px;
+  height: 84px;
   margin: 0 auto 0.85rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 16px;
+  border-radius: 50%;
   background: var(--bg3);
+  border: 2px solid var(--navy);
+  box-sizing: border-box;
+}
+
+.login-tennis-seams {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  color: var(--navy);
+  pointer-events: none;
+}
+
+.login-logo-inner {
+  position: relative;
+  z-index: 1;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .login-logo {
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   object-fit: cover;
-  border-radius: 12px;
+  border-radius: 50%;
   display: block;
 }
 
 .login-brand-name {
   margin: 0;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 600;
   color: var(--text);
   letter-spacing: 0.01em;
@@ -105,7 +130,7 @@ body {
 
 .login-brand-sport {
   margin: 0.15rem 0 0.45rem;
-  font-size: 29px;
+  font-size: 26px;
   font-weight: 700;
   line-height: 1.15;
   color: var(--navy);
