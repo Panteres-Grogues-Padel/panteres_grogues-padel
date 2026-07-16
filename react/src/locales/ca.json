@@ -72,6 +72,23 @@
     "enter": "Entrar",
     "entering": "Entrant...",
     "enterGoogle": "Entrar amb Google",
+    "howToAccess": {
+      "link": "Com accedir?",
+      "title": "Com accedir a l'app",
+      "intro": "Per accedir necessites un compte de Google (Gmail). Segueix aquests passos:",
+      "step1": "Prem \"Entrar amb Google\" i selecciona el teu compte de Gmail",
+      "step2": "Completa el formulari amb les teves dades obligatòries:",
+      "step3": "Accepta la política de privacitat i prem \"Enviar sol·licitud\"",
+      "step4": "Un coordinador aprovarà el teu accés en breu i podràs entrar a l'app",
+      "fields": {
+        "identity": "Pronom, Nom, Cognoms",
+        "birthDate": "Data de naixement (dia i mes)",
+        "nickname": "Nom visible — el nom amb el qual et veuran al rànquing i partits (ex: JotaLB)",
+        "memberNumber": "Número de soci Panteres Grogues",
+        "legacyId": "ID app antiga — és el teu número d'usuari de l'app actual. Si no el saps o ets nou/a, posa 000",
+        "contact": "Email i Telèfon de contacte"
+      }
+    },
     "errors": {
       "userNotFound": "Usuari/ària no trobat/da",
       "connection": "Error de connexió.",

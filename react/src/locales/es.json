@@ -71,6 +71,23 @@
     "enter": "Entrar",
     "entering": "Entrando...",
     "enterGoogle": "Entrar con Google",
+    "howToAccess": {
+      "link": "¿Cómo acceder?",
+      "title": "Cómo acceder a la app",
+      "intro": "Para acceder necesitas una cuenta de Google (Gmail). Sigue estos pasos:",
+      "step1": "Pulsa \"Entrar con Google\" y selecciona tu cuenta de Gmail",
+      "step2": "Completa el formulario con tus datos obligatorios:",
+      "step3": "Acepta la política de privacidad y pulsa \"Enviar solicitud\"",
+      "step4": "Un coordinador aprobará tu acceso en breve y podrás entrar a la app",
+      "fields": {
+        "identity": "Pronombre, Nombre, Apellidos",
+        "birthDate": "Fecha de nacimiento (día y mes)",
+        "nickname": "Nombre visible — el nombre con el que te verán en el ranking y partidos (ej: JotaLB)",
+        "memberNumber": "Número de socio Panteres Grogues",
+        "legacyId": "ID app antigua — es tu número de usuario de la app actual. Si no lo sabes o eres nuevo/a, pon 000",
+        "contact": "Email y Teléfono de contacto"
+      }
+    },
     "errors": {
       "userNotFound": "Usuario no encontrado",
       "connection": "Error de conexion.",

@@ -79,6 +79,78 @@ body {
   margin-bottom: 5px;
 }
 
+.login-help-link {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--info-t, #378add);
+  font-size: 13px;
+  text-align: center;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.login-help-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.login-help-modal {
+  width: 100%;
+  max-width: 420px;
+  max-height: min(80vh, 640px);
+  overflow: auto;
+  background: #fff;
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.1rem 1rem 1.15rem;
+}
+
+.login-help-title {
+  margin: 0 0 0.5rem;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.login-help-intro {
+  margin: 0 0 0.85rem;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text2);
+}
+
+.login-help-steps {
+  margin: 0 0 1rem;
+  padding-left: 1.2rem;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.login-help-steps > li + li {
+  margin-top: 0.65rem;
+}
+
+.login-help-fields {
+  margin: 0.4rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--text2);
+}
+
+.login-help-fields li + li {
+  margin-top: 0.25rem;
+}
+
 .form-group {
   margin-bottom: 0.75rem;
 }
