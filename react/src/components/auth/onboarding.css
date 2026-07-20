@@ -119,3 +119,9 @@
   color: var(--text2);
   line-height: 1.45;
 }
+
+.onboarding-privacy-link {
+  color: var(--navy);
+  text-decoration: underline;
+  font-weight: 600;
+}

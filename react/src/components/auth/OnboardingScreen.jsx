@@ -201,7 +201,18 @@ export default function OnboardingScreen({ auth }) {
                 checked={form.acepto_privacidad}
                 onChange={(e) => updateField("acepto_privacidad", e.target.checked)}
               />
-              <span className="onboarding-privacy-text">{t("auth.privacyAccept")}</span>
+              <span className="onboarding-privacy-text">
+                {t("auth.privacyAcceptBefore")}
+                <a
+                  href="/privacitat"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="onboarding-privacy-link"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {t("auth.privacyPolicyLink")}
+                </a>
+              </span>
             </label>
 
             <button

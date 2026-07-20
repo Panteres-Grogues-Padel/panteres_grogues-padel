@@ -70,6 +70,7 @@
     "passwordLabel": "Contrasena",
     "emailPlaceholder": "tu@email.com",
     "privacyAccept": "Acepto la politica de privacidad",
+    "privacyAcceptBefore": "Acepto la ",
     "privacyPolicyLink": "Política de privacidad",
     "enter": "Entrar",
     "entering": "Entrando...",

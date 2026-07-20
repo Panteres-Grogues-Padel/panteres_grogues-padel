@@ -71,6 +71,7 @@
     "passwordLabel": "Contrasenya",
     "emailPlaceholder": "tu@email.com",
     "privacyAccept": "Accepto la política de privacitat",
+    "privacyAcceptBefore": "Accepto la ",
     "privacyPolicyLink": "Política de privacitat",
     "enter": "Entrar",
     "entering": "Entrant...",
