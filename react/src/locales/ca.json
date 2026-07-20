@@ -6,6 +6,7 @@
 
   "common": {
     "close": "Tancar",
+    "back": "← Tornar",
     "cancel": "Cancel·lar",
     "confirm": "Confirmar",
     "save": "Desar",
@@ -70,6 +71,7 @@
     "passwordLabel": "Contrasenya",
     "emailPlaceholder": "tu@email.com",
     "privacyAccept": "Accepto la política de privacitat",
+    "privacyPolicyLink": "Política de privacitat",
     "enter": "Entrar",
     "entering": "Entrant...",
     "enterGoogle": "Continua amb Google",

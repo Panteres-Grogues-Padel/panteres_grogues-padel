@@ -25,9 +25,18 @@ import { isJugadorUuid, jugadoresCoinciden } from "./utils/jugador";
 import PerfilJugador from "./components/ranking/PerfilJugador";
 import { CurrentJugadorProvider, useCurrentJugador } from "./context/CurrentJugadorContext";
 import { t } from "./i18n";
+import PrivacyPolicy from "./components/legal/PrivacyPolicy";
+
+function currentPath() {
+  return window.location.pathname.replace(/\/$/, "") || "/";
+}
 
 export default function App() {
   const auth = useAuth();
+
+  if (currentPath() === "/privacitat") {
+    return <PrivacyPolicy />;
+  }
 
   if (!auth.currentUser) return <LoginScreen auth={auth} />;
 

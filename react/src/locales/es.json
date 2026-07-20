@@ -6,6 +6,7 @@
 
   "common": {
     "close": "Cerrar",
+    "back": "← Volver",
     "cancel": "Cancelar",
     "confirm": "Confirmar",
     "save": "Guardar",
@@ -69,6 +70,7 @@
     "passwordLabel": "Contrasena",
     "emailPlaceholder": "tu@email.com",
     "privacyAccept": "Acepto la politica de privacidad",
+    "privacyPolicyLink": "Política de privacidad",
     "enter": "Entrar",
     "entering": "Entrando...",
     "enterGoogle": "Continua con Google",

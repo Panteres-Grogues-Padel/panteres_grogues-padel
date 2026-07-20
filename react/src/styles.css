@@ -185,10 +185,18 @@ body {
   flex-shrink: 0;
 }
 
+.login-footer-links {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
 .login-help-link {
   display: block;
   width: 100%;
-  margin-top: 14px;
+  margin-top: 0;
   padding: 0;
   border: none;
   background: none;
@@ -197,6 +205,77 @@ body {
   text-align: center;
   text-decoration: underline;
   cursor: pointer;
+}
+
+.legal-page {
+  min-height: 100vh;
+  padding: 1.5rem 1.25rem 2.5rem;
+  background: var(--bg3);
+}
+
+.legal-card {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 1.5rem 1.35rem 1.75rem;
+  background: #fff;
+  border-radius: 24px;
+  border: 0.5px solid var(--border);
+  box-shadow: 0 8px 28px rgba(12, 86, 115, 0.1);
+}
+
+.legal-brand {
+  margin: 0 0 0.35rem;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.legal-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--navy);
+}
+
+.legal-updated {
+  margin: 0.55rem 0 1.25rem;
+  font-size: 13px;
+  color: var(--text2);
+}
+
+.legal-section {
+  margin-bottom: 1.15rem;
+}
+
+.legal-section h2 {
+  margin: 0 0 0.4rem;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.legal-section p,
+.legal-section li {
+  margin: 0 0 0.45rem;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.legal-section ul {
+  margin: 0.35rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.legal-section a {
+  color: var(--navy);
+}
+
+.legal-back {
+  margin-top: 1.25rem;
+  text-align: center;
+  text-decoration: none;
 }
 
 .login-help-overlay {

@@ -99,9 +99,14 @@ export default function LoginScreen({ auth }) {
             <span>{t("auth.enterGoogle")}</span>
           </button>
 
-          <button type="button" className="login-help-link" onClick={() => setHelpOpen(true)}>
-            {t("auth.howToAccess.link")}
-          </button>
+          <div className="login-footer-links">
+            <button type="button" className="login-help-link" onClick={() => setHelpOpen(true)}>
+              {t("auth.howToAccess.link")}
+            </button>
+            <a href="/privacitat" className="login-help-link">
+              {t("auth.privacyPolicyLink")}
+            </a>
+          </div>
 
           {auth.error ? <p className="error-box">{auth.error}</p> : null}
         </div>
