@@ -22,10 +22,15 @@ import { t } from "../../i18n";
 
 const LANDING_TABLER_ICON_SIZE = 34;
 
-const INSURANCE_PROTOCOL_URL =
-  "https://fulqczmbmmakdxylejgw.supabase.co/storage/v1/object/public/documents/Protocol%20expres%20d'accidents%20Panteres.pdf";
-const SANCTIONS_RULES_URL =
-  "https://fulqczmbmmakdxylejgw.supabase.co/storage/v1/object/public/documents/reglament-sancions.pdf";
+function documentsPublicUrl(objectPath) {
+  const base = String(import.meta.env.VITE_SUPABASE_URL || "").replace(/\/$/, "");
+  return `${base}/storage/v1/object/public/documents/${objectPath}`;
+}
+
+const INSURANCE_PROTOCOL_URL = documentsPublicUrl(
+  "Protocol%20expres%20d'accidents%20Panteres.pdf"
+);
+const SANCTIONS_RULES_URL = documentsPublicUrl("reglament-sancions.pdf");
 
 function LandingTablerIcon({ Icon }) {
   return (
