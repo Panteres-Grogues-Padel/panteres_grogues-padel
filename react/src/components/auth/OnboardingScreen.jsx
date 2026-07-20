@@ -50,6 +50,18 @@ export default function OnboardingScreen({ auth }) {
     <section className="screen active">
       <div className="onboarding-screen">
         <div className="onboarding-card onboarding-card--form">
+          <button
+            type="button"
+            className="onboarding-close-btn"
+            aria-label={t("common.close")}
+            onClick={() => {
+              setForm(emptyForm());
+              void auth.logout();
+            }}
+            disabled={auth.loading}
+          >
+            ×
+          </button>
           <div className="onboarding-title">{t("auth.onboarding.title")}</div>
           <div className="onboarding-sub">{t("auth.onboarding.subtitle")}</div>
 

@@ -21,9 +21,36 @@
 }
 
 .onboarding-card--form {
+  position: relative;
   max-height: calc(100vh - 2.5rem);
   display: flex;
   flex-direction: column;
+}
+
+.onboarding-close-btn {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  z-index: 1;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--navy);
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.onboarding-close-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.onboarding-card--form .onboarding-title {
+  padding-right: 2.25rem;
 }
 
 .onboarding-title {
