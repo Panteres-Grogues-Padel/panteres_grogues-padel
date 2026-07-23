@@ -1453,13 +1453,17 @@ select {
 }
 
 .rank-wrap {
-  overflow-x: auto;
+  /* Contenedor de scroll propio: overflow-x en un ancestro rompe sticky respecto al viewport. */
+  overflow: auto;
+  max-height: min(70vh, calc(100dvh - 12rem));
   -webkit-overflow-scrolling: touch;
 }
 
 .rank-table {
   width: 100%;
-  border-collapse: collapse;
+  /* separate: border-collapse: collapse rompe position:sticky en th en varios navegadores */
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 12px;
 }
 
@@ -1480,9 +1484,14 @@ select {
 }
 
 .rank-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   color: var(--text2);
   font-size: 11px;
   font-weight: 600;
+  background: var(--bg3);
+  box-shadow: 0 1px 0 var(--border);
 }
 
 .rank-table th:nth-child(2),

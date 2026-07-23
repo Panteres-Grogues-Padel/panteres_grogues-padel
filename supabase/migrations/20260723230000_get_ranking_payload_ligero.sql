@@ -1,5 +1,6 @@
--- Lectura del ranking vía RPC (evita caché PostgREST del SELECT directo).
--- Payload lleuger: només camps de la llista; el perfil es carrega a part.
+-- get_ranking: només camps de la llista (id, nom visible, stats).
+-- El perfil complet es carrega amb get_perfil_jugador en obrir PerfilJugador.
+
 CREATE OR REPLACE FUNCTION get_ranking()
 RETURNS jsonb
 LANGUAGE sql

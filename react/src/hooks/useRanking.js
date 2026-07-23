@@ -17,26 +17,16 @@ function numRanking(value) {
 
 function mapRankingRow(row) {
   if (!row) return null;
+  // Compat: payloads antics amb objecte `jugadores` nidat.
   const j = row.jugadores ?? {};
-  const id = j.id ?? row.jugador_id;
+  const id = row.jugador_id ?? j.id;
   if (!id) return null;
   const nombre = row.nombre ?? j.nombre ?? "";
-  const nickname = row.nickname ?? j.nickname ?? null;
+  const nicknameRaw = row.nickname ?? j.nickname ?? null;
   return {
     id,
     nombre,
-    nickname: nickname?.trim() || null,
-    nombreCompleto: row.nombre_completo ?? j.nombre_completo ?? nombre,
-    telefono: j.telefono ?? "",
-    instagram: j.instagram ?? "",
-    foto_url: j.foto_url ?? null,
-    mostrar_telefono: Boolean(j.mostrar_telefono),
-    ocultar_telefon: Boolean(
-      j.ocultar_telefon ?? (j.mostrar_telefono != null ? !j.mostrar_telefono : false)
-    ),
-    autoriza_instagram: Boolean(j.autoriza_instagram),
-    sancionat: Boolean(j.sancionat),
-    sancio_fins: j.sancio_fins ?? null,
+    nickname: typeof nicknameRaw === "string" ? nicknameRaw.trim() || null : null,
     pj: row.partidos_jugados ?? 0,
     pg: row.partidos_ganados ?? 0,
     jj: row.juegos_jugados ?? 0,
